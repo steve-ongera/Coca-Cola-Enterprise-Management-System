@@ -115,6 +115,14 @@ class Employee(models.Model):
     ]
     position = models.CharField(max_length=100, choices=POSITION_CHOICES, null=True, blank=True)
 
+    ROLE_CHOICES = [
+        ('employee', 'Employee'),
+        ('manager', 'Manager'),
+        ('admin', 'Admin'),
+    ]
+
+    role = models.CharField(max_length=100, choices=ROLE_CHOICES, null=True, blank=True)
+
     # Department the employee belongs to
     department = models.ForeignKey(
         'Department', 
