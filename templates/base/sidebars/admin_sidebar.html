@@ -1,155 +1,107 @@
 {% load static %}
-<!-- ======= Sidebar ======= -->
+<!-- ======= Coca-Cola Admin Sidebar ======= -->
 <aside id="sidebar" class="sidebar">
 
     <ul class="sidebar-nav" id="sidebar-nav">
 
       <li class="nav-item">
-        <a class="nav-link " href="{% url 'admin_dashboard'%}">
+        <a class="nav-link" href="#">
           <i class="bi bi-grid"></i>
-          <span>Admin Dashboard</span>
+          <span>Executive Dashboard</span>
         </a>
       </li><!-- End Dashboard Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#staff-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-people"></i><span>User Management</span><i class="bi bi-chevron-down ms-auto"></i>
+        <a class="nav-link collapsed" data-bs-target="#employees-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-people"></i><span>Employee Management</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
-        <ul id="staff-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+        <ul id="employees-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
           <li>
-            <a class="nav-link collapsed" href="{% url 'lecturer_list'%}">
-              <i class="bi bi-person-badge"></i><span>Lecturers</span>
+            <a href="#">
+              <i class="bi bi-person-lines-fill"></i><span>Employee Directory</span>
             </a>
           </li>
           <li>
-            <a class="nav-link collapsed" href="#">
-              <i class="bi bi-person-lines-fill"></i><span>Administrators</span>
+            <a href="#">
+              <i class="bi bi-building"></i><span>Department Structure</span>
             </a>
           </li>
           <li>
-            <a class="nav-link collapsed" href="#">
-              <i class="bi bi-gear"></i><span>User Permissions</span>
+            <a href="#">
+              <i class="bi bi-shield-lock"></i><span>Access Control</span>
             </a>
           </li>
         </ul>
-      </li><!-- End User Management Nav -->
+      </li><!-- End Employee Management Nav -->
       
       <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#forms-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-journal-text"></i><span>Student Management</span><i class="bi bi-chevron-down ms-auto"></i>
+        <a class="nav-link collapsed" data-bs-target="#operations-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-gear"></i><span>Operations</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
-        <ul id="forms-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+        <ul id="operations-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
           <li>
-            <a href="{% url 'database_students_list'%}">
-              <i class="bi bi-circle"></i><span>Student Records</span>
+            <a href="#">
+              <i class="bi bi-truck"></i><span>Supply Chain</span>
             </a>
           </li>
           <li>
-            <a href="{% url 'search_student_data'%}">
-              <i class="bi bi-circle"></i><span>Search Student</span>
+            <a href="#">
+              <i class="bi bi-shop"></i><span>Retail Management</span>
             </a>
           </li>
           <li>
-            <a href="{% url 'student_create'%}"> 
-              <i class="bi bi-circle"></i><span>Add Student</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'promote_students'%}"> 
-              <i class="bi bi-circle"></i><span>Promote Student</span>
-            </a>
-          </li>
-          <li>
-            <a href="#"> 
-              <i class="bi bi-circle"></i><span>Bulk Operations</span>
+            <a href="#">
+              <i class="bi bi-box-seam"></i><span>Inventory</span>
             </a>
           </li>
         </ul>
-      </li><!-- End Student Management Nav -->
+      </li><!-- End Operations Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#tables-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-layout-text-window-reverse"></i><span>Academic Management</span><i class="bi bi-chevron-down ms-auto"></i>
+        <a class="nav-link collapsed" data-bs-target="#marketing-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-megaphone"></i><span>Marketing</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
-        <ul id="tables-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+        <ul id="marketing-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
           <li>
-            <a href="{% url 'programme_list'%}">
-              <i class="bi bi-circle"></i><span>Programmes</span>
+            <a href="#">
+              <i class="bi bi-graph-up"></i><span>Campaigns</span>
             </a>
           </li>
           <li>
             <a href="#">
-              <i class="bi bi-circle"></i><span>Units/Courses</span>
+              <i class="bi bi-people"></i><span>Consumer Insights</span>
             </a>
           </li>
           <li>
             <a href="#">
-              <i class="bi bi-circle"></i><span>Timetable</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Assignments</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Academic Calendar</span>
+              <i class="bi bi-globe"></i><span>Brand Management</span>
             </a>
           </li>
         </ul>
-      </li><!-- End Academic Management Nav -->
+      </li><!-- End Marketing Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#charts-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-bar-chart"></i><span>Semester Management</span><i class="bi bi-chevron-down ms-auto"></i>
+        <a class="nav-link collapsed" data-bs-target="#finance-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-cash-stack"></i><span>Finance</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
-        <ul id="charts-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+        <ul id="finance-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
           <li>
             <a href="#">
-              <i class="bi bi-circle"></i><span>Current Semester</span>
+              <i class="bi bi-wallet2"></i><span>Budgeting</span>
             </a>
           </li>
           <li>
             <a href="#">
-              <i class="bi bi-circle"></i><span>Add Semester</span>
+              <i class="bi bi-graph-up-arrow"></i><span>Financial Reports</span>
             </a>
           </li>
           <li>
             <a href="#">
-              <i class="bi bi-circle"></i><span>Semester Settings</span>
+              <i class="bi bi-currency-dollar"></i><span>Expense Management</span>
             </a>
           </li>
         </ul>
-      </li><!-- End Semester Management Nav -->
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#icons-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-gem"></i><span>Examination</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="icons-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="{% url 'enter-grades'%}">
-              <i class="bi bi-circle"></i><span>Enter Grades</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Exam Scheduling</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Reports</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Transcripts</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Examination Nav -->
+      </li><!-- End Finance Nav -->
 
       <li class="nav-heading">System Administration</li>
 
@@ -162,36 +114,26 @@
 
       <li class="nav-item">
         <a class="nav-link collapsed" data-bs-target="#analytics-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-graph-up"></i><span>Analytics</span><i class="bi bi-chevron-down ms-auto"></i>
+          <i class="bi bi-graph-up"></i><span>Business Analytics</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="analytics-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li class="nav-item">
-            <a class="nav-link collapsed" href="#">
-              <i class="bi bi-card-list"></i>
-              <span>Institution Analytics</span>
+          <li>
+            <a href="#">
+              <i class="bi bi-bar-chart"></i><span>Sales Performance</span>
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link collapsed" href="#">
-              <i class="bi bi-card-list"></i>
-              <span>Academic Performance</span>
+          <li>
+            <a href="#">
+              <i class="bi bi-map"></i><span>Market Analysis</span>
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link collapsed" href="#">
-              <i class="bi bi-card-list"></i>
-              <span>Student Demographics</span>
+          <li>
+            <a href="#">
+              <i class="bi bi-people"></i><span>Employee Productivity</span>
             </a>
           </li>
         </ul>
       </li><!-- End Analytics Nav -->
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'admin_comment_dashboard'%}">
-          <i class="bi bi-chat-left-text"></i>
-          <span>Complaints & Feedback</span>
-        </a>
-      </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
@@ -204,20 +146,6 @@
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-gear"></i>
           <span>System Configuration</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-database"></i>
-          <span>Data Management</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-file-earmark"></i>
-          <span>Documentation</span>
         </a>
       </li>
 

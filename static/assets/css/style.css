@@ -602,8 +602,8 @@ h6 {
   padding: 20px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #aab7cf transparent;
-  box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1);
+  scrollbar-color: #d1d5db transparent;
+  box-shadow: 0px 0px 20px rgba(237, 28, 22, 0.1);
   background-color: #fff;
 }
 
@@ -620,7 +620,7 @@ h6 {
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background-color: #aab7cf;
+  background-color: #d1d5db;
 }
 
 @media (min-width: 1200px) {
@@ -668,9 +668,15 @@ h6 {
 .sidebar-nav .nav-heading {
   font-size: 11px;
   text-transform: uppercase;
-  color: #899bbd;
+  color: #ED1C16; /* Coca-Cola red */
   font-weight: 600;
   margin: 10px 0 5px 15px;
+}
+
+.sidebar-nav .nav-link i {
+  font-size: 16px;
+  margin-right: 10px;
+  color: #ED1C16; /* Coca-Cola red */
 }
 
 .sidebar-nav .nav-link {
@@ -678,7 +684,7 @@ h6 {
   align-items: center;
   font-size: 15px;
   font-weight: 600;
-  color: #4154f1;
+  color: #ED1C16; /* Coca-Cola red */
   transition: 0.3;
   background: #f6f9ff;
   padding: 10px 15px;
@@ -688,7 +694,7 @@ h6 {
 .sidebar-nav .nav-link i {
   font-size: 16px;
   margin-right: 10px;
-  color: #4154f1;
+  color: #ED1C16; /* Coca-Cola red */
 }
 
 .sidebar-nav .nav-link.collapsed {
@@ -700,9 +706,11 @@ h6 {
   color: #899bbd;
 }
 
+
+
 .sidebar-nav .nav-link:hover {
-  color: #4154f1;
-  background: #f6f9ff;
+  color: #ffffff; /* White text on hover */
+  background: #ED1C16; /* Coca-Cola red background on hover */
 }
 
 .sidebar-nav .nav-link:hover i {
