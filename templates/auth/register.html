@@ -175,34 +175,29 @@
                       </div>
                     </div>
 
-                    <div class="col-12">
-                      <label for="email" class="form-label">Email</label>
-                      <div class="input-group has-validation">
-                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                        <input type="email" id="email" name="email" class="form-control" required>
-                        <div class="invalid-feedback">Please enter a valid email address.</div>
-                      </div>
+                    <div class="row form-row">
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group position-relative">
+                              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                              <input type="password" id="password" name="password" class="form-control" required>
+                              <i id="togglePassword" class="bi bi-eye-slash position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 5;"></i>
+                            </div>
+                            <div class="invalid-feedback">Please enter your password!</div>
+                          </div>
+      
+                          <div class="col-md-6">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <div class="input-group position-relative">
+                              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                              <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                              <i id="togglePassword2" class="bi bi-eye-slash position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 5;"></i>
+                            </div>
+                            <div class="invalid-feedback">Please confirm your password!</div>
+                          </div>
                     </div>
 
-                    <div class="col-12">
-                      <label for="password" class="form-label">Password</label>
-                      <div class="input-group position-relative">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" id="password" name="password" class="form-control" required>
-                        <i id="togglePassword" class="bi bi-eye-slash position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 5;"></i>
-                      </div>
-                      <div class="invalid-feedback">Please enter your password!</div>
-                    </div>
-
-                    <div class="col-12">
-                      <label for="confirm_password" class="form-label">Confirm Password</label>
-                      <div class="input-group position-relative">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
-                        <i id="togglePassword2" class="bi bi-eye-slash position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 5;"></i>
-                      </div>
-                      <div class="invalid-feedback">Please confirm your password!</div>
-                    </div>
+                    
                     
                     <div class="col-12">
                       <div class="form-check">
