@@ -73,6 +73,10 @@ class Employee(models.Model):
         null=True,  # Allowing user field to be blank
         blank=True  # Allowing user field to be blank
     )
+    first_name = models.CharField(max_length=100, null=True, blank=True)
+    last_number = models.CharField(max_length=20, null=True, blank=True)
+    email = models.EmailField( null=True, blank=True)
+ 
     emergency_contact_name = models.CharField(max_length=100, null=True, blank=True)
     emergency_contact_number = models.CharField(max_length=20, null=True, blank=True)
     hire_date = models.DateField()
