@@ -5,17 +5,35 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 
 
+
 class User(AbstractUser):
     employee_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
     contact_number = models.CharField(max_length=20, null=True, blank=True)
     profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
+    
+    # New fields
+    USER_TYPE_CHOICES = [
+        ('employee', 'Employee'),
+        ('manager', 'Manager'),
+        ('admin', 'Admin'),
+    ]
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='employee')
+
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('non_active', 'Non-Active'),
+        ('retired', 'Retired'),
+        ('fired', 'Fired'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     
     class Meta:
         verbose_name = 'User'
         verbose_name_plural = 'Users'
         
     def __str__(self):
-        return f"{self.username} ({self.employee_id})"
+        return f"{self.username} ({self.employee_id}) - {self.get_user_type_display()} - {self.get_status_display()}"
+
 
 
 class Permission(models.Model):
