@@ -66,10 +66,17 @@ class Department(models.Model):
 
 # Employee Management Models
 class Employee(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile')
+    user = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='employee_profile', 
+        null=True,  # Allowing user field to be blank
+        blank=True  # Allowing user field to be blank
+    )
     emergency_contact_name = models.CharField(max_length=100, null=True, blank=True)
     emergency_contact_number = models.CharField(max_length=20, null=True, blank=True)
     hire_date = models.DateField()
+    
     EMPLOYMENT_STATUS_CHOICES = [
         ('active', 'Active'),
         ('on_leave', 'On Leave'),
@@ -77,12 +84,58 @@ class Employee(models.Model):
         ('retired', 'Retired'),
     ]
     employment_status = models.CharField(max_length=20, choices=EMPLOYMENT_STATUS_CHOICES, default='active')
+    
     education_records = models.JSONField(null=True, blank=True)
     skills = models.JSONField(null=True, blank=True)
     documents = models.JSONField(null=True, blank=True)
+
+    working_id = models.CharField(max_length=20, null=True, blank=True)
     
+    contract_type = models.CharField(
+        max_length=50, 
+        choices=[('permanent', 'Permanent'), ('contract', 'Contract')], 
+        default='permanent'
+    )
+
+    # Employee's date of birth
+    date_of_birth = models.DateField(null=True, blank=True)
+
+    # Job position/role with predefined choices
+    POSITION_CHOICES = [
+        ('manager', 'Manager'),
+        ('developer', 'Developer'),
+        ('analyst', 'Analyst'),
+        ('hr', 'Human Resources'),
+        ('marketing', 'Marketing'),
+        ('sales', 'Sales'),
+        ('engineer', 'Engineer'),
+        ('support', 'Support'),
+        ('admin', 'Administrator'),
+        ('consultant', 'Consultant'),
+    ]
+    position = models.CharField(max_length=100, choices=POSITION_CHOICES, null=True, blank=True)
+
+    # Department the employee belongs to
+    department = models.ForeignKey(
+        'Department', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='employees'
+    )
+    
+    # Performance review data (could include ratings, feedback, etc.)
+    
+    phone_number = models.CharField(max_length=20, null=True, blank=True)
+    address = models.TextField(null=True, blank=True)
+    salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    bank_account_number = models.CharField(max_length=30, null=True, blank=True)
+    last_promotion_date = models.DateField(null=True, blank=True)
+    contract_end_date = models.DateField(null=True, blank=True)
+
     def __str__(self):
-        return f"{self.user.first_name} {self.user.last_name}"
+        return f"{self.user.first_name} {self.user.last_name}" if self.user else "Employee without account"
+
 
 
 class PositionHistory(models.Model):
