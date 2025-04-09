@@ -1,24 +1,228 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
 
-<div class="login-container">
-    <h2>Login</h2>
-    {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+  <title>Employee Portal | Login</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+  <!-- Favicons -->
+  <link href="{% static 'assets/img/logo.png'%}" rel="icon">
+  <link href="{% static 'assets/img/logo.png'%}" rel="apple-touch-icon">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css'%}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css'%}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css'%}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/quill/quill.snow.css'%}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/quill/quill.bubble.css'%}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/remixicon/remixicon.css'%}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/simple-datatables/style.css'%}" rel="stylesheet">
+  <link href="{% static 'assets/css/messages.css'%}" rel="stylesheet">
+
+  <!-- Template Main CSS File -->
+  <link href="{% static 'assets/css/style.css'%}" rel="stylesheet">
+  <link href="{% static 'assets/css/extra.css'%}" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-color: #ED1C16; /* Coca-Cola red */
+      --secondary-color: #FFFFFF; /* White */
+      --accent-color: #F9A01B; /* Coca-Cola yellow */
+    }
     
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="username">Employee ID</label>
-            <input type="text" id="username" name="username" required>
-        </div>
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Login</button>
-    </form>
+    .card {
+      border: 2px solid var(--primary-color);
+      border-radius: 10px;
+    }
     
-    <p class="register-link">Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
-</div>
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+      background-color: #D3110A;
+      border-color: #D3110A;
+    }
+    
+    .logo span {
+      color: var(--primary-color);
+      font-weight: 700;
+      font-size: 1.5rem;
+      margin-left: 10px;
+    }
+    
+    .card-title {
+      color: var(--primary-color);
+    }
+    
+    a {
+      color: var(--primary-color);
+    }
+    
+    a:hover {
+      color: #D3110A;
+    }
+    
+    .credits {
+      color: var(--primary-color);
+    }
+    
+    select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ced4da;
+    }
+    
+    /* Added styles for the modified layout */
+    .form-row {
+      margin-bottom: 15px;
+    }
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+    }
+    .alert-success {
+        color: #3c763d;
+        background-color: #dff0d8;
+        border-color: #d6e9c6;
+    }
+    .alert-error {
+        color: #a94442;
+        background-color: #f2dede;
+        border-color: #ebccd1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="message-container" id="system-messages">
+    {% for message in messages %}
+    <div class="alert-message alert-{{ message.tags }}">
+        {{ message }}
+        <span class="close-message">&times;</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <main>
+    <div class="container">
+      <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
+        <div class="container">
+          <div class="row justify-content-center">
+            <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
+
+              <div class="d-flex justify-content-center py-4">
+                <a href="{% url 'login' %}" class="logo d-flex align-items-center w-auto">
+                  <img src="{% static 'assets/img/coca-cola-logo.png' %}" alt="" style="max-width: 80px; max-height: 80px;">
+                  <span class="d-none d-lg-block">Employee Portal</span>
+                </a>
+              </div>
+
+              <div class="card mb-3">
+                <div class="card-body">
+                  <div class="pt-4 pb-2">
+                    <h5 class="card-title text-center pb-0 fs-4">Login to Your Account</h5>
+                    <p class="text-center small">Enter your employee ID & password to login</p>
+                  </div>
+
+                  <form method="POST" class="row g-3 needs-validation" novalidate>
+                    {% csrf_token %}
+                    <div class="col-12">
+                      <label for="username" class="form-label">Employee ID</label>
+                      <div class="input-group has-validation">
+                        <input type="text" id="username" name="username" class="form-control" required>
+                        <div class="invalid-feedback">Please enter your employee ID.</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12">
+                      <label for="password" class="form-label">Password</label>
+                      <div class="input-group has-validation position-relative">
+                        <input type="password" id="password" name="password" class="form-control" required>
+                        <i id="togglePassword" class="bi bi-eye-slash position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+                        <div class="invalid-feedback">Please enter your password.</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12">
+                      <div class="form-check">
+                        <a href="#" class="small">Forgot your password?</a>
+                      </div>
+                    </div>
+                    <div class="col-12">
+                      <button class="btn btn-primary w-100" type="submit">Login</button>
+                    </div>
+                    <div class="col-12">
+                      <p class="small mb-0">Don't have account? <a href="{% url 'register' %}">Create an account</a></p>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div class="credits">
+                © 2023 The Coca-Cola Company. All rights reserved.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Vendor JS Files -->
+  <script src="{% static 'assets/vendor/apexcharts/apexcharts.min.js'%}"></script>
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js'%}"></script>
+  <script src="{% static 'assets/vendor/chart.js/chart.umd.js'%}"></script>
+  <script src="{% static 'assets/vendor/echarts/echarts.min.js'%}"></script>
+  <script src="{% static 'assets/vendor/quill/quill.js'%}"></script>
+  <script src="{% static 'assets/vendor/simple-datatables/simple-datatables.js'%}"></script>
+  <script src="{% static 'assets/vendor/tinymce/tinymce.min.js'%}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js'%}"></script>
+
+  <!-- Template Main JS File -->
+  <script src="{% static 'assets/js/main.js'%}"></script>
+  
+  <!-- Password Toggle Script -->
+  <script>
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.getElementById('password');
+      const icon = this;
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+      }
+    });
+  </script>
+  
+  <!-- Message Close Script -->
+  <script>
+    document.querySelectorAll('.close-message').forEach(button => {
+      button.addEventListener('click', function() {
+        this.parentElement.style.display = 'none';
+      });
+    });
+  </script>
+</body>
+</html>

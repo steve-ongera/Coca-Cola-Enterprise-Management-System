@@ -1,0 +1,210 @@
+{% load static %}
+<!-- ======= Sidebar ======= -->
+<aside id="sidebar" class="sidebar">
+
+    <ul class="sidebar-nav" id="sidebar-nav">
+
+      <li class="nav-item">
+        <a class="nav-link " href="{% url 'lecturer_dashboard'%}">
+          <i class="bi bi-grid"></i>
+          <span>Lecture Dashboard</span>
+        </a>
+      </li><!-- End Dashboard Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#lecturers-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-person-badge"></i><span>Lecturers</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="lecturers-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Lecturers List</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Add Lecturer</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Lecturer Workload</span>
+            </a>
+          </li>
+        </ul>
+      </li><!-- End Lecturers Nav -->
+      
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#courses-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-journal-text"></i><span>Courses</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="courses-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          <li>
+            <a href="{% url 'lecturer_unit_students'%}">
+              <i class="bi bi-circle"></i><span>Course Catalog</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Add New Course</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Course Materials</span>
+            </a>
+          </li>
+        </ul>
+      </li><!-- End Courses Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#schedule-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-calendar-week"></i><span>Lecture Schedule</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="schedule-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Weekly Timetable</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Room Allocation</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Schedule Conflicts</span>
+            </a>
+          </li>
+        </ul>
+      </li><!-- End Schedule Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#materials-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-folder"></i><span>Lecture Materials</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="materials-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          <li>
+            <a href="{% url 'upload_lecture_notes'%}">
+              <i class="bi bi-circle"></i><span>Upload Notes</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Material Library</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Shared Resources</span>
+            </a>
+          </li>
+        </ul>
+      </li><!-- End Materials Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#attendance-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-clipboard-check"></i><span>Lecture Attendance</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="attendance-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Take Attendance</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'lecturer_attendance_view'%}">
+              <i class="bi bi-circle"></i><span>Attendance Records</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Attendance Reports</span>
+            </a>
+          </li>
+        </ul>
+      </li><!-- End Attendance Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#assessments-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-file-earmark-text"></i><span>Assessments</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="assessments-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Create Assessment</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Gradebook</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>Student Progress</span>
+            </a>
+          </li>
+        </ul>
+      </li><!-- End Assessments Nav -->
+
+      <li class="nav-heading">Lecture Tools</li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#">
+          <i class="bi bi-camera-video"></i>
+          <span>Virtual Classroom</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#">
+          <i class="bi bi-chat-left-text"></i>
+          <span>Discussion Forum</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#analytics-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-graph-up"></i><span>Lecture Analytics</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="analytics-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+          <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+              <i class="bi bi-card-list"></i>
+              <span>Student Engagement</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+              <i class="bi bi-card-list"></i>
+              <span>Attendance Trends</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+              <i class="bi bi-card-list"></i>
+              <span>Performance Analysis</span>
+            </a>
+          </li>
+        </ul>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#">
+          <i class="bi bi-question-circle"></i>
+          <span>Lecture Support</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#">
+          <i class="bi bi-gear"></i>
+          <span>Lecture Settings</span>
+        </a>
+      </li>
+
+    </ul>
+
+</aside><!-- End Sidebar-->
