@@ -94,8 +94,8 @@
                     <i class="bi bi-cash-stack text-white"></i>
                   </div>
                   <div class="ps-3">
-                    <h6>${{ payroll_summary.total_payroll|floatformat:2 }}</h6>
-                    <span class="text-muted small">Avg: ${{ payroll_summary.avg_salary|floatformat:2 }}</span>
+                    <h6>KES{{ payroll_summary.total_payroll|floatformat:2 }}</h6>
+                    <span class="text-muted small">Avg: KES{{ payroll_summary.avg_salary|floatformat:2 }}</span>
                   </div>
                 </div>
               </div>
@@ -249,7 +249,7 @@
                     <tr>
                       <td><a href="#" class="text-primary">SO-{{ order.order_number }}</a></td>
                       <td>{{ order.customer.name }}</td>
-                      <td>${{ order.total_amount }}</td>
+                      <td>ksh{{ order.total_amount }}</td>
                       <td><span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}warning{% endif %}">
                         {{ order.get_status_display }}
                       </span></td>

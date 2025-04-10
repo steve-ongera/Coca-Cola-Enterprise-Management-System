@@ -74,7 +74,7 @@ class Employee(models.Model):
         blank=True  # Allowing user field to be blank
     )
     first_name = models.CharField(max_length=100, null=True, blank=True)
-    last_number = models.CharField(max_length=20, null=True, blank=True)
+    last_name  = models.CharField(max_length=20, null=True, blank=True)
     email = models.EmailField( null=True, blank=True)
  
     emergency_contact_name = models.CharField(max_length=100, null=True, blank=True)
@@ -518,6 +518,7 @@ class Invoice(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True)
     sales_order = models.ForeignKey(SalesOrder, on_delete=models.CASCADE, related_name='invoices')
     invoice_date = models.DateField()
+
     due_date = models.DateField()
     STATUS_CHOICES = [
         ('unpaid', 'Unpaid'),
