@@ -9,8 +9,8 @@
 
 body {
   font-family: "Open Sans", sans-serif;
-  background: #f6f9ff;
-  color: #444444;
+  background: #fff6f6; /* Soft white with red tint */
+  color: #333333;
 }
 
 a {
@@ -23,14 +23,44 @@ a:hover {
   text-decoration: none;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: "Nunito", sans-serif;
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: #F40009;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
 }
+
+h1 {
+  border-bottom: 2px solid #F40009;
+  padding-bottom: 10px;
+  display: inline-block;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #F40009;
+  border-color: #D60000;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary:hover {
+  background-color: #D60000;
+  border-color: #B80000;
+}
+
+.btn-outline-primary {
+  color: #F40009;
+  border-color: #F40009;
+}
+
+.btn-outline-primary:hover {
+  background-color: #F40009;
+  color: white;
+}
+
+
 
 /*--------------------------------------------------------------
 # Main
@@ -62,31 +92,42 @@ h6 {
 }
 
 /*--------------------------------------------------------------
-# Back to top button
+# Coca-Cola Back to Top Button
 --------------------------------------------------------------*/
 .back-to-top {
   position: fixed;
   visibility: hidden;
   opacity: 0;
-  right: 15px;
-  bottom: 15px;
+  right: 20px;
+  bottom: 20px;
   z-index: 99999;
-  background: #4154f1;
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  transition: all 0.4s;
+  background: #F40009; /* Coca-Cola red */
+  width: 50px;
+  height: 50px;
+  border-radius: 50%; /* Circular shape */
+  transition: all 0.4s ease;
+  box-shadow: 0 2px 10px rgba(244, 0, 9, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
 }
 
 .back-to-top i {
   font-size: 24px;
-  color: #fff;
+  color: white;
   line-height: 0;
+  transition: transform 0.3s ease;
 }
 
 .back-to-top:hover {
-  background: #6776f4;
-  color: #fff;
+  background: #D60000; /* Darker Coca-Cola red */
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(244, 0, 9, 0.4);
+}
+
+.back-to-top:hover i {
+  transform: translateY(-2px);
 }
 
 .back-to-top.active {
@@ -94,6 +135,38 @@ h6 {
   opacity: 1;
 }
 
+/* Optional: Add Coca-Cola ribbon animation effect */
+.back-to-top::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 50%;
+  border: 2px solid #F40009;
+  animation: pulse 2s infinite;
+  opacity: 0;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+}
+
+.back-to-top.active:hover::after {
+  animation: pulse 2s infinite;
+}
 /*--------------------------------------------------------------
 # Override some default Bootstrap stylings
 --------------------------------------------------------------*/
@@ -370,15 +443,20 @@ h6 {
   font-family: "Nunito", sans-serif;
 }
 
-.header {
+header {
   transition: all 0.5s;
   z-index: 997;
-  height: 60px;
-  box-shadow: 0px 2px 20px rgba(1, 41, 112, 0.1);
-  background-color: #fff;
+  height: 70px; /* Slightly taller for prominence */
+  box-shadow: 0px 2px 20px rgba(244, 0, 9, 0.1); /* Subtle red-tinted shadow */
+  background-color: #fff; /* White background */
   padding-left: 20px;
-  /* Toggle Sidebar Button */
-  /* Search Bar */
+  color: #333; /* Dark text for contrast (or use #F40009 for red text) */
+  font-family: 'Arial', sans-serif; /* Clean font (or use 'TCCC Unity' if licensed) */
+}
+
+/* Hover effects for buttons/links (if needed) */
+.header-button:hover {
+  color: #F40009; /* Coca-Cola red on hover */
 }
 
 .header .toggle-sidebar-btn {
@@ -422,19 +500,20 @@ h6 {
 .header .search-form input {
   border: 0;
   font-size: 14px;
-  color: #012970;
-  border: 1px solid rgba(1, 41, 112, 0.2);
-  padding: 7px 38px 7px 8px;
-  border-radius: 3px;
+  color: #333; /* Dark gray for readability (instead of blue) */
+  border: 1px solid rgba(244, 0, 9, 0.3); /* Coca-Cola red border (subtle) */
+  padding: 7px 38px 7px 12px; /* Slightly more padding on the left */
+  border-radius: 20px; /* Rounded edges (like Coke's classic curves) */
   transition: 0.3s;
   width: 100%;
+  background-color: #FFF5F5; /* Light red/pink tint for soft contrast */
 }
 
 .header .search-form input:focus,
 .header .search-form input:hover {
   outline: none;
-  box-shadow: 0 0 10px 0 rgba(1, 41, 112, 0.15);
-  border: 1px solid rgba(1, 41, 112, 0.3);
+  box-shadow: 0 0 8px 0 rgba(244, 0, 9, 0.2); /* Red glow on focus */
+  border: 1px solid #F40009; /* Solid red border on interaction */
 }
 
 .header .search-form button {
@@ -442,11 +521,15 @@ h6 {
   padding: 0;
   margin-left: -30px;
   background: none;
+  cursor: pointer; /* Add pointer for better UX */
 }
 
 .header .search-form button i {
-  color: #012970;
+  color: #F40009; /* Coca-Cola red icon */
+  font-size: 16px; /* Slightly larger for visibility */
 }
+
+
 
 /*--------------------------------------------------------------
 # Header Nav
