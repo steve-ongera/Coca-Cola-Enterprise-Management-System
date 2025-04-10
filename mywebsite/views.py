@@ -217,3 +217,137 @@ def admin_dashboard_view(request):
     
     return render(request, 'dashboard/admin_dashboard.html', context)
 
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from datetime import timedelta
+from .models import Employee, Attendance, Task, Announcement, Leave
+from django.db.models import Count
+from .forms import *
+
+@login_required
+def employee_dashboard(request):
+    # Get the employee profile
+    employee = request.user.employee_profile
+    
+    # Attendance summary for the current month
+    today = timezone.now().date()
+    first_day = today.replace(day=1)
+    last_day = (first_day + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+    
+    attendance_records = Attendance.objects.filter(
+        employee=employee,
+        date__range=[first_day, last_day]
+    )
+    
+    attendance_summary = {
+        'present_days': attendance_records.filter(status='present').count(),
+        'absent_days': attendance_records.filter(status='absent').count(),
+        'late_days': attendance_records.filter(status='late').count(),
+        'leave_days': attendance_records.filter(status='on_leave').count(),
+        'working_days': (last_day - first_day).days + 1
+    }
+    
+    # Leave balance
+    leave_balance = {
+        'total_days': 21,  # Typically 21 days annual leave
+        'used_days': Leave.objects.filter(
+            employee=employee,
+            status='approved',
+            start_date__year=today.year
+        ).count(),
+        'remaining_days': 21 - Leave.objects.filter(
+            employee=employee,
+            status='approved',
+            start_date__year=today.year
+        ).count()
+    }
+    
+    # Tasks (today and overdue)
+    tasks = Task.objects.filter(
+        assigned_to=employee,
+        due_date__lte=today + timedelta(days=7)  # Show tasks due in next 7 days
+    ).order_by('due_date', 'priority')
+    
+    # Weekly schedule (simplified example)
+    schedule = [
+        {'day': 'Monday', 'shift_name': 'Morning', 'start_time': '08:00', 'end_time': '16:00', 'location': 'Production Line A'},
+        {'day': 'Tuesday', 'shift_name': 'Morning', 'start_time': '08:00', 'end_time': '16:00', 'location': 'Production Line A'},
+        {'day': 'Wednesday', 'shift_name': 'Afternoon', 'start_time': '12:00', 'end_time': '20:00', 'location': 'Packaging'},
+        # Add more days as needed
+    ]
+    
+    # Recent announcements
+    announcements = Announcement.objects.filter(
+        target_departments=employee.department
+    ).order_by('-created_at')[:3]
+    
+    context = {
+        'employee': employee,
+        'attendance_summary': attendance_summary,
+        'leave_balance': leave_balance,
+        'tasks': tasks,
+        'schedule': schedule,
+        'announcements': announcements,
+    }
+    
+    return render(request, 'employee_dashboard.html', context)
+
+@login_required
+def clock_in_out(request):
+    employee = request.user.employee_profile
+    today = timezone.now().date()
+    
+    # Check if already clocked in today
+    attendance, created = Attendance.objects.get_or_create(
+        employee=employee,
+        date=today,
+        defaults={'status': 'present'}
+    )
+    
+    if not created:
+        if not attendance.check_out_time:
+            # Clock out
+            attendance.check_out_time = timezone.now().time()
+            attendance.save()
+            messages.success(request, "Successfully clocked out")
+        else:
+            # Already clocked out
+            messages.warning(request, "You've already clocked out today")
+    else:
+        # Clocked in
+        messages.success(request, "Successfully clocked in")
+    
+    return redirect('employee_dashboard')
+
+@login_required
+def request_leave(request):
+    if request.method == 'POST':
+        form = LeaveRequestForm(request.POST)
+        if form.is_valid():
+            leave = form.save(commit=False)
+            leave.employee = request.user.employee_profile
+            leave.save()
+            messages.success(request, "Leave request submitted successfully")
+            return redirect('employee_dashboard')
+    else:
+        form = LeaveRequestForm()
+    
+    return render(request, 'request_leave.html', {'form': form})
+
+@login_required
+def submit_timesheet(request):
+    if request.method == 'POST':
+        form = TimesheetForm(request.POST)
+        if form.is_valid():
+            timesheet = form.save(commit=False)
+            timesheet.employee = request.user.employee_profile
+            timesheet.save()
+            messages.success(request, "Timesheet submitted successfully")
+            return redirect('employee_dashboard')
+    else:
+        form = TimesheetForm()
+    
+    return render(request, 'submit_timesheet.html', {'form': form})

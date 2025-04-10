@@ -184,6 +184,24 @@ class Attendance(models.Model):
     def __str__(self):
         return f"{self.employee} - {self.date} ({self.status})"
 
+class Task(models.Model):
+    assigned_to = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    due_date = models.DateField()
+    priority = models.CharField(max_length=10, choices=[
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low')
+    ], default='medium')
+    completed = models.BooleanField(default=False)
+
+
+class Timesheet(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    week_starting = models.DateField()
+    hours_worked = models.CharField(max_length=20)
+    tasks_completed = models.CharField(max_length=20)
 
 class Leave(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_requests')
