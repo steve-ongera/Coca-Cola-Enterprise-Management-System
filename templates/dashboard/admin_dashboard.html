@@ -123,24 +123,101 @@
           <!-- Department Distribution Chart -->
           <div class="col-12">
             <div class="card">
-              <div class="filter">
-                <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                  <li class="dropdown-header text-start">
-                    <h6>Filter</h6>
-                  </li>
-                  <li><a class="dropdown-item" href="#">This Year</a></li>
-                  <li><a class="dropdown-item" href="#">Last Year</a></li>
-                </ul>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title">Employee Distribution by Department</h5>
-                <div class="chart-container" style="position: relative; height:300px; width:100%">
-                  {{ dept_chart|safe }}
+                <div class="filter">
+                    <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                        <li class="dropdown-header text-start">
+                            <h6>Filter</h6>
+                        </li>
+                        <li><a class="dropdown-item filter-department active" href="#" data-filter="all">All Departments</a></li>
+                        <li><a class="dropdown-item filter-department" href="#" data-filter="large">Large Departments</a></li>
+                    </ul>
                 </div>
-              </div>
+                <div class="card-body">
+                    <h5 class="card-title">Employee Distribution by Department</h5>
+                    <div class="chart-container" style="position: relative; height:300px; width:100%">
+                        <canvas id="departmentChart"></canvas>
+                    </div>
+                </div>
             </div>
-          </div><!-- End Department Chart -->
+          </div>
+
+          <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                // Department Chart
+                const deptLabels = JSON.parse('{{ dept_labels|escapejs }}');
+                const deptData = JSON.parse('{{ dept_data|escapejs }}');
+                
+                const deptCtx = document.getElementById('departmentChart').getContext('2d');
+                const departmentChart = new Chart(deptCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: deptLabels,
+                        datasets: [{
+                            data: deptData,
+                            backgroundColor: [
+                                '#F40009', // Coca-Cola Red
+                                '#4CAF50', // Green
+                                '#2196F3', // Blue
+                                '#FFC107', // Yellow
+                                '#9C27B0', // Purple
+                                '#607D8B', // Gray
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${context.raw} employees`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            
+                // Filter functionality
+                document.querySelectorAll('.filter-department').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        document.querySelectorAll('.filter-department').forEach(el => {
+                            el.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        
+                        const filterType = this.getAttribute('data-filter');
+                        let filteredLabels = deptLabels;
+                        let filteredData = deptData;
+                        
+                        if (filterType === 'large') {
+                            // Show only departments with more than 10 employees
+                            filteredLabels = [];
+                            filteredData = [];
+                            for (let i = 0; i < deptData.length; i++) {
+                                if (deptData[i] > 10) {
+                                    filteredLabels.push(deptLabels[i]);
+                                    filteredData.push(deptData[i]);
+                                }
+                            }
+                        }
+                        
+                        departmentChart.data.labels = filteredLabels;
+                        departmentChart.data.datasets[0].data = filteredData;
+                        departmentChart.update();
+                    });
+                });
+            });
+            </script>
+        <!-- End Department Chart -->
 
           <!-- Recent Sales Orders -->
           <div class="col-12">
@@ -233,33 +310,190 @@
         <!-- Attendance Chart -->
         <div class="card">
           <div class="filter">
-            <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-              <li class="dropdown-header text-start">
-                <h6>Filter</h6>
-              </li>
-              <li><a class="dropdown-item" href="#">This Week</a></li>
-              <li><a class="dropdown-item" href="#">This Month</a></li>
-              <li><a class="dropdown-item" href="#">This Year</a></li>
-            </ul>
+              <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                  <li class="dropdown-header text-start">
+                      <h6>Filter</h6>
+                  </li>
+                  <li><a class="dropdown-item filter-attendance active" href="#" data-period="30">Last 30 Days</a></li>
+                  <li><a class="dropdown-item filter-attendance" href="#" data-period="7">Last 7 Days</a></li>
+              </ul>
           </div>
           <div class="card-body">
-            <h5 class="card-title">Attendance Status <span>| Last 30 Days</span></h5>
-            <div class="chart-container" style="position: relative; height:300px; width:100%">
-              {{ attendance_chart|safe }}
-            </div>
+              <h5 class="card-title">Attendance Status <span>| Last 30 Days</span></h5>
+              <div class="chart-container" style="position: relative; height:300px; width:100%">
+                  <canvas id="attendanceChart"></canvas>
+              </div>
           </div>
-        </div><!-- End Attendance Chart -->
+      </div>
+      
+      <script>
+      document.addEventListener("DOMContentLoaded", () => {
+          // Attendance Chart
+          const attLabels = JSON.parse('{{ attendance_labels|escapejs }}');
+          const attData = JSON.parse('{{ attendance_data|escapejs }}');
+          
+          const attCtx = document.getElementById('attendanceChart').getContext('2d');
+          const attendanceChart = new Chart(attCtx, {
+              type: 'bar',
+              data: {
+                  labels: attLabels,
+                  datasets: [{
+                      label: 'Number of Days',
+                      data: attData,
+                      backgroundColor: [
+                          '#4CAF50', // Present - Green
+                          '#F40009', // Absent - Red
+                          '#FFC107', // Half Day - Yellow
+                      ],
+                      borderColor: [
+                          '#388E3C',
+                          '#D32F2F',
+                          '#FFA000',
+                      ],
+                      borderWidth: 1
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                      y: {
+                          beginAtZero: true,
+                          title: {
+                              display: true,
+                              text: 'Number of Records'
+                          }
+                      },
+                      x: {
+                          title: {
+                              display: true,
+                              text: 'Attendance Status'
+                          }
+                      }
+                  },
+                  plugins: {
+                      legend: {
+                          display: false
+                      }
+                  }
+              }
+          });
+      
+          // Filter functionality would require AJAX calls to get different time periods
+          document.querySelectorAll('.filter-attendance').forEach(item => {
+              item.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  
+                  document.querySelectorAll('.filter-attendance').forEach(el => {
+                      el.classList.remove('active');
+                  });
+                  this.classList.add('active');
+                  
+                  // In a real implementation, you would make an AJAX call here
+                  // to get data for the selected period
+                  const period = this.getAttribute('data-period');
+                  document.querySelector('.card-title span').textContent = `| Last ${period} Days`;
+                  
+                  // For demo purposes, we'll just show a message
+                  console.log(`Would fetch data for last ${period} days`);
+              });
+          });
+      });
+      </script>
+        <!-- End Attendance Chart -->
 
         <!-- Sales Trend Chart -->
         <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Sales Trend <span>| Last 7 Days</span></h5>
-            <div class="chart-container" style="position: relative; height:300px; width:100%">
-              {{ sales_trend_chart|safe }}
-            </div>
+          <div class="filter">
+              <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                  <li class="dropdown-header text-start">
+                      <h6>Filter</h6>
+                  </li>
+                  <li><a class="dropdown-item filter-sales active" href="#" data-period="7">Last 7 Days</a></li>
+                  <li><a class="dropdown-item filter-sales" href="#" data-period="30">Last 30 Days</a></li>
+              </ul>
           </div>
-        </div><!-- End Sales Trend Chart -->
+          <div class="card-body">
+              <h5 class="card-title">Sales Trend <span>| Last 7 Days</span></h5>
+              <div class="chart-container" style="position: relative; height:300px; width:100%">
+                  <canvas id="salesTrendChart"></canvas>
+              </div>
+          </div>
+      </div>
+      
+      <script>
+      document.addEventListener("DOMContentLoaded", () => {
+          // Sales Trend Chart
+          const salesDates = JSON.parse('{{ sales_dates|escapejs }}');
+          const salesAmounts = JSON.parse('{{ sales_amounts|escapejs }}');
+          
+          const salesCtx = document.getElementById('salesTrendChart').getContext('2d');
+          const salesTrendChart = new Chart(salesCtx, {
+              type: 'line',
+              data: {
+                  labels: salesDates,
+                  datasets: [{
+                      label: 'Daily Sales ($)',
+                      data: salesAmounts,
+                      backgroundColor: 'rgba(244, 0, 9, 0.2)', // Coca-Cola Red with opacity
+                      borderColor: '#F40009', // Coca-Cola Red
+                      borderWidth: 2,
+                      tension: 0.1,
+                      fill: true
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                      y: {
+                          beginAtZero: false,
+                          title: {
+                              display: true,
+                              text: 'Sales Amount ($)'
+                          }
+                      },
+                      x: {
+                          title: {
+                              display: true,
+                              text: 'Date'
+                          }
+                      }
+                  },
+                  plugins: {
+                      tooltip: {
+                          callbacks: {
+                              label: function(context) {
+                                  return `Sales: $${context.raw.toFixed(2)}`;
+                              }
+                          }
+                      }
+                  }
+              }
+          });
+      
+          // Filter functionality would require AJAX calls to get different time periods
+          document.querySelectorAll('.filter-sales').forEach(item => {
+              item.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  
+                  document.querySelectorAll('.filter-sales').forEach(el => {
+                      el.classList.remove('active');
+                  });
+                  this.classList.add('active');
+                  
+                  const period = this.getAttribute('data-period');
+                  document.querySelector('.card-title span').textContent = `| Last ${period} Days`;
+                  
+                  // In a real implementation, you would make an AJAX call here
+                  console.log(`Would fetch sales data for last ${period} days`);
+              });
+          });
+      });
+      </script>
+        <!-- End Sales Trend Chart -->
 
         <!-- Recent Deliveries -->
         <div class="card">

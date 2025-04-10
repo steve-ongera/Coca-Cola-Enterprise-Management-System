@@ -137,13 +137,15 @@ def employee_dashboard_view(request):
     
 
 
-
 from django.shortcuts import render
-from django.db.models import Count, Sum, Avg, Q
+from django.db.models import Count, Sum, Avg
 from django.utils import timezone
 from datetime import timedelta
-import plotly.express as px
-import pandas as pd
+from .models import (
+    Employee, Department, Attendance, 
+    SalesOrder, PurchaseOrder, Payroll
+)
+import json
 
 def admin_dashboard_view(request):
     # Employee Metrics
@@ -151,15 +153,30 @@ def admin_dashboard_view(request):
     active_employees = Employee.objects.filter(employment_status='active').count()
     on_leave = Employee.objects.filter(employment_status='on_leave').count()
     
-    # Department distribution
-    dept_distribution = Department.objects.annotate(
-        employee_count=Count('employees'))
+    # Department distribution data for Chart.js
+    departments = Department.objects.annotate(employee_count=Count('employees'))
+    dept_labels = [dept.name for dept in departments]
+    dept_data = [dept.employee_count for dept in departments]
     
-    # Attendance metrics (last 30 days)
+    # Attendance data (last 30 days)
     thirty_days_ago = timezone.now().date() - timedelta(days=30)
-    attendance_data = Attendance.objects.filter(
+    attendance_statuses = Attendance.objects.filter(
         date__gte=thirty_days_ago
     ).values('status').annotate(count=Count('id'))
+    
+    attendance_labels = [status['status'].title() for status in attendance_statuses]
+    attendance_data = [status['count'] for status in attendance_statuses]
+    
+    # Sales trend data (last 7 days)
+    seven_days_ago = timezone.now().date() - timedelta(days=7)
+    sales_trend = SalesOrder.objects.filter(
+        order_date__gte=seven_days_ago
+    ).values('order_date').annotate(
+        daily_sales=Sum('total_amount')
+    ).order_by('order_date')
+    
+    sales_dates = [order['order_date'].strftime("%Y-%m-%d") for order in sales_trend]
+    sales_amounts = [float(order['daily_sales']) for order in sales_trend]
     
     # Payroll summary
     payroll_summary = Payroll.objects.filter(
@@ -174,67 +191,29 @@ def admin_dashboard_view(request):
         quantity__lte=models.F('reorder_level')
     ).count()
     total_products = Product.objects.count()
-    total_variants = ProductVariant.objects.count()
-    
-    # Sales metrics (last 30 days)
-    sales_data = SalesOrder.objects.filter(
-        order_date__gte=thirty_days_ago
-    ).aggregate(
-        total_sales=Sum('total_amount'),
-        order_count=Count('id')
-    )
     
     # Recent activities
     recent_orders = SalesOrder.objects.order_by('-order_date')[:5]
     recent_purchases = PurchaseOrder.objects.order_by('-order_date')[:5]
     recent_deliveries = Delivery.objects.order_by('-scheduled_date')[:5]
     
-    # Create charts
     context = {
         'total_employees': total_employees,
         'active_employees': active_employees,
         'on_leave': on_leave,
-        'dept_distribution': dept_distribution,
-        'attendance_data': attendance_data,
+        'dept_labels': json.dumps(dept_labels),
+        'dept_data': json.dumps(dept_data),
+        'attendance_labels': json.dumps(attendance_labels),
+        'attendance_data': json.dumps(attendance_data),
+        'sales_dates': json.dumps(sales_dates),
+        'sales_amounts': json.dumps(sales_amounts),
         'payroll_summary': payroll_summary,
         'low_stock_items': low_stock_items,
         'total_products': total_products,
-        'total_variants': total_variants,
-        'sales_data': sales_data,
         'recent_orders': recent_orders,
         'recent_purchases': recent_purchases,
         'recent_deliveries': recent_deliveries,
     }
     
-    # Generate department distribution chart
-    dept_df = pd.DataFrame(list(dept_distribution.values('name', 'employee_count')))
-    if not dept_df.empty:
-        dept_fig = px.pie(dept_df, values='employee_count', names='name', 
-                          title='Employee Distribution by Department')
-        context['dept_chart'] = dept_fig.to_html()
-    
-    # Generate attendance chart
-    if attendance_data:
-        att_df = pd.DataFrame(list(attendance_data))
-        if not att_df.empty:
-            att_fig = px.bar(att_df, x='status', y='count', 
-                            title='Attendance Status (Last 30 Days)')
-            context['attendance_chart'] = att_fig.to_html()
-    
-    # Generate sales trend chart (last 7 days)
-    seven_days_ago = timezone.now().date() - timedelta(days=7)
-    sales_trend = SalesOrder.objects.filter(
-        order_date__gte=seven_days_ago
-    ).values('order_date').annotate(
-        daily_sales=Sum('total_amount'),
-        order_count=Count('id')
-    ).order_by('order_date')
-    
-    if sales_trend:
-        trend_df = pd.DataFrame(list(sales_trend))
-        if not trend_df.empty:
-            trend_fig = px.line(trend_df, x='order_date', y='daily_sales',
-                               title='Daily Sales Trend (Last 7 Days)')
-            context['sales_trend_chart'] = trend_fig.to_html()
-    
     return render(request, 'dashboard/admin_dashboard.html', context)
+
