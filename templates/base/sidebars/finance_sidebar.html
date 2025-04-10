@@ -1,282 +1,141 @@
 {% load static %}
-<!-- ======= Sidebar ======= -->
-<aside id="sidebar" class="sidebar">
+<!-- ======= Coca-Cola Finance Sidebar ======= -->
+<aside id="sidebar" class="sidebar" style="border-right: 3px solid #f40009;">
+    <div class="sidebar-brand text-center py-3">
+        <img src="{% static 'images/coca-cola-logo-small.png' %}" alt="Coca-Cola" style="height: 40px;">
+        <h6 class="mt-2 text-uppercase" style="color: #f40009; font-weight: 600;">Finance Portal</h6>
+        <div class="badge bg-white text-danger mt-1">v3.1.2</div>
+    </div>
 
     <ul class="sidebar-nav" id="sidebar-nav">
 
-      <li class="nav-item">
-        <a class="nav-link " href="#">
-          <i class="bi bi-grid"></i>
-          <span>Dashboard</span>
-        </a>
-      </li><!-- End Dashboard Nav -->
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#staff-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-people"></i><span>Staff</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="staff-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          
-          <!-- Doctors Sub-List -->
-          <li>
-            <a class="nav-link collapsed" data-bs-target="#doctors-subnav" data-bs-toggle="collapse" href="#">
-              <i class="bi bi-person-badge"></i><span>Teachers</span><i class="bi bi-chevron-down ms-auto"></i>
+        <!-- Financial Dashboard -->
+        <li class="nav-item">
+            <a class="nav-link" href="#" style="border-left: 3px solid #f40009;">
+                <i class="bi bi-graph-up-arrow" style="color: #f40009;"></i>
+                <span>Financial Dashboard</span>
             </a>
-            <ul id="doctors-subnav" class="nav-content collapse">
-              <li>
-                <a href="#">
-                  <i class="bi bi-circle"></i><span>Teachers List</span>
-                </a>
-              </li>
-              <li>
-                <a href="#">
-                  <i class="bi bi-circle"></i><span>Add Teachers</span>
-                </a>
-              </li>
+        </li>
+
+        <!-- Accounting -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#accounting-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-journal-bookmark" style="color: #f40009;"></i>
+                <span>Accounting</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul id="accounting-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-cash-stack"></i> Accounts Payable</a></li>
+                <li><a href="#"><i class="bi bi-receipt"></i> Accounts Receivable</a></li>
+                <li><a href="#"><i class="bi bi-journal-text"></i> General Ledger</a></li>
+                <li><a href="#"><i class="bi bi-arrow-repeat"></i> Reconciliations</a></li>
+                <li><a href="#"><i class="bi bi-file-earmark-spreadsheet"></i> Financial Statements</a></li>
             </ul>
-          </li>
-          
-          <!-- Interns Sub-List -->
-          <li>
-            <a class="nav-link collapsed" data-bs-target="#interns-subnav" data-bs-toggle="collapse" href="#">
-              <i class="bi bi-person-lines-fill"></i><span>Staff</span><i class="bi bi-chevron-down ms-auto"></i>
+        </li>
+
+        <!-- Treasury -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#treasury-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-safe" style="color: #f40009;"></i>
+                <span>Treasury</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-            <ul id="interns-subnav" class="nav-content collapse">
-              <li>
-                <a href="#">
-                  <i class="bi bi-circle"></i><span>Staff List</span>
-                </a>
-              </li>
-              <li>
-                <a href="#">
-                  <i class="bi bi-circle"></i><span>Add Staff</span>
-                </a>
-              </li>
+            <ul id="treasury-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-bank"></i> Cash Management</a></li>
+                <li><a href="#"><i class="bi bi-currency-exchange"></i> Forex Transactions</a></li>
+                <li><a href="#"><i class="bi bi-piggy-bank"></i> Investments</a></li>
+                <li><a href="#"><i class="bi bi-lightning-charge"></i> Quick Payments</a></li>
             </ul>
-          </li>
-          <!--staffs -->
+        </li>
 
-          <li>
-            <a class="nav-link collapsed" data-bs-target="#staff-subnav" data-bs-toggle="collapse" href="#">
-              <i class="bi bi-person-x"></i><span>Non Staff</span><i class="bi bi-chevron-down ms-auto"></i>
+        <!-- Budgeting -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#budget-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-pie-chart" style="color: #f40009;"></i>
+                <span>Budgeting</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-            <ul id="staff-subnav" class="nav-content collapse">
-              <li>
-                <a href="#">
-                  <i class="bi bi-circle"></i><span>Non-Staff List</span>
-                </a>
-              </li>
-              <li>
-                <a href="#">
-                  <i class="bi bi-circle"></i><span>Add Non-staff</span>
-                </a>
-              </li>
+            <ul id="budget-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-file-earmark-plus"></i> Budget Creation</a></li>
+                <li><a href="#"><i class="bi bi-graph-up"></i> Budget vs Actual</a></li>
+                <li><a href="#"><i class="bi bi-funnel"></i> Cost Center Analysis</a></li>
+                <li><a href="#"><i class="bi bi-clipboard2-pulse"></i> Forecast Adjustments</a></li>
             </ul>
-          </li>
-          
-          <!-- Non-Staff Sub-List -->
-          <li>
-            <a class="nav-link collapsed" data-bs-target="#nonstaff-subnav" data-bs-toggle="collapse" href="#">
-              <i class="bi bi-person-x"></i><span>Intern</span><i class="bi bi-chevron-down ms-auto"></i>
+        </li>
+
+        <!-- Tax & Compliance -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#tax-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-file-earmark-check" style="color: #f40009;"></i>
+                <span>Tax & Compliance</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-            <ul id="nonstaff-subnav" class="nav-content collapse">
-              <li>
-                <a href="#">
-                  <i class="bi bi-circle"></i><span>Interns</span>
-                </a>
-              </li>
-              <li>
-                <a href="#">
-                  <i class="bi bi-circle"></i><span>Add Intern</span>
-                </a>
-              </li>
+            <ul id="tax-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-file-earmark-text"></i> Tax Filings</a></li>
+                <li><a href="#"><i class="bi bi-shield-check"></i> SOX Controls</a></li>
+                <li><a href="#"><i class="bi bi-globe2"></i> Regional Compliance</a></li>
+                <li><a href="#"><i class="bi bi-archive"></i> Audit Trails</a></li>
             </ul>
-          </li>
-        </ul>
-      </li><!-- End Staff Nav -->
-      
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#forms-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-journal-text"></i><span>Student</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="forms-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Student Records</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Search Student</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Add Student</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Forms Nav -->
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#tables-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-layout-text-window-reverse"></i><span>Academic Management</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="tables-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Streams</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Timetable</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Resources</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Assignments</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Tables Nav -->
+        <!-- Coca-Cola Financial Tools -->
+        <li class="nav-heading" style="color: #f40009;">Coca-Cola Finance</li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#charts-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-bar-chart"></i><span>Terms</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="charts-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Terms List</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Add Term</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Charts Nav -->
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#icons-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-gem"></i><span>Exams Records</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="icons-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Student Ranking</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Form Ranking</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>stream performance</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>subject performance</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>CAT Records</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Add Marks</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>Reports</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Icons Nav -->
-
-      <li class="nav-heading">Pages</li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-person"></i>
-          <span>Profile</span>
-        </a>
-      </li><!-- End Profile Page Nav -->
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#tb-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-people"></i><span>Analysis Section</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="tb-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li class="nav-item">
+        <li class="nav-item">
             <a class="nav-link collapsed" href="#">
-              <i class="bi bi-card-list"></i>
-              <span>Population Graphs</span>
+                <i class="bi bi-coin" style="color: #f40009;"></i>
+                <span>Global Treasury</span>
             </a>
-          </li>
-          <li class="nav-item">
+        </li>
+
+        <li class="nav-item">
             <a class="nav-link collapsed" href="#">
-              <i class="bi bi-card-list"></i>
-              <span>class-distribution</span>
+                <i class="bi bi-building-check" style="color: #f40009;"></i>
+                <span>Bottler Accounting</span>
             </a>
-          </li>
-          <li class="nav-item">
+        </li>
+
+        <li class="nav-item">
             <a class="nav-link collapsed" href="#">
-              <i class="bi bi-card-list"></i>
-              <span>student results</span>
+                <i class="bi bi-tags" style="color: #f40009;"></i>
+                <span>Trade Promotions</span>
             </a>
-          </li>
-        </ul>
-      </li><!-- End Staff Nav -->
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-card-list"></i>
-          <span>Search Student</span>
-        </a>
-      </li>
+        <!-- Reports -->
+        <li class="nav-heading">Advanced</li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-card-list"></i>
-          <span>Register</span>
-        </a>
-      </li>
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <span>Financial Modeling</span>
+            </a>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-box-arrow-in-right"></i>
-          <span>Login</span>
-        </a>
-      </li>
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-cpu"></i>
+                <span>ERP Integration</span>
+            </a>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-dash-circle"></i>
-          <span>System Settings</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-file-earmark"></i>
-          <span>Help & Support</span>
-        </a>
-      </li><!-- End Blank Page Nav -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </a>
+        </li>
 
     </ul>
 
-</aside><!-- End Sidebar-->
+    <!-- Finance Quick Actions -->
+    <div class="sidebar-footer p-3">
+        <button class="btn btn-sm btn-danger w-100 mb-2">
+            <i class="bi bi-cash-coin"></i> Approve Payments
+            <span class="badge bg-white text-danger ms-2">12</span>
+        </button>
+        <button class="btn btn-sm btn-outline-danger w-100">
+            <i class="bi bi-file-earmark-excel"></i> Export Reports
+        </button>
+    </div>
+</aside>

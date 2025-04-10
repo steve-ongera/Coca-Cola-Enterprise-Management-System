@@ -1,0 +1,198 @@
+{% load static %}
+<!-- ======= Coca-Cola Security Gate Sidebar ======= -->
+<aside id="sidebar" class="sidebar" style="border-right: 3px solid #f40009; background-color: #f8f9fa;">
+    <div class="sidebar-brand text-center py-3 bg-white">
+        <img src="{% static 'images/coca-cola-logo-small.png' %}" alt="Coca-Cola Security" style="height: 40px;">
+        <h6 class="mt-2 text-uppercase" style="color: #f40009; font-weight: 600;">GATE SECURITY PORTAL</h6>
+    </div>
+
+    <ul class="sidebar-nav" id="sidebar-nav">
+
+        <!-- Gate Dashboard -->
+        <li class="nav-item">
+            <a class="nav-link" href="#" style="border-left: 3px solid #f40009;">
+                <i class="bi bi-shield-lock" style="color: #f40009;"></i>
+                <span>Gate Control Dashboard</span>
+            </a>
+        </li>
+
+        <!-- Visitor Management -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#visitor-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-person-badge" style="color: #f40009;"></i>
+                <span>Visitor Management</span>
+                <span class="badge bg-danger float-end">5</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul id="visitor-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="#">
+                        <i class="bi bi-person-plus"></i> New Visitor Check-In
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="bi bi-person-x"></i> Visitor Check-Out
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="bi bi-list-ul"></i> Active Visitors
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="bi bi-card-checklist"></i> Scheduled Appointments
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="bi bi-qr-code"></i> Generate Visitor Pass
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Employee Access -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#employee-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-person-check" style="color: #f40009;"></i>
+                <span>Employee Access</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul id="employee-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="#">
+                        <i class="bi bi-clock-history"></i> Shift Change Log
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="bi bi-card-text"></i> ID Badge Lookup
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="bi bi-exclamation-triangle"></i> Access Violations
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Vehicle Tracking -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#vehicle-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-truck" style="color: #f40009;"></i>
+                <span>Vehicle Management</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul id="vehicle-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="#">
+                        <i class="bi bi-truck-front"></i> Delivery Logs
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="bi bi-clipboard-data"></i> Vehicle Inspection
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="bi bi-database"></i> Registered Vehicles
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Incident Reporting -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#incident-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-exclamation-octagon" style="color: #f40009;"></i>
+                <span>Incident Management</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul id="incident-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="#">
+                        <i class="bi bi-plus-circle"></i> New Incident Report
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="bi bi-list-check"></i> Open Incidents
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="bi bi-archive"></i> Incident Archive
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Coca-Cola Security -->
+        <li class="nav-heading" style="color: #f40009;">Coca-Cola Security</li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-camera-video" style="color: #f40009;"></i>
+                <span>Camera Feeds</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-door-closed" style="color: #f40009;"></i>
+                <span>Gate Controls</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-shield-check" style="color: #f40009;"></i>
+                <span>Emergency Protocols</span>
+            </a>
+        </li>
+
+        <!-- Quick Tools -->
+        <li class="nav-heading">Quick Tools</li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-printer"></i>
+                <span>Print Temporary Badge</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-megaphone"></i>
+                <span>PA System</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </a>
+        </li>
+
+    </ul>
+
+    <!-- Emergency Actions -->
+    <div class="sidebar-footer p-3">
+        <button class="btn btn-sm btn-danger w-100 mb-2">
+            <i class="bi bi-alarm"></i> Emergency Lockdown
+        </button>
+        <div class="btn-group w-100">
+            <button class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-people"></i> Call Supervisor
+            </button>
+            <button class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-phone"></i> 911
+            </button>
+        </div>
+    </div>
+</aside>

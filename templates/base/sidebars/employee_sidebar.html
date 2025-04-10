@@ -1,168 +1,125 @@
 {% load static %}
 <!-- ======= Coca-Cola Employee Sidebar ======= -->
 <aside id="sidebar" class="sidebar">
+    
 
     <ul class="sidebar-nav" id="sidebar-nav">
 
-      <li class="nav-item">
-        <a class="nav-link" href="#">
-          <i class="bi bi-speedometer2"></i>
-          <span>Employee Dashboard</span>
-        </a>
-      </li><!-- End Dashboard Nav -->
+        <!-- Employee Dashboard -->
+        <li class="nav-item">
+            <a class="nav-link" href="#" style="border-left: 3px solid #f40009;">
+                <i class="bi bi-speedometer2" style="color: #f40009;"></i>
+                <span>My Dashboard</span>
+            </a>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#operations-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-gear"></i><span>Daily Operations</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="operations-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-clipboard-check"></i><span>Task Management</span>
+        <!-- Daily Work -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#work-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-cup-straw" style="color: #f40009;"></i>
+                <span>Production Work</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-clock-history"></i><span>Time Tracking</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-box-seam"></i><span>Inventory Check</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-check-circle"></i><span>Daily Reports</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Operations Nav -->
-      
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#production-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-cup-straw"></i><span>Production</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="production-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-clipboard-data"></i><span>Quality Control</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-graph-up"></i><span>Performance Metrics</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-lightning-charge"></i><span>Equipment Status</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Production Nav -->
+            <ul id="work-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-clipboard-check"></i> Daily Tasks</a></li>
+                <li><a href="#"><i class="bi bi-clipboard-data"></i> Quality Checks</a></li>
+                <li><a href="#"><i class="bi bi-lightning-charge"></i> Equipment Status</a></li>
+                <li><a href="#"><i class="bi bi-box-seam"></i> Material Requests</a></li>
+            </ul>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#hr-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-person-lines-fill"></i><span>HR Services</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="hr-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-file-earmark-text"></i><span>Payroll</span>
+        <!-- Time Management -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#time-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-clock" style="color: #f40009;"></i>
+                <span>Time Management</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-calendar-check"></i><span>Leave Requests</span>
+            <ul id="time-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-qr-code-scan"></i> Clock In/Out</a></li>
+                <li><a href="#"><i class="bi bi-calendar-week"></i> Schedule</a></li>
+                <li><a href="#"><i class="bi bi-hourglass-split"></i> Overtime Requests</a></li>
+            </ul>
+        </li>
+
+        <!-- HR Services -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#hr-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-person-vcard" style="color: #f40009;"></i>
+                <span>My HR</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-award"></i><span>Benefits</span>
+            <ul id="hr-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-file-earmark-text"></i> Pay Slips</a></li>
+                <li><a href="#"><i class="bi bi-airplane"></i> Leave Requests</a></li>
+                <li><a href="#"><i class="bi bi-award"></i> Benefits</a></li>
+                <li><a href="#"><i class="bi bi-graph-up"></i> Performance</a></li>
+            </ul>
+        </li>
+
+        <!-- Training -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#training-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-journal-bookmark" style="color: #f40009;"></i>
+                <span>Training</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-        </ul>
-      </li><!-- End HR Services Nav -->
+            <ul id="training-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-film"></i> Video Courses</a></li>
+                <li><a href="#"><i class="bi bi-file-earmark-pdf"></i> SOP Manuals</a></li>
+                <li><a href="#"><i class="bi bi-shield-check"></i> Safety Training</a></li>
+            </ul>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#attendance-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-person-check"></i><span>Attendance</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="attendance-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-qr-code-scan"></i><span>Clock In/Out</span>
+        <!-- Coca-Cola Life -->
+        <li class="nav-heading" style="color: #f40009;">Coca-Cola Life</li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-trophy" style="color: #f40009;"></i>
+                <span>Recognition</span>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-calendar-week"></i><span>Schedule</span>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-chat-square-heart" style="color: #f40009;"></i>
+                <span>Employee Forum</span>
             </a>
-          </li>
-        </ul>
-      </li><!-- End Attendance Nav -->
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#resources-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-journal-bookmark"></i><span>Resources</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="resources-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-file-earmark-pdf"></i><span>Manuals</span>
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-gift" style="color: #f40009;"></i>
+                <span>Perks & Discounts</span>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-film"></i><span>Training Videos</span>
+        </li>
+
+        <!-- Personal -->
+        <li class="nav-heading">Personal</li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-person-circle"></i>
+                <span>My Profile</span>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-headset"></i><span>Safety Protocols</span>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-gear"></i>
+                <span>Settings</span>
             </a>
-          </li>
-        </ul>
-      </li><!-- End Resources Nav -->
+        </li>
 
-      <li class="nav-heading">Employee Services</li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-person-circle"></i>
-          <span>My Profile</span>
-        </a>
-      </li><!-- End Profile Nav -->
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-megaphone"></i>
-          <span>Feedback</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-question-circle"></i>
-          <span>Help Desk</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-gear"></i>
-          <span>Settings</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-box-arrow-right"></i>
-          <span>Logout</span>
-        </a>
-      </li>
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </a>
+        </li>
 
     </ul>
 
-</aside><!-- End Sidebar-->
+    
+</aside>

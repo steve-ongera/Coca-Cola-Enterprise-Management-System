@@ -1,161 +1,157 @@
 {% load static %}
 <!-- ======= Coca-Cola Admin Sidebar ======= -->
 <aside id="sidebar" class="sidebar">
-
     <ul class="sidebar-nav" id="sidebar-nav">
 
-      <li class="nav-item">
-        <a class="nav-link" href="#">
-          <i class="bi bi-grid"></i>
-          <span>Executive Dashboard</span>
-        </a>
-      </li><!-- End Dashboard Nav -->
+        <!-- Dashboard -->
+        <li class="nav-item">
+            <a class="nav-link" href="#">
+                <i class="bi bi-speedometer2"></i>
+                <span>Executive Dashboard</span>
+            </a>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#employees-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-people"></i><span>Employee Management</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="employees-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-person-lines-fill"></i><span>Employee Directory</span>
+        <!-- Employee Management -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#hr-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-people-fill"></i>
+                <span>HR & Employees</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-building"></i><span>Department Structure</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-shield-lock"></i><span>Access Control</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Employee Management Nav -->
-      
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#operations-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-gear"></i><span>Operations</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="operations-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-truck"></i><span>Supply Chain</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-shop"></i><span>Retail Management</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-box-seam"></i><span>Inventory</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Operations Nav -->
+            <ul id="hr-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-person-vcard"></i> Employee Records</a></li>
+                <li><a href="#"><i class="bi bi-calendar-check"></i> Attendance</a></li>
+                <li><a href="#"><i class="bi bi-airplane"></i> Leave Management</a></li>
+                <li><a href="#"><i class="bi bi-cash-coin"></i> Payroll</a></li>
+                <li><a href="#"><i class="bi bi-award"></i> Performance Reviews</a></li>
+                <li><a href="#"><i class="bi bi-building-gear"></i> Departments</a></li>
+            </ul>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#marketing-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-megaphone"></i><span>Marketing</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="marketing-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-graph-up"></i><span>Campaigns</span>
+        <!-- Product Management -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#products-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-cup-straw"></i>
+                <span>Products</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-people"></i><span>Consumer Insights</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-globe"></i><span>Brand Management</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Marketing Nav -->
+            <ul id="products-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-tags"></i> Product Catalog</a></li>
+                <li><a href="#"><i class="bi bi-box-seam"></i> Variants (Sizes/Flavors)</a></li>
+                <li><a href="#"><i class="bi bi-flower1"></i> Ingredients</a></li>
+                <li><a href="#"><i class="bi bi-clipboard2-check"></i> Quality Control</a></li>
+                <li><a href="#"><i class="bi bi-diagram-3"></i> Categories</a></li>
+            </ul>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#finance-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-cash-stack"></i><span>Finance</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="finance-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-wallet2"></i><span>Budgeting</span>
+        <!-- Inventory & Supply Chain -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#inventory-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-boxes"></i>
+                <span>Inventory</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-graph-up-arrow"></i><span>Financial Reports</span>
+            <ul id="inventory-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-house-gear"></i> Warehouses</a></li>
+                <li><a href="#"><i class="bi bi-arrow-left-right"></i> Stock Movements</a></li>
+                <li><a href="#"><i class="bi bi-card-checklist"></i> Purchase Orders</a></li>
+                <li><a href="#"><i class="bi bi-truck"></i> Suppliers</a></li>
+                <li><a href="#"><i class="bi bi-exclamation-triangle"></i> Low Stock Alerts</a></li>
+            </ul>
+        </li>
+
+        <!-- Sales & Distribution -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#sales-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Sales</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-currency-dollar"></i><span>Expense Management</span>
+            <ul id="sales-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-cart-check"></i> Orders</a></li>
+                <li><a href="#"><i class="bi bi-building"></i> Customers</a></li>
+                <li><a href="#"><i class="bi bi-receipt"></i> Invoices</a></li>
+                <li><a href="#"><i class="bi bi-truck"></i> Deliveries</a></li>
+                <li><a href="#"><i class="bi bi-map"></i> Delivery Routes</a></li>
+            </ul>
+        </li>
+
+        <!-- Production -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#production-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-factory"></i>
+                <span>Production</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-        </ul>
-      </li><!-- End Finance Nav -->
+            <ul id="production-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-building-gear"></i> Facilities</a></li>
+                <li><a href="#"><i class="bi bi-cpu"></i> Production Lines</a></li>
+                <li><a href="#"><i class="bi bi-collection"></i> Batches</a></li>
+                <li><a href="#"><i class="bi bi-tools"></i> Maintenance</a></li>
+                <li><a href="#"><i class="bi bi-clock-history"></i> Downtime Tracking</a></li>
+            </ul>
+        </li>
 
-      <li class="nav-heading">System Administration</li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-person"></i>
-          <span>Admin Profile</span>
-        </a>
-      </li><!-- End Profile Page Nav -->
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#analytics-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-graph-up"></i><span>Business Analytics</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="analytics-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-bar-chart"></i><span>Sales Performance</span>
+        <!-- Finance -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#finance-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-cash-stack"></i>
+                <span>Finance</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-map"></i><span>Market Analysis</span>
+            <ul id="finance-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-journal-bookmark"></i> Transactions</a></li>
+                <li><a href="#"><i class="bi bi-piggy-bank"></i> Accounts</a></li>
+                <li><a href="#"><i class="bi bi-file-earmark-bar-graph"></i> Budgets</a></li>
+                <li><a href="#"><i class="bi bi-receipt-cutoff"></i> Tax Records</a></li>
+            </ul>
+        </li>
+
+        <!-- Marketing -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#marketing-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-megaphone"></i>
+                <span>Marketing</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-people"></i><span>Employee Productivity</span>
+            <ul id="marketing-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li><a href="#"><i class="bi bi-collection-play"></i> Campaigns</a></li>
+                <li><a href="#"><i class="bi bi-tag"></i> Promo Codes</a></li>
+                <li><a href="#"><i class="bi bi-graph-up"></i> Campaign Analytics</a></li>
+                <li><a href="#"><i class="bi bi-hearts"></i> Loyalty Programs</a></li>
+            </ul>
+        </li>
+
+        <!-- System Admin -->
+        <li class="nav-heading">System Administration</li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-shield-lock"></i>
+                <span>Roles & Permissions</span>
             </a>
-          </li>
-        </ul>
-      </li><!-- End Analytics Nav -->
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-shield-lock"></i>
-          <span>Security Settings</span>
-        </a>
-      </li>
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-gear"></i>
+                <span>System Settings</span>
+            </a>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-gear"></i>
-          <span>System Configuration</span>
-        </a>
-      </li>
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-graph-up"></i>
+                <span>Analytics Dashboard</span>
+            </a>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
-          <i class="bi bi-box-arrow-right"></i>
-          <span>Logout</span>
-        </a>
-      </li>
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </a>
+        </li>
 
     </ul>
-
-</aside><!-- End Sidebar-->
+</aside>
