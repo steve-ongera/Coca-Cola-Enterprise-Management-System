@@ -14,12 +14,12 @@ body {
 }
 
 a {
-  color: #4154f1;
+  color: #ED1C16; /* Coca-Cola red */
   text-decoration: none;
 }
 
 a:hover {
-  color: #717ff5;
+  color: #F44336; /* Lighter Coca-Cola red variant for hover */
   text-decoration: none;
 }
 
@@ -323,7 +323,7 @@ h6 {
   font-weight: 600;
 }
 
-/* Bordered Tabs */
+/* Bordered Tabs - Coca-Cola Theme */
 .nav-tabs-bordered {
   border-bottom: 2px solid #ebeef4;
 }
@@ -336,13 +336,13 @@ h6 {
 
 .nav-tabs-bordered .nav-link:hover,
 .nav-tabs-bordered .nav-link:focus {
-  color: #4154f1;
+  color: #ED1C16; /* Coca-Cola red */
 }
 
 .nav-tabs-bordered .nav-link.active {
   background-color: #fff;
-  color: #4154f1;
-  border-bottom: 2px solid #4154f1;
+  color: #ED1C16; /* Coca-Cola red */
+  border-bottom: 2px solid #ED1C16; /* Coca-Cola red */
 }
 
 /*--------------------------------------------------------------
@@ -691,6 +691,12 @@ h6 {
   border-radius: 4px;
 }
 
+/* Fix for all Bootstrap icons in navigation */
+.sidebar-nav .nav-link:hover .bi {
+  color: #ffffff !important; /* Forces white on hover */
+  opacity: 1 !important; /* Ensures full visibility */
+}
+
 .sidebar-nav .nav-link i {
   font-size: 16px;
   margin-right: 10px;
@@ -698,14 +704,23 @@ h6 {
 }
 
 .sidebar-nav .nav-link.collapsed {
-  color: #012970;
-  background: #fff;
+  color: #1F2937;  /* Dark gray text for better readability */
+  background: #fff; /* Maintains white background */
 }
 
 .sidebar-nav .nav-link.collapsed i {
-  color: #899bbd;
+  color: red;
 }
 
+/* Chevron Down Icon Visibility Fix */
+.sidebar-nav .nav-link:hover .bi-chevron-down {
+  color: #ffffff !important; /* Force white color on red background */
+}
+
+/* Or alternatively, if you want to maintain the red theme */
+.sidebar-nav .nav-link:hover .bi-chevron-down {
+  filter: brightness(0) invert(1); /* Makes black icon white */
+}
 
 
 .sidebar-nav .nav-link:hover {
@@ -714,7 +729,7 @@ h6 {
 }
 
 .sidebar-nav .nav-link:hover i {
-  color: #4154f1;
+  color: #ED1C16; /* Coca-Cola red for hovered icons */
 }
 
 .sidebar-nav .nav-link .bi-chevron-down {
@@ -737,7 +752,7 @@ h6 {
   align-items: center;
   font-size: 14px;
   font-weight: 600;
-  color: #012970;
+  color: #1F2937; /* Changed to dark gray for better readability */
   transition: 0.3;
   padding: 10px 0 10px 40px;
   transition: 0.3s;
@@ -752,11 +767,11 @@ h6 {
 
 .sidebar-nav .nav-content a:hover,
 .sidebar-nav .nav-content a.active {
-  color: #4154f1;
+  color: #ED1C16; /* Coca-Cola red */
 }
 
 .sidebar-nav .nav-content a.active i {
-  background-color: #4154f1;
+  background-color: #ED1C16; /* Coca-Cola red */
 }
 
 /*--------------------------------------------------------------
