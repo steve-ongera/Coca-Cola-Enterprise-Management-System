@@ -1128,3 +1128,233 @@ class Region(models.Model):
     
     def __str__(self):
         return f"{self.name}, {self.country}"
+    
+
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+User = get_user_model()
+
+class ProductionTarget(models.Model):
+    PRODUCT_CHOICES = [
+        ('cola_330ml', 'Coca-Cola 330ml'),
+        ('cola_500ml', 'Coca-Cola 500ml'),
+        ('cola_1l', 'Coca-Cola 1L'),
+        ('sprite_330ml', 'Sprite 330ml'),
+        ('fanta_500ml', 'Fanta Orange 500ml'),
+        ('schweppes_1l', 'Schweppes 1L'),
+    ]
+    
+    SHIFT_CHOICES = [
+        ('morning', 'Morning Shift (8AM-4PM)'),
+        ('afternoon', 'Afternoon Shift (12PM-8PM)'),
+        ('night', 'Night Shift (8PM-4AM)'),
+    ]
+    
+    product = models.CharField(max_length=50, choices=PRODUCT_CHOICES)
+    production_line = models.ForeignKey('ProductionLine', on_delete=models.CASCADE)
+    shift = models.CharField(max_length=20, choices=SHIFT_CHOICES)
+    target_quantity = models.PositiveIntegerField()
+    date = models.DateField(default=timezone.now)
+    team = models.ForeignKey(Department, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('product', 'production_line', 'shift', 'date')
+        ordering = ['date', 'shift']
+    
+    def __str__(self):
+        return f"{self.get_product_display()} - {self.shift} - {self.date}"
+    
+    @property
+    def completed_quantity(self):
+        from .models import ProductionLog
+        return ProductionLog.objects.filter(
+            production_target=self
+        ).aggregate(models.Sum('quantity'))['quantity__sum'] or 0
+    
+    @property
+    def percent_complete(self):
+        if self.target_quantity == 0:
+            return 0
+        return min(round((self.completed_quantity / self.target_quantity) * 100, 100))
+
+
+
+class QualityCheck(models.Model):
+    CHECK_TYPE_CHOICES = [
+        ('bottle_seal', 'Bottle Seal Integrity'),
+        ('fill_level', 'Fill Level'),
+        ('label_placement', 'Label Placement'),
+        ('sugar_content', 'Sugar Content'),
+        ('carbonation', 'Carbonation Level'),
+        ('packaging', 'Packaging Quality'),
+    ]
+    
+    check_type = models.CharField(max_length=50, choices=CHECK_TYPE_CHOICES)
+    production_line = models.ForeignKey(ProductionLine, on_delete=models.CASCADE)
+    checked_by = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=[
+        ('passed', 'Passed'),
+        ('failed', 'Failed'),
+        ('pending', 'Pending')
+    ], default='pending')
+    notes = models.TextField(blank=True)
+    checked_at = models.DateTimeField(default=timezone.now)
+    next_check_due = models.DateTimeField()
+    
+    class Meta:
+        ordering = ['-checked_at']
+    
+    def __str__(self):
+        return f"{self.get_check_type_display()} - {self.production_line} - {self.checked_at.strftime('%Y-%m-%d %H:%M')}"
+    
+    @property
+    def is_overdue(self):
+        return timezone.now() > self.next_check_due and self.status != 'passed'
+
+class TrainingSession(models.Model):
+    TRAINING_TYPE_CHOICES = [
+        ('safety', 'Safety Training'),
+        ('quality', 'Quality Control'),
+        ('equipment', 'Equipment Operation'),
+        ('hygiene', 'Hygiene Practices'),
+        ('soft_skills', 'Soft Skills'),
+    ]
+    
+    title = models.CharField(max_length=200)
+    training_type = models.CharField(max_length=50, choices=TRAINING_TYPE_CHOICES)
+    description = models.TextField()
+    trainer = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, related_name='trainings_conducted')
+    date = models.DateField()
+    time = models.TimeField()
+    duration = models.DurationField(help_text="Duration in hours")
+    location = models.CharField(max_length=100)
+    max_participants = models.PositiveIntegerField()
+    target_groups = models.ManyToManyField(Department, help_text="Which departments should attend")
+    is_mandatory = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['date', 'time']
+    
+    def __str__(self):
+        return f"{self.title} - {self.date.strftime('%Y-%m-%d')}"
+    
+    @property
+    def registered_count(self):
+        return self.registrations.count()
+    
+    @property
+    def available_slots(self):
+        return self.max_participants - self.registered_count
+    
+    @property
+    def is_full(self):
+        return self.registered_count >= self.max_participants
+
+class TrainingRegistration(models.Model):
+    training = models.ForeignKey(TrainingSession, on_delete=models.CASCADE, related_name='registrations')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='training_registrations')
+    registered_at = models.DateTimeField(auto_now_add=True)
+    attended = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ('training', 'employee')
+    
+    def __str__(self):
+        return f"{self.employee} - {self.training}"
+
+class SafetyAlert(models.Model):
+    PRIORITY_CHOICES = [
+        ('high', 'High Priority'),
+        ('medium', 'Medium Priority'),
+        ('low', 'Low Priority'),
+    ]
+    
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES)
+    affected_areas = models.ManyToManyField(ProductionLine)
+    issued_by = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.title} - {self.get_priority_display()}"
+    
+    @property
+    def is_resolved(self):
+        return self.resolved_at is not None
+    
+    def resolve(self):
+        self.resolved_at = timezone.now()
+        self.is_active = False
+        self.save()
+
+class SafetyChecklist(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    frequency = models.CharField(max_length=50, choices=[
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+    ])
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return self.name
+
+class SafetyChecklistItem(models.Model):
+    checklist = models.ForeignKey(SafetyChecklist, on_delete=models.CASCADE, related_name='items')
+    description = models.TextField()
+    is_critical = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.checklist.name} - Item {self.id}"
+
+class SafetyChecklistCompletion(models.Model):
+    checklist = models.ForeignKey(SafetyChecklist, on_delete=models.CASCADE)
+    completed_by = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    completed_at = models.DateTimeField(default=timezone.now)
+    comments = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.checklist} completed by {self.completed_by}"
+
+class IncidentReport(models.Model):
+    INCIDENT_TYPE_CHOICES = [
+        ('injury', 'Personal Injury'),
+        ('equipment', 'Equipment Failure'),
+        ('spill', 'Chemical Spill'),
+        ('near_miss', 'Near Miss'),
+        ('security', 'Security Breach'),
+    ]
+    
+    SEVERITY_CHOICES = [
+        ('minor', 'Minor'),
+        ('moderate', 'Moderate'),
+        ('major', 'Major'),
+        ('critical', 'Critical'),
+    ]
+    
+    reported_by = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    incident_type = models.CharField(max_length=50, choices=INCIDENT_TYPE_CHOICES)
+    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES)
+    description = models.TextField()
+    location = models.ForeignKey(ProductionLine, on_delete=models.CASCADE)
+    date_time = models.DateTimeField(default=timezone.now)
+    action_taken = models.TextField(blank=True)
+    reported_at = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-date_time']
+    
+    def __str__(self):
+        return f"{self.get_incident_type_display()} at {self.location} - {self.date_time.strftime('%Y-%m-%d')}"

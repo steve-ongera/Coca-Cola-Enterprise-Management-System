@@ -351,3 +351,122 @@ def submit_timesheet(request):
         form = TimesheetForm()
     
     return render(request, 'submit_timesheet.html', {'form': form})
+
+
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from datetime import timedelta
+from .models import Employee, Attendance, ProductionTarget, QualityCheck, Announcement, TrainingSession, SafetyAlert
+
+@login_required
+def staff_dashboard(request):
+    employee = request.user.employee_profile
+    
+    # Today's shift information
+    today = timezone.now().date()
+    today_shift = {
+        'shift_name': 'Morning Shift',
+        'start_time': timezone.now().replace(hour=8, minute=0, second=0),
+        'end_time': timezone.now().replace(hour=16, minute=0, second=0),
+        'location': 'Production Line 3'
+    }
+    
+    # Attendance status
+    attendance_status = {
+        'clocked_in': Attendance.objects.filter(
+            employee=employee,
+            date=today,
+            check_in_time__isnull=False
+        ).exists(),
+        'time': Attendance.objects.filter(
+            employee=employee,
+            date=today
+        ).first().check_in_time if Attendance.objects.filter(
+            employee=employee,
+            date=today
+        ).exists() else None
+    }
+    
+    # Production targets
+    production_targets = [
+        {
+            'product': {'name': 'Coca-Cola 330ml'},
+            'target_quantity': 5000,
+            'completed_quantity': 3750,
+            'percent_complete': 75
+        },
+        {
+            'product': {'name': 'Sprite 500ml'},
+            'target_quantity': 3000,
+            'completed_quantity': 2700,
+            'percent_complete': 90
+        },
+        {
+            'product': {'name': 'Fanta Orange 1L'},
+            'target_quantity': 2000,
+            'completed_quantity': 2200,
+            'percent_complete': 110
+        }
+    ]
+    
+    # Quality checks
+    quality_checks = [
+        {
+            'check_name': 'Bottle Seal Integrity',
+            'description': 'Check seal quality on random samples',
+            'status': 'passed',
+            'last_checked': timezone.now() - timedelta(hours=2)
+        },
+        {
+            'check_name': 'Sugar Content',
+            'description': 'Verify sugar levels in production batch',
+            'status': 'pending',
+            'last_checked': timezone.now() - timedelta(hours=4)
+        },
+        {
+            'check_name': 'Label Alignment',
+            'description': 'Inspect label placement accuracy',
+            'status': 'failed',
+            'last_checked': timezone.now() - timedelta(hours=1)
+        }
+    ]
+    
+    # Announcements
+    announcements = Announcement.objects.filter(
+        target_departments=employee.department
+    ).order_by('-created_at')[:5]
+    
+    new_announcements = announcements.filter(
+        created_at__gte=timezone.now() - timedelta(days=1))
+    
+    # Training sessions
+    upcoming_training = TrainingSession.objects.filter(
+        target_groups__in=[employee.position],
+        date__gte=today
+    ).order_by('date')[:3]
+    
+    # Safety information
+    safety_status = {
+        'level': 'Normal',
+        'message': 'All safety protocols are being followed'
+    }
+    
+    safety_alerts = SafetyAlert.objects.filter(
+        is_active=True
+    ).order_by('-created_at')[:3]
+    
+    context = {
+        'today_shift': today_shift,
+        'attendance_status': attendance_status,
+        'production_targets': production_targets,
+        'quality_checks': quality_checks,
+        'announcements': announcements,
+        'new_announcements': new_announcements,
+        'upcoming_training': upcoming_training,
+        'safety_status': safety_status,
+        'safety_alerts': safety_alerts,
+    }
+    
+    return render(request, 'dashboard/staff_dashboard.html', context)
