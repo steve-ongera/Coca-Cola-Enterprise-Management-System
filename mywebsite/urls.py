@@ -55,8 +55,9 @@ urlpatterns = [
 
      # AJAX Endpoints
     path('search/', views.product_search, name='product_search'),
-    path('<int:pk>/quickview/', views.quick_view, name='quick_view'),
+    path('products/<int:pk>/quickview/', views.quick_view, name='product_quick_view'),
     path('<int:pk>/toggle-status/', views.toggle_product_status, name='toggle_status'),
     path('import/', views.import_products, name='import_products'),
+   
     
 ]

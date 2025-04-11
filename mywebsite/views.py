@@ -1093,13 +1093,32 @@ def product_search(request):
     )
     return HttpResponse(html)
 
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse
+import logging
+
+logger = logging.getLogger(__name__)
+
 def quick_view(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    variants = product.variants.all()
-    return render(request, 'products/partials/quick_view.html', {
-        'product': product,
-        'variants': variants
-    })
+    try:
+        product = get_object_or_404(
+            Product.objects.select_related('category'),
+            pk=pk
+        )
+        variants = product.variants.all()
+        
+        return render(request, 'products/partials/quick_view.html', {
+            'product': product,
+            'variants': variants,
+            'user_has_edit_perms': request.user.has_perm('products.change_product')
+        })
+        
+    except Exception as e:
+        logger.error(f"Quick view error for product {pk}: {str(e)}")
+        return render(request, 'products/partials/error.html', {
+            'error': 'Failed to load product details. Please try again later.'
+        }, status=500)
 
 
 def import_csv(file, update_existing: bool) -> tuple[int, int, list[dict]]:

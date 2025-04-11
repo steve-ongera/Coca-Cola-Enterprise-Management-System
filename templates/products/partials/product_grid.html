@@ -18,7 +18,7 @@
                      loading="lazy"
                      data-bs-toggle="modal" 
                      data-bs-target="#quickViewModal"
-                     hx-get="{% url 'quick_view' product.pk %}"
+                     hx-get="{% url 'product_quick_view' product.pk %}"
                      hx-target="#quickViewContent">
                 
                 <!-- Status Indicator -->
@@ -84,7 +84,7 @@
                         <button class="btn btn-outline-dark quick-view-btn"
                                 data-bs-toggle="modal" 
                                 data-bs-target="#quickViewModal"
-                                hx-get="{% url 'quick_view' product.pk %}"
+                                hx-get="{% url 'product_quick_view' product.pk %}"
                                 hx-target="#quickViewContent"
                                 data-bs-toggle="tooltip"
                                 title="Quick View">

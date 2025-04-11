@@ -17,7 +17,7 @@
         <div class="product-actions position-absolute bottom-0 start-0 end-0 p-2 bg-dark bg-opacity-75 text-center">
             <div class="btn-group btn-group-sm">
                 <button class="btn btn-sm btn-light quick-view-btn" 
-                        hx-get="{% url 'quick_view' product.pk %}"
+                        hx-get="{% url 'product_quick_view' product.pk %}"
                         hx-target="#quickViewContent"
                         data-bs-toggle="modal" 
                         data-bs-target="#quickViewModal">
