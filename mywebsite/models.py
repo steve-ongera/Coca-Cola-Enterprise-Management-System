@@ -3,7 +3,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
-
+from decimal import Decimal
+from datetime import date
 
 
 class User(AbstractUser):
@@ -231,12 +232,16 @@ class Leave(models.Model):
 
 class Payroll(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payroll_records')
+    year = models.PositiveIntegerField()
+    month = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 13)] , null=True , blank=True )
     period_start = models.DateField()
     period_end = models.DateField()
     basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
     allowances = models.JSONField(default=dict)
     deductions = models.JSONField(default=dict)
-    net_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    gross_salary = models.DecimalField(max_digits=12, decimal_places=2, editable=False , null=True , blank=True )
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, editable=False , null=True , blank=True )
+    net_salary = models.DecimalField(max_digits=12, decimal_places=2, editable=False, null=True , blank=True )
     payment_date = models.DateField()
     PAYMENT_STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -244,9 +249,51 @@ class Payroll(models.Model):
         ('failed', 'Failed'),
     ]
     payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        unique_together = ['employee', 'year', 'month']
+        ordering = ['-year', '-month', 'employee__user__last_name']
     
     def __str__(self):
-        return f"{self.employee} - {self.period_start} to {self.period_end}"
+        return f"{self.employee} - {self.get_month_display()}/{self.year}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate allowances total
+        allowances_total = sum(float(v) for v in self.allowances.values())
+        
+        # Calculate deductions total
+        deductions_total = sum(float(v) for v in self.deductions.values())
+        
+        # Calculate gross salary
+        self.gross_salary = self.basic_salary + allowances_total
+        
+        # Calculate tax (simplified tax calculation - 15%)
+        self.tax_amount = self.gross_salary * Decimal('0.15')
+        
+        # Calculate net salary
+        self.net_salary = self.gross_salary - self.tax_amount - deductions_total
+        
+        # Set year and month from period_start if not set
+        if not self.year or not self.month:
+            self.year = self.period_start.year
+            self.month = self.period_start.month
+        
+        super().save(*args, **kwargs)
+    
+    def get_month_display(self):
+        return date(1900, self.month, 1).strftime('%b')
+    
+    def get_pay_period_display(self):
+        return f"{self.period_start.strftime('%b %d')} - {self.period_end.strftime('%b %d, %Y')}"
+    
+    @property
+    def total_allowances(self):
+        return sum(float(v) for v in self.allowances.values())
+    
+    @property
+    def total_deductions(self):
+        return sum(float(v) for v in self.deductions.values())
 
 
 class PerformanceReview(models.Model):

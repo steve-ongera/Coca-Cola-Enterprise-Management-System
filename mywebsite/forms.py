@@ -129,3 +129,55 @@ class LeaveForm(forms.ModelForm):
                 raise ValidationError("Cannot request leave for past dates")
         
         return cleaned_data
+    
+
+from django import forms
+from .models import Payroll
+from django.core.exceptions import ValidationError
+from datetime import date
+
+class PayrollForm(forms.ModelForm):
+    class Meta:
+        model = Payroll
+        fields = [
+            'employee', 'year', 'month', 
+            'period_start', 'period_end', 
+            'basic_salary', 'allowances', 
+            'deductions', 'payment_date',
+            'payment_status', 'notes'
+        ]
+        widgets = {
+            'period_start': forms.DateInput(attrs={'type': 'date'}),
+            'period_end': forms.DateInput(attrs={'type': 'date'}),
+            'payment_date': forms.DateInput(attrs={'type': 'date'}),
+            'allowances': forms.Textarea(attrs={'rows': 3, 'placeholder': '{"housing": 1000, "transport": 500}'}),
+            'deductions': forms.Textarea(attrs={'rows': 3, 'placeholder': '{"loan": 200, "insurance": 150}'}),
+            'notes': forms.Textarea(attrs={'rows': 2}),
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        period_start = cleaned_data.get('period_start')
+        period_end = cleaned_data.get('period_end')
+        payment_date = cleaned_data.get('payment_date')
+        year = cleaned_data.get('year')
+        month = cleaned_data.get('month')
+        employee = cleaned_data.get('employee')
+        
+        if period_start and period_end:
+            if period_start > period_end:
+                raise ValidationError("Period end date must be after start date")
+            
+            if year and month:
+                if period_start.year != year or period_start.month != month:
+                    raise ValidationError("Period start date must match selected year and month")
+        
+        if payment_date and period_end:
+            if payment_date < period_end:
+                raise ValidationError("Payment date cannot be before period end date")
+        
+        if employee and year and month:
+            if Payroll.objects.filter(employee=employee, year=year, month=month).exclude(pk=self.instance.pk).exists():
+                raise ValidationError("Payroll record already exists for this employee in selected month/year")
+        
+        return cleaned_data

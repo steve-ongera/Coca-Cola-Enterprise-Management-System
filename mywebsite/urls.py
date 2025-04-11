@@ -32,5 +32,12 @@ urlpatterns = [
     path('leave/<int:pk>/delete/', views.leave_delete, name='leave_delete'),
     path('leave/<int:pk>/approve/', views.leave_approve, name='leave_approve'),
     path('leave/<int:pk>/reject/', views.leave_reject, name='leave_reject'),
+
+    path('payroll/create/', views.payroll_create, name='payroll_create'),
+    path('payroll/<int:pk>/', views.payroll_detail, name='payroll_detail'),
+    path('payroll/<int:pk>/edit/', views.payroll_update, name='payroll_update'),
+    path('payroll/<int:pk>/delete/', views.payroll_delete, name='payroll_delete'),
+    path('payroll/', views.payroll_list, name='payroll_list'),
+    path('payroll/<int:pk>/process/', views.payroll_process, name='payroll_process'),
     
 ]

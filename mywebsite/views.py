@@ -842,3 +842,139 @@ def leave_reject(request, pk):
         leave.save()
         messages.success(request, 'Leave request rejected successfully!')
     return redirect('leave_detail', pk=leave.pk)
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db.models import Sum, Q
+from .models import Payroll, Employee
+from .forms import PayrollForm
+from datetime import date
+import json
+
+def payroll_create(request):
+    if request.method == 'POST':
+        form = PayrollForm(request.POST)
+        if form.is_valid():
+            payroll = form.save()
+            messages.success(request, f'Payroll record for {payroll.employee} created successfully!')
+            return redirect('payroll_detail', pk=payroll.pk)
+    else:
+        initial = {
+            'year': date.today().year,
+            'month': date.today().month,
+            'payment_date': date.today(),
+        }
+        form = PayrollForm(initial=initial)
+    
+    return render(request, 'payroll/payroll_form.html', {
+        'form': form,
+        'title': 'Create Payroll Record'
+    })
+
+def payroll_detail(request, pk):
+    payroll = get_object_or_404(Payroll, pk=pk)
+    
+    # Prepare data for salary breakdown chart
+    salary_breakdown = {
+        'Basic Salary': float(payroll.basic_salary),
+        'Allowances': float(payroll.total_allowances),
+        'Tax': float(payroll.tax_amount),
+        'Deductions': float(payroll.total_deductions),
+    }
+    
+    # Prepare data for monthly salary trend (last 6 months)
+    six_months_ago = date.today() - timedelta(days=180)
+    monthly_data = Payroll.objects.filter(
+        employee=payroll.employee,
+        payment_date__gte=six_months_ago,
+        payment_date__lte=date.today()
+    ).order_by('year', 'month')
+    
+    months = []
+    net_salary_data = []
+    
+    for record in monthly_data:
+        months.append(f"{record.get_month_display()} {record.year}")
+        net_salary_data.append(float(record.net_salary))
+    
+    chart_data = {
+        'salary_breakdown': json.dumps(salary_breakdown),
+        'months': json.dumps(months),
+        'net_salary': json.dumps(net_salary_data),
+    }
+    
+    return render(request, 'payroll/payroll_detail.html', {
+        'payroll': payroll,
+        'chart_data': chart_data,
+    })
+
+def payroll_update(request, pk):
+    payroll = get_object_or_404(Payroll, pk=pk)
+    
+    if request.method == 'POST':
+        form = PayrollForm(request.POST, instance=payroll)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Payroll record for {payroll.employee} updated successfully!')
+            return redirect('payroll_detail', pk=payroll.pk)
+    else:
+        form = PayrollForm(instance=payroll)
+    
+    return render(request, 'payroll/payroll_form.html', {
+        'form': form,
+        'title': 'Update Payroll Record',
+        'payroll': payroll
+    })
+
+def payroll_delete(request, pk):
+    payroll = get_object_or_404(Payroll, pk=pk)
+    
+    if request.method == 'POST':
+        employee_name = payroll.employee.user.get_full_name()
+        period = payroll.get_pay_period_display()
+        payroll.delete()
+        messages.success(request, f'Payroll record for {employee_name} ({period}) deleted successfully!')
+        return redirect('payroll_list')
+    
+    return render(request, 'payroll/payroll_confirm_delete.html', {
+        'payroll': payroll
+    })
+
+def payroll_list(request):
+    payrolls = Payroll.objects.all().order_by('-year', '-month', 'employee__user__last_name')
+    
+    # Filtering
+    employee_id = request.GET.get('employee')
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    status = request.GET.get('status')
+    
+    if employee_id:
+        payrolls = payrolls.filter(employee__id=employee_id)
+    if year:
+        payrolls = payrolls.filter(year=year)
+    if month:
+        payrolls = payrolls.filter(month=month)
+    if status:
+        payrolls = payrolls.filter(payment_status=status)
+    
+    employees = Employee.objects.all()
+    years = Payroll.objects.dates('period_start', 'year').distinct()
+    
+    return render(request, 'payroll/payroll_list.html', {
+        'payrolls': payrolls,
+        'employees': employees,
+        'years': years,
+        'month_choices': Payroll._meta.get_field('month').choices,
+        'status_choices': Payroll.PAYMENT_STATUS_CHOICES,
+    })
+
+def payroll_process(request, pk):
+    payroll = get_object_or_404(Payroll, pk=pk)
+    if request.method == 'POST':
+        payroll.payment_status = 'processed'
+        payroll.save()
+        messages.success(request, f'Payroll for {payroll.employee} marked as processed!')
+    return redirect('payroll_detail', pk=payroll.pk)

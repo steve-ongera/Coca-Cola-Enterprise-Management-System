@@ -1,0 +1,268 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Payroll Record - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-money-bill-wave text-danger"></i> Payroll Record
+                </h2>
+                <div>
+                    {% if payroll.payment_status == 'pending' %}
+                        <form method="POST" action="{% url 'payroll_process' payroll.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success me-2">
+                                <i class="fas fa-check-circle"></i> Mark as Processed
+                            </button>
+                        </form>
+                    {% endif %}
+                    <a href="{% url 'payroll_update' payroll.pk %}" class="btn btn-warning me-2">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{% url 'payroll_delete' payroll.pk %}" class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </a>
+                </div>
+            </div>
+            <hr class="mt-2 mb-4">
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Payroll Details -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Payroll Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" class="w-25">Employee</th>
+                                    <td>
+                                        <a href="{% url 'employee_detail' payroll.employee.pk %}">
+                                            {{ payroll.employee.user.get_full_name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Pay Period</th>
+                                    <td>{{ payroll.get_pay_period_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Month/Year</th>
+                                    <td>{{ payroll.get_month_display }}, {{ payroll.year }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Payment Date</th>
+                                    <td>{{ payroll.payment_date|date:"M j, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Status</th>
+                                    <td>
+                                        <span class="badge bg-{% if payroll.payment_status == 'processed' %}success{% elif payroll.payment_status == 'failed' %}danger{% else %}warning{% endif %}">
+                                            {{ payroll.get_payment_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Salary Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Component</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Basic Salary</td>
+                                    <td class="text-end">{{ payroll.basic_salary|floatformat:2 }}</td>
+                                </tr>
+                                
+                                {% for name, amount in payroll.allowances.items %}
+                                <tr>
+                                    <td>{{ name|title }} Allowance</td>
+                                    <td class="text-end">{{ amount|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                                
+                                <tr class="table-success">
+                                    <td><strong>Total Allowances</strong></td>
+                                    <td class="text-end"><strong>{{ payroll.total_allowances|floatformat:2 }}</strong></td>
+                                </tr>
+                                
+                                <tr class="table-primary">
+                                    <td><strong>Gross Salary</strong></td>
+                                    <td class="text-end"><strong>{{ payroll.gross_salary|floatformat:2 }}</strong></td>
+                                </tr>
+                                
+                                <tr>
+                                    <td>Tax (15%)</td>
+                                    <td class="text-end">{{ payroll.tax_amount|floatformat:2 }}</td>
+                                </tr>
+                                
+                                {% for name, amount in payroll.deductions.items %}
+                                <tr>
+                                    <td>{{ name|title }} Deduction</td>
+                                    <td class="text-end">{{ amount|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                                
+                                <tr class="table-danger">
+                                    <td><strong>Total Deductions</strong></td>
+                                    <td class="text-end"><strong>{{ payroll.total_deductions|floatformat:2 }}</strong></td>
+                                </tr>
+                                
+                                <tr class="table-warning">
+                                    <td><strong>Net Salary</strong></td>
+                                    <td class="text-end"><strong>{{ payroll.net_salary|floatformat:2 }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Additional Info -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Salary Composition</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salaryBreakdownChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Salary Trend (Last 6 Months)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salaryTrendChart" height="250"></canvas>
+                </div>
+            </div>
+
+            {% if payroll.notes %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Notes</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ payroll.notes|linebreaks }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Salary Breakdown Chart (Doughnut)
+        const breakdownCtx = document.getElementById('salaryBreakdownChart').getContext('2d');
+        const breakdownData = JSON.parse('{{ chart_data.salary_breakdown|escapejs }}');
+        
+        new Chart(breakdownCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(breakdownData),
+                datasets: [{
+                    data: Object.values(breakdownData),
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(255, 159, 64, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: $${context.raw.toFixed(2)}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Salary Trend Chart (Line)
+        const trendCtx = document.getElementById('salaryTrendChart').getContext('2d');
+        const months = JSON.parse('{{ chart_data.months|escapejs }}');
+        const netSalary = JSON.parse('{{ chart_data.net_salary|escapejs }}');
+        
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Net Salary',
+                    data: netSalary,
+                    fill: false,
+                    backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                    borderColor: 'rgba(220, 53, 69, 1)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: $${context.raw.toFixed(2)}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

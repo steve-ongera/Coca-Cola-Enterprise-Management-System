@@ -1,0 +1,150 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Payroll Records - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-file-invoice-dollar text-danger"></i> Payroll Records
+                </h2>
+                <a href="{% url 'payroll_create' %}" class="btn btn-danger">
+                    <i class="fas fa-plus"></i> New Record
+                </a>
+            </div>
+            <hr class="mt-2 mb-4">
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="employee" class="form-label">Employee</label>
+                            <select id="employee" name="employee" class="form-select">
+                                <option value="">All Employees</option>
+                                {% for employee in employees %}
+                                    <option value="{{ employee.id }}" {% if request.GET.employee == employee.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ employee.user.get_full_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="year" class="form-label">Year</label>
+                            <select id="year" name="year" class="form-select">
+                                <option value="">All Years</option>
+                                {% for year in years %}
+                                    <option value="{{ year.year }}" {% if request.GET.year == year.year|stringformat:"s" %}selected{% endif %}>
+                                        {{ year.year }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="month" class="form-label">Month</label>
+                            <select id="month" name="month" class="form-select">
+                                <option value="">All Months</option>
+                                {% for month_num, month_name in month_choices %}
+                                    <option value="{{ month_num }}" {% if request.GET.month == month_num|stringformat:"s" %}selected{% endif %}>
+                                        {{ month_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select id="status" name="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                {% for value, display in status_choices %}
+                                    <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-danger me-2">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <a href="{% url 'payroll_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-sync-alt"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payroll Records Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Period</th>
+                                    <th>Month/Year</th>
+                                    <th class="text-end">Basic Salary</th>
+                                    <th class="text-end">Net Salary</th>
+                                    <th>Status</th>
+                                    <th>Payment Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payroll in payrolls %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'employee_detail' payroll.employee.pk %}">
+                                                {{ payroll.employee.user.get_full_name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ payroll.get_pay_period_display }}</td>
+                                        <td>{{ payroll.get_month_display }} {{ payroll.year }}</td>
+                                        <td class="text-end">{{ payroll.basic_salary|floatformat:2 }}</td>
+                                        <td class="text-end">{{ payroll.net_salary|floatformat:2 }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if payroll.payment_status == 'processed' %}success{% elif payroll.payment_status == 'failed' %}danger{% else %}warning{% endif %}">
+                                                {{ payroll.get_payment_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ payroll.payment_date|date:"M j, Y" }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'payroll_detail' payroll.pk %}" class="btn btn-info" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'payroll_update' payroll.pk %}" class="btn btn-warning" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'payroll_delete' payroll.pk %}" class="btn btn-danger" title="Delete">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center">No payroll records found</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
