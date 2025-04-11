@@ -589,3 +589,136 @@ def employee_delete(request, pk):
     context = {'employee': employee}
     return render(request, 'employees/employee_confirm_delete.html', context)
 
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db.models import Count, Q
+from .models import Attendance, Employee
+from .forms import AttendanceForm
+from datetime import date, timedelta
+import json
+
+# Create
+def attendance_create(request):
+    if request.method == 'POST':
+        form = AttendanceForm(request.POST)
+        if form.is_valid():
+            attendance = form.save()
+            messages.success(request, f'Attendance record for {attendance.employee} on {attendance.date} created successfully!')
+            return redirect('attendance_detail', pk=attendance.pk)
+    else:
+        form = AttendanceForm()
+    
+    return render(request, 'attendance/attendance_form.html', {
+        'form': form,
+        'title': 'Create Attendance Record'
+    })
+
+# Read (Detail View with Graph)
+def attendance_detail(request, pk):
+    attendance = get_object_or_404(Attendance, pk=pk)
+    
+    # Prepare data for monthly attendance chart (last 6 months)
+    today = date.today()
+    six_months_ago = today - timedelta(days=180)
+    
+    monthly_data = Attendance.objects.filter(
+        employee=attendance.employee,
+        date__gte=six_months_ago,
+        date__lte=today
+    ).values('date__month', 'status').annotate(count=Count('status'))
+    
+    # Process data for Chart.js
+    months = []
+    present_data = []
+    absent_data = []
+    half_day_data = []
+    
+    for month in range(1, 13):
+        month_name = date(1900, month, 1).strftime('%b')
+        months.append(month_name)
+        
+        present = next((item['count'] for item in monthly_data 
+                       if item['date__month'] == month and item['status'] == 'present'), 0)
+        absent = next((item['count'] for item in monthly_data 
+                      if item['date__month'] == month and item['status'] == 'absent'), 0)
+        half_day = next((item['count'] for item in monthly_data 
+                        if item['date__month'] == month and item['status'] == 'half_day'), 0)
+        
+        present_data.append(present)
+        absent_data.append(absent)
+        half_day_data.append(half_day)
+    
+    chart_data = {
+        'months': json.dumps(months),
+        'present': json.dumps(present_data),
+        'absent': json.dumps(absent_data),
+        'half_day': json.dumps(half_day_data),
+    }
+    
+    return render(request, 'attendance/attendance_detail.html', {
+        'attendance': attendance,
+        'chart_data': chart_data
+    })
+
+# Update
+def attendance_update(request, pk):
+    attendance = get_object_or_404(Attendance, pk=pk)
+    
+    if request.method == 'POST':
+        form = AttendanceForm(request.POST, instance=attendance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Attendance record for {attendance.employee} on {attendance.date} updated successfully!')
+            return redirect('attendance_detail', pk=attendance.pk)
+    else:
+        form = AttendanceForm(instance=attendance)
+    
+    return render(request, 'attendance/attendance_form.html', {
+        'form': form,
+        'title': 'Update Attendance Record',
+        'attendance': attendance
+    })
+
+# Delete
+def attendance_delete(request, pk):
+    attendance = get_object_or_404(Attendance, pk=pk)
+    
+    if request.method == 'POST':
+        employee_name = attendance.employee.user.get_full_name()
+        date_str = attendance.date.strftime('%Y-%m-%d')
+        attendance.delete()
+        messages.success(request, f'Attendance record for {employee_name} on {date_str} deleted successfully!')
+        return redirect('attendance_list')
+    
+    return render(request, 'attendance/attendance_confirm_delete.html', {
+        'attendance': attendance
+    })
+
+# List View
+def attendance_list(request):
+    attendances = Attendance.objects.all().order_by('-date', 'employee__user__last_name')
+    
+    # Filtering
+    employee_id = request.GET.get('employee')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    status = request.GET.get('status')
+    
+    if employee_id:
+        attendances = attendances.filter(employee__id=employee_id)
+    if date_from:
+        attendances = attendances.filter(date__gte=date_from)
+    if date_to:
+        attendances = attendances.filter(date__lte=date_to)
+    if status:
+        attendances = attendances.filter(status=status)
+    
+    employees = Employee.objects.all()
+    
+    return render(request, 'attendance/attendance_list.html', {
+        'attendances': attendances,
+        'employees': employees,
+        'status_choices': Attendance.STATUS_CHOICES
+    })

@@ -1,0 +1,159 @@
+{% extends "base/base.html" %}
+{% load time_filters %}
+{% load static %}
+
+{% block title %}Attendance Record - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-calendar-check text-danger"></i> Attendance Record
+                </h2>
+                <div>
+                    <a href="{% url 'attendance_update' attendance.pk %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{% url 'attendance_delete' attendance.pk %}" class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </a>
+                </div>
+            </div>
+            <hr class="mt-2 mb-4">
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Attendance Details -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Attendance Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" class="w-25">Employee</th>
+                                    <td>
+                                        <a href="{% url 'employee_detail' attendance.employee.pk %}">
+                                            {{ attendance.employee.user.get_full_name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Date</th>
+                                    <td>{{ attendance.date|date:"F j, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Status</th>
+                                    <td>
+                                        <span class="badge bg-{{ attendance.status|yesno:'success,danger,warning' }}">
+                                            {{ attendance.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Check In</th>
+                                    <td>{{ attendance.check_in_time|default:"--:--" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Check Out</th>
+                                    <td>{{ attendance.check_out_time|default:"--:--" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Duration</th>
+                                    <td>
+                                        {% if attendance.check_in_time and attendance.check_out_time %}
+                                            {{ attendance.check_out_time|time_diff:attendance.check_in_time }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Attendance Chart -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Monthly Attendance Overview (Last 6 Months)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="attendanceChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: JSON.parse('{{ chart_data.months|escapejs }}'),
+                datasets: [
+                    {
+                        label: 'Present',
+                        data: JSON.parse('{{ chart_data.present|escapejs }}'),
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Absent',
+                        data: JSON.parse('{{ chart_data.absent|escapejs }}'),
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Half Day',
+                        data: JSON.parse('{{ chart_data.half_day|escapejs }}'),
+                        backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        stacked: true,
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Attendance by Month'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

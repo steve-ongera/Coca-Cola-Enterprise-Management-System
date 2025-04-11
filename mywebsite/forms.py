@@ -81,3 +81,18 @@ class EmployeeForm(forms.ModelForm):
         self.fields['email'].required = True
         self.fields['hire_date'].required = True
         self.fields['employment_status'].required = True
+
+
+
+from django import forms
+from .models import Attendance
+
+class AttendanceForm(forms.ModelForm):
+    class Meta:
+        model = Attendance
+        fields = ['employee', 'date', 'check_in_time', 'check_out_time', 'status']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'check_in_time': forms.TimeInput(attrs={'type': 'time'}),
+            'check_out_time': forms.TimeInput(attrs={'type': 'time'}),
+        }

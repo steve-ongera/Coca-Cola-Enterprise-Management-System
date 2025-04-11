@@ -1,0 +1,99 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Delete Attendance Record - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Deletion
+                    </h3>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">Warning!</h4>
+                        <p>You are about to permanently delete this attendance record from the Coca-Cola ERP system.</p>
+                        <hr>
+                        <p class="mb-0">This action cannot be undone. All related data will be permanently removed.</p>
+                    </div>
+
+                    <div class="attendance-details p-4 border rounded bg-light">
+                        <h5 class="text-center mb-4">Attendance Record Details</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row" class="w-25">Employee</th>
+                                        <td>
+                                            <a href="{% url 'employee_detail' attendance.employee.pk %}">
+                                                {{ attendance.employee.user.get_full_name }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Date</th>
+                                        <td>{{ attendance.date|date:"F j, Y" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Status</th>
+                                        <td>
+                                            <span class="badge bg-{{ attendance.status|yesno:'success,danger,warning' }}">
+                                                {{ attendance.get_status_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Check In</th>
+                                        <td>{{ attendance.check_in_time|default:"--:--" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Check Out</th>
+                                        <td>{{ attendance.check_out_time|default:"--:--" }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <form method="POST" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'attendance_detail' attendance.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left mr-2"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt mr-2"></i> Confirm Delete
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> For assistance, contact HR at hr@coca-cola.com
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .border-danger {
+        border: 1px solid #dc3545;
+    }
+    .attendance-details {
+        background-color: #f8f9fa;
+    }
+    .table th {
+        background-color: #e9ecef;
+    }
+</style>
+{% endblock %}
