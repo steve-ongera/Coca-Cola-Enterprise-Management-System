@@ -287,3 +287,74 @@ class PayrollForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+    
+
+
+from django import forms
+from .models import Product, ProductVariant, ProductCategory
+
+class ProductCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ProductCategory
+        fields = ['name', 'description', 'parent_category']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'parent_category': forms.Select(attrs={'class': 'select2'}),
+        }
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['name', 'description', 'product_code', 'category', 'launch_date', 'status']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'launch_date': forms.DateInput(attrs={'type': 'date'}),
+            'category': forms.Select(attrs={'class': 'select2'}),
+        }
+
+class ProductVariantForm(forms.ModelForm):
+    class Meta:
+        model = ProductVariant
+        fields = ['name', 'size', 'packaging_type', 'barcode', 'status']
+        widgets = {
+            'barcode': forms.TextInput(attrs={'placeholder': 'Scan or enter barcode'}),
+        }
+
+
+from django import forms
+from django.core.validators import FileExtensionValidator
+from .models import Product
+import magic
+
+class ProductImportForm(forms.Form):
+    csv_file = forms.FileField(
+        label='CSV File',
+        validators=[FileExtensionValidator(allowed_extensions=['csv'])],
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.csv'
+        })
+    )
+    update_existing = forms.BooleanField(
+        label='Update existing products',
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        })
+    )
+
+    def clean_csv_file(self):
+        csv_file = self.cleaned_data['csv_file']
+        
+        # Verify file type using magic (actual content, not just extension)
+        file_type = magic.from_buffer(csv_file.read(1024), mime=True)
+        csv_file.seek(0)  # Reset file pointer
+        
+        if file_type not in ['text/csv', 'text/plain', 'application/vnd.ms-excel']:
+            raise forms.ValidationError('Invalid file type. Please upload a CSV file.')
+        
+        # Verify file size (max 5MB)
+        if csv_file.size > 5 * 1024 * 1024:
+            raise forms.ValidationError('File too large. Maximum size is 5MB.')
+        
+        return csv_file

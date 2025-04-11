@@ -981,3 +981,213 @@ def payroll_process(request, pk):
         payroll.save()
         messages.success(request, f'Payroll for {payroll.employee} marked as processed!')
     return redirect('payroll_detail', pk=payroll.pk)
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.views.generic import ListView
+from .models import Product, ProductCategory, ProductVariant
+from .forms import ProductForm, ProductVariantForm, ProductCategoryForm
+
+# --- Product Category Views ---
+def category_list(request):
+    categories = ProductCategory.objects.filter(parent_category__isnull=True)
+    return render(request, 'products/category_list.html', {'categories': categories})
+
+def category_detail(request, pk):
+    category = get_object_or_404(ProductCategory, pk=pk)
+    subcategories = category.subcategories.all()
+    products = category.products.all()
+    return render(request, 'products/category_detail.html', {
+        'category': category,
+        'subcategories': subcategories,
+        'products': products
+    })
+
+def category_create(request):
+    if request.method == 'POST':
+        form = ProductCategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Category created successfully!')
+            return redirect('category_list')
+    else:
+        form = ProductCategoryForm()
+    return render(request, 'products/category_form.html', {'form': form})
+
+# --- Product Views ---
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse , HttpResponse
+from django.db.models import Q, Count
+from django.core.paginator import Paginator
+from django.template.loader import render_to_string
+from django.contrib import messages
+from .models import Product, ProductCategory, ProductVariant
+from .forms import ProductForm, ProductImportForm
+
+def product_list(request):
+    # Base queryset
+    products = Product.objects.annotate(
+        variant_count=Count('variants'))
+    
+    # Filtering
+    category_id = request.GET.get('category')
+    status = request.GET.get('status')
+    search_query = request.GET.get('q')
+    
+    if category_id:
+        products = products.filter(category__id=category_id)
+    if status:
+        products = products.filter(status=status)
+    if search_query:
+        products = products.filter(
+            Q(name__icontains=search_query) |
+            Q(product_code__icontains=search_query) |
+            Q(category__name__icontains=search_query)
+        )
+    
+    # Get filter options
+    categories = ProductCategory.objects.all()
+    launch_years = Product.objects.dates('launch_date', 'year')
+    
+    # Pagination
+    paginator = Paginator(products.order_by('-launch_date'), 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Context for full page load
+    context = {
+        'products': page_obj,
+        'categories': categories,
+        'launch_years': [date.year for date in launch_years],
+        'active_count': Product.objects.filter(status='active').count(),
+        'variant_count': ProductVariant.objects.count(),
+        'is_paginated': paginator.num_pages > 1
+    }
+    
+    # AJAX response for HTMX requests
+    if request.htmx:
+        html = render_to_string(
+            'products/partials/product_grid.html', 
+            {'products': page_obj},
+            request=request
+        )
+        return HttpResponse(html)
+    
+    return render(request, 'products/product_list.html', context)
+
+def product_search(request):
+    query = request.GET.get('q', '')
+    products = Product.objects.filter(
+        Q(name__icontains=query) |
+        Q(product_code__icontains=query)
+    )[:10]
+    
+    html = render_to_string(
+        'products/partials/search_results.html', 
+        {'products': products},
+        request=request
+    )
+    return HttpResponse(html)
+
+def quick_view(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    variants = product.variants.all()
+    return render(request, 'products/partials/quick_view.html', {
+        'product': product,
+        'variants': variants
+    })
+
+
+def import_csv(file, update_existing: bool) -> tuple[int, int, list[dict]]:
+    """Returns: (success_count, error_count, error_list)"""
+    ...
+
+from django.http import JsonResponse
+from .forms import ProductImportForm
+
+def import_products(request):
+    if request.method == 'POST':
+        form = ProductImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                success_count, error_count, error_list = import_csv(
+                    form.cleaned_data['csv_file'],
+                    form.cleaned_data['update_existing']
+                )
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'imported': success_count,
+                    'errors': error_count,
+                    'error_samples': error_list[:5] if error_count > 0 else None
+                })
+                
+            except Exception as e:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': str(e)
+                }, status=500)
+        
+        # Return form errors if validation fails
+        return JsonResponse({
+            'status': 'error',
+            'errors': form.errors.get_json_data()
+        }, status=400)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Only POST requests are allowed'
+    }, status=405)
+
+def toggle_product_status(request, pk):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, pk=pk)
+        product.status = 'discontinued' if product.status == 'active' else 'active'
+        product.save()
+        return JsonResponse({
+            'status': 'success',
+            'new_status': product.get_status_display(),
+            'is_active': product.status == 'active'
+        })
+    return JsonResponse({'status': 'error'}, status=405)
+    return render(request, 'products/product_list.html', {'products': products})
+
+def product_detail(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    variants = product.variants.all()
+    return render(request, 'products/product_detail.html', {
+        'product': product,
+        'variants': variants
+    })
+
+def product_create(request):
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        if form.is_valid():
+            product = form.save()
+            messages.success(request, f'Product {product.name} created!')
+            return redirect('product_detail', pk=product.pk)
+    else:
+        form = ProductForm()
+    return render(request, 'products/product_form.html', {'form': form})
+
+# --- Product Variant Views ---
+def variant_create(request, product_pk):
+    product = get_object_or_404(Product, pk=product_pk)
+    if request.method == 'POST':
+        form = ProductVariantForm(request.POST)
+        if form.is_valid():
+            variant = form.save(commit=False)
+            variant.product = product
+            variant.save()
+            messages.success(request, f'Variant {variant.name} added!')
+            return redirect('product_detail', pk=product.pk)
+    else:
+        form = ProductVariantForm()
+    return render(request, 'products/variant_form.html', {
+        'form': form,
+        'product': product
+    })

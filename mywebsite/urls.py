@@ -39,5 +39,24 @@ urlpatterns = [
     path('payroll/<int:pk>/delete/', views.payroll_delete, name='payroll_delete'),
     path('payroll/', views.payroll_list, name='payroll_list'),
     path('payroll/<int:pk>/process/', views.payroll_process, name='payroll_process'),
+
+    # Categories
+    path('categories/', views.category_list, name='category_list'),
+    path('categories/<int:pk>/', views.category_detail, name='category_detail'),
+    path('categories/create/', views.category_create, name='category_create'),
+    
+    # Products
+    path('store', views.product_list, name='product_list'),
+    path('store/<int:pk>/', views.product_detail, name='product_detail'),
+    path('store/create/', views.product_create, name='product_create'),
+    
+    # Variants
+    path('store/<int:product_pk>/variants/create/', views.variant_create, name='variant_create'),
+
+     # AJAX Endpoints
+    path('search/', views.product_search, name='product_search'),
+    path('<int:pk>/quickview/', views.quick_view, name='quick_view'),
+    path('<int:pk>/toggle-status/', views.toggle_product_status, name='toggle_status'),
+    path('import/', views.import_products, name='import_products'),
     
 ]

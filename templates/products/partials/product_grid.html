@@ -1,0 +1,51 @@
+{% for product in products %}
+<div class="col-xl-3 col-lg-4 col-md-6">
+    <div class="product-card h-100">
+        <div class="position-relative">
+            <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/default-product.png' %}{% endif %}" 
+                 class="img-fluid w-100 product-image p-3" 
+                 alt="{{ product.name }}">
+            <span class="product-badge badge bg-{% if product.status == 'active' %}success{% else %}secondary{% endif %}">
+                {{ product.get_status_display }}
+            </span>
+        </div>
+        <div class="p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="mb-0">{{ product.name }}</h5>
+                <span class="badge bg-light text-dark">{{ product.product_code }}</span>
+            </div>
+            <p class="text-muted small mb-2">{{ product.category.name }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="badge bg-info">
+                    <i class="fas fa-boxes me-1"></i>{{ product.variants.count }}
+                </span>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-dark quick-view-btn" data-id="{{ product.id }}">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-outline-dark">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-outline-danger" 
+                            data-bs-toggle="tooltip" 
+                            title="Discontinue"
+                            {% if product.status == 'discontinued' %}disabled{% endif %}>
+                        <i class="fas fa-ban"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="col-12">
+    <div class="text-center py-5">
+        <img src="{% static 'images/empty-product.svg' %}" style="height: 150px;" class="mb-4">
+        <h4 class="text-muted">No products found</h4>
+        <p class="text-muted">Try adjusting your filters or create a new product</p>
+        <a href="{% url 'products:product_create' %}" class="btn btn-danger mt-2">
+            <i class="fas fa-plus me-2"></i>Create Product
+        </a>
+    </div>
+</div>
+{% endfor %}

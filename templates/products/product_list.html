@@ -1,0 +1,326 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Product Portfolio - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header with Stats -->
+    <div class="d-flex justify-content-between align-items-end mb-5">
+        <div>
+            <h1 class="display-6 fw-bold text-danger">
+                <i class="fas fa-cubes me-2"></i>Product Portfolio
+            </h1>
+            <p class="text-muted">Manage Coca-Cola's global product formulations and variants</p>
+        </div>
+        <div class="text-end">
+            <div class="d-flex gap-3">
+                <div class="border-end pe-3">
+                    <h5 class="mb-0">{{ active_count }}</h5>
+                    <small class="text-muted">Active Products</small>
+                </div>
+                <div>
+                    <h5 class="mb-0">{{ variant_count }}</h5>
+                    <small class="text-muted">Total Variants</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="card shadow-lg mb-5 border-0">
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="search-box">
+                        <i class="fas fa-search position-absolute mt-2 ms-3 text-muted"></i>
+                        <input type="text" id="product-search" class="form-control ps-5" 
+                               placeholder="Search products, codes, categories..." 
+                               hx-get="{% url 'products:search' %}"
+                               hx-trigger="keyup changed delay:300ms"
+                               hx-target="#product-results"
+                               hx-indicator=".search-indicator">
+                        <span class="search-indicator position-absolute end-0 mt-2 me-3 htmx-indicator">
+                            <div class="spinner-border spinner-border-sm text-danger" role="status"></div>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="d-flex gap-2">
+                        <select class="form-select select2" id="category-filter">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select class="form-select" id="status-filter">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="discontinued">Discontinued</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#importModal">
+                        <i class="fas fa-file-import me-2"></i>Import
+                    </button>
+                    <a href="{% url 'products:product_create' %}" class="btn btn-dark">
+                        <i class="fas fa-plus me-2"></i>New Product
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div id="product-results" class="row g-4">
+        {% include 'products/partials/product_grid.html' %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Import Products</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="importForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Select CSV File</label>
+                        <input type="file" class="form-control" name="csv_file" accept=".csv">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="updateExisting" name="update_existing">
+                        <label class="form-check-label" for="updateExisting">Update existing products</label>
+                    </div>
+                    <a href="{% static 'templates/product_import_template.csv' %}" class="text-danger">
+                        <i class="fas fa-download me-1"></i>Download template
+                    </a>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="startImport">
+                    <i class="fas fa-upload me-1"></i>Import
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick View Modal (Will be populated by HTMX) -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="quick-view-content">
+            <!-- HTMX will load content here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .product-card {
+        transition: all 0.2s ease;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(220,53,69,0.1);
+    }
+    .product-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .product-image {
+        height: 180px;
+        object-fit: contain;
+        background: #f9f9f9;
+    }
+    .search-box {
+        position: relative;
+    }
+    .search-box i {
+        z-index: 3;
+    }
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2
+    $('#category-filter').select2({
+        placeholder: "Filter by category",
+        width: '100%'
+    }).on('change', function() {
+        const category = $(this).val();
+        const status = $('#status-filter').val();
+        reloadProducts(category, status);
+    });
+
+    $('#status-filter').on('change', function() {
+        const category = $('#category-filter').val();
+        const status = $(this).val();
+        reloadProducts(category, status);
+    });
+
+    // Quick view modal handler
+    document.body.addEventListener('click', function(e) {
+        if (e.target.closest('.quick-view-btn')) {
+            const productId = e.target.closest('.quick-view-btn').dataset.id;
+            fetch(`/products/${productId}/quickview/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('quick-view-content').innerHTML = html;
+                    new bootstrap.Modal(document.getElementById('quickViewModal')).show();
+                });
+        }
+    });
+
+    // Import functionality
+    $('#startImport').click(function() {
+        const formData = new FormData(document.getElementById('importForm'));
+        $.ajax({
+            url: "{% url 'products:import' %}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            beforeSend: function() {
+                $('#startImport').prop('disabled', true)
+                    .html('<span class="spinner-border spinner-border-sm" role="status"></span> Importing...');
+            },
+            success: function(response) {
+                $('#importModal').modal('hide');
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('Error during import: ' + xhr.responseText);
+            },
+            complete: function() {
+                $('#startImport').prop('disabled', false)
+                    .html('<i class="fas fa-upload me-1"></i>Import');
+            }
+        });
+    });
+
+    function reloadProducts(category, status) {
+        const params = new URLSearchParams();
+        if (category) params.append('category', category);
+        if (status) params.append('status', status);
+        
+        fetch(`{% url 'products:product_list' %}?${params.toString()}`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('product-results').innerHTML = html;
+                initTooltips();
+            });
+    }
+
+    function initTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+    
+    initTooltips();
+});
+
+// Add to your existing scripts
+document.getElementById('startImport').addEventListener('click', function() {
+    const formData = new FormData(document.getElementById('importForm'));
+    
+    fetch("{% url 'products:import_products' %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast(`Successfully imported ${data.imported} products`, 'success');
+            location.reload();
+        } 
+        else if (data.status === 'partial') {
+            showToast(`Imported ${data.success} products with ${data.errors} errors`, 'warning');
+            displayImportErrors(data.error_list);
+        }
+        else {
+            showToast(data.message || 'Import failed', 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Network error during import', 'error');
+    });
+});
+
+function displayImportErrors(errors) {
+    const modalBody = document.createElement('div');
+    modalBody.innerHTML = `
+        <div class="alert alert-warning">
+            <h5><i class="fas fa-exclamation-triangle"></i> Import Completed with Errors</h5>
+            <p>First ${errors.length} errors shown:</p>
+            <ul class="mb-0">
+                ${errors.map(e => `<li><strong>Row ${e.row}</strong> (${e.product_code}): ${e.error}</li>`).join('')}
+            </ul>
+        </div>
+    `;
+    
+    // Replace modal content
+    const importModal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
+    importModal._dialog.querySelector('.modal-body').appendChild(modalBody);
+}
+</script>
+{% endblock %}

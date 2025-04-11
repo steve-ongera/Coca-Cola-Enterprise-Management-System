@@ -1,0 +1,35 @@
+{% extends "base/base.html" %}
+{% block title %}Product Categories - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card shadow-lg">
+    <div class="card-header bg-danger text-white">
+      <h3><i class="fas fa-tags"></i> Product Categories</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        {% for category in categories %}
+        <div class="col-md-4 mb-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">
+                <a href="{% url 'category_detail' category.pk %}">{{ category.name }}</a>
+              </h5>
+              {% if category.subcategories.exists %}
+              <h6 class="mt-3">Subcategories:</h6>
+              <ul>
+                {% for subcat in category.subcategories.all %}
+                <li><a href="{% url 'category_detail' subcat.pk %}">{{ subcat.name }}</a></li>
+                {% endfor %}
+              </ul>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

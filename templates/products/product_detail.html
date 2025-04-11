@@ -1,0 +1,56 @@
+{% extends "base/base.html" %}
+{% block title %}{{ product.name }} - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card shadow-lg">
+    <div class="card-header bg-danger text-white">
+      <div class="d-flex justify-content-between">
+        <h3>{{ product.name }} <small>({{ product.product_code }})</small></h3>
+        <span class="badge bg-{% if product.status == 'active' %}success{% else %}secondary{% endif %}">
+          {{ product.get_status_display }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <h5>Product Details</h5>
+          <p>{{ product.description }}</p>
+          <table class="table table-bordered">
+            <tr><th>Category:</th><td>{{ product.category.name }}</td></tr>
+            <tr><th>Launch Date:</th><td>{{ product.launch_date|date:"M Y" }}</td></tr>
+          </table>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="d-flex justify-content-between mb-3">
+            <h5>Variants</h5>
+            <a href="{% url 'variant_create' product.pk %}" class="btn btn-sm btn-danger">
+              <i class="fas fa-plus"></i> Add Variant
+            </a>
+          </div>
+          
+          <div class="list-group">
+            {% for variant in variants %}
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between">
+                <h6>{{ variant.name }} ({{ variant.size }})</h6>
+                <span class="badge bg-{% if variant.status == 'active' %}success{% else %}secondary{% endif %}">
+                  {{ variant.get_status_display }}
+                </span>
+              </div>
+              <div>
+                <span class="badge bg-info">{{ variant.get_packaging_type_display }}</span>
+                <small class="text-muted">Barcode: {{ variant.barcode }}</small>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
