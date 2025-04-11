@@ -1,0 +1,147 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Leave Requests - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-calendar-alt text-danger"></i> Leave Requests
+                </h2>
+                <a href="{% url 'leave_create' %}" class="btn btn-danger">
+                    <i class="fas fa-plus"></i> New Request
+                </a>
+            </div>
+            <hr class="mt-2 mb-4">
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="employee" class="form-label">Employee</label>
+                            <select id="employee" name="employee" class="form-select">
+                                <option value="">All Employees</option>
+                                {% for employee in employees %}
+                                    <option value="{{ employee.id }}" {% if request.GET.employee == employee.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ employee.user.get_full_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select id="status" name="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                {% for value, display in status_choices %}
+                                    <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="leave_type" class="form-label">Leave Type</label>
+                            <select id="leave_type" name="leave_type" class="form-select">
+                                <option value="">All Types</option>
+                                {% for value, display in leave_type_choices %}
+                                    <option value="{{ value }}" {% if request.GET.leave_type == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="date_from" class="form-label">From Date</label>
+                            <input type="date" id="date_from" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="date_to" class="form-label">To Date</label>
+                            <input type="date" id="date_to" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-danger me-2">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                            <a href="{% url 'leave_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-sync-alt"></i>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave Requests Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Leave Type</th>
+                                    <th>Dates</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for leave in leaves %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'employee_detail' leave.employee.pk %}">
+                                                {{ leave.employee.user.get_full_name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ leave.get_leave_type_display }}</td>
+                                        <td>
+                                            {{ leave.start_date|date:"M j" }} - {{ leave.end_date|date:"M j, Y" }}
+                                        </td>
+                                        <td>{{ leave.duration }} day{{ leave.duration|pluralize }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                                {{ leave.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'leave_detail' leave.pk %}" class="btn btn-info" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if leave.employee.user == request.user or request.user.is_superuser %}
+                                                    <a href="{% url 'leave_update' leave.pk %}" class="btn btn-warning" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{% url 'leave_delete' leave.pk %}" class="btn btn-danger" title="Delete">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No leave requests found</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

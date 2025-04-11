@@ -92,7 +92,40 @@ class AttendanceForm(forms.ModelForm):
         model = Attendance
         fields = ['employee', 'date', 'check_in_time', 'check_out_time', 'status']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
-            'check_in_time': forms.TimeInput(attrs={'type': 'time'}),
-            'check_out_time': forms.TimeInput(attrs={'type': 'time'}),
+            'employee': forms.Select(attrs={'class': 'form-control'}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'check_in_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'check_out_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
         }
+
+
+from django import forms
+from .models import Leave
+from django.core.exceptions import ValidationError
+from datetime import date
+
+class LeaveForm(forms.ModelForm):
+    class Meta:
+        model = Leave
+        fields = ['employee','leave_type', 'start_date', 'end_date', 'reason']
+        widgets = {
+            'employee': forms.Select(attrs={'class': 'form-control'}),
+            'leave_type': forms.Select(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'reason': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        
+        if start_date and end_date:
+            if start_date > end_date:
+                raise ValidationError("End date must be after start date")
+            if start_date < date.today():
+                raise ValidationError("Cannot request leave for past dates")
+        
+        return cleaned_data

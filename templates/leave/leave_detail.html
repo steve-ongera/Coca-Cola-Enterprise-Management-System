@@ -1,0 +1,106 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Leave Request - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-calendar-minus text-danger"></i> Leave Request
+                </h2>
+                <div>
+                    {% if leave.status == 'pending' and request.user.is_superuser %}
+                        <form method="POST" action="{% url 'leave_approve' leave.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success me-2">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                        </form>
+                        <form method="POST" action="{% url 'leave_reject' leave.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger me-2">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </form>
+                    {% endif %}
+                    {% if leave.employee.user == request.user or request.user.is_superuser %}
+                        <a href="{% url 'leave_update' leave.pk %}" class="btn btn-warning me-2">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="{% url 'leave_delete' leave.pk %}" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <hr class="mt-2 mb-4">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Leave Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" class="w-25">Employee</th>
+                                    <td>
+                                        <a href="{% url 'employee_detail' leave.employee.pk %}">
+                                            {{ leave.employee.user.get_full_name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Leave Type</th>
+                                    <td>{{ leave.get_leave_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Duration</th>
+                                    <td>{{ duration }} day{{ duration|pluralize }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Dates</th>
+                                    <td>{{ leave.start_date|date:"M j, Y" }} to {{ leave.end_date|date:"M j, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Status</th>
+                                    <td>
+                                        <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                            {{ leave.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% if leave.approved_by %}
+                                <tr>
+                                    <th scope="row">Approved By</th>
+                                    <td>{{ leave.approved_by.get_full_name }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Reason</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ leave.reason|linebreaks }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

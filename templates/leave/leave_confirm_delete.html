@@ -1,0 +1,95 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Delete Leave Request - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Deletion
+                    </h3>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">Warning!</h4>
+                        <p>You are about to permanently delete this leave request from the Coca-Cola ERP system.</p>
+                        <hr>
+                        <p class="mb-0">This action cannot be undone. All related data will be permanently removed.</p>
+                    </div>
+
+                    <div class="leave-details p-4 border rounded bg-light">
+                        <h5 class="text-center mb-4">Leave Request Details</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row" class="w-25">Employee</th>
+                                        <td>
+                                            <a href="{% url 'employee_detail' leave.employee.pk %}">
+                                                {{ leave.employee.user.get_full_name }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Leave Type</th>
+                                        <td>{{ leave.get_leave_type_display }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Dates</th>
+                                        <td>{{ leave.start_date|date:"M j, Y" }} to {{ leave.end_date|date:"M j, Y" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Status</th>
+                                        <td>
+                                            <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                                {{ leave.get_status_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <form method="POST" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'leave_detail' leave.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left mr-2"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt mr-2"></i> Confirm Delete
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> For assistance, contact HR at hr@coca-cola.com
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .border-danger {
+        border: 1px solid #dc3545;
+    }
+    .leave-details {
+        background-color: #f8f9fa;
+    }
+    .table th {
+        background-color: #e9ecef;
+    }
+</style>
+{% endblock %}

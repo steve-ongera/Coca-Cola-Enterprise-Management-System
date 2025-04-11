@@ -722,3 +722,123 @@ def attendance_list(request):
         'employees': employees,
         'status_choices': Attendance.STATUS_CHOICES
     })
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import Leave, Employee
+from .forms import LeaveForm
+from datetime import date
+
+@login_required
+def leave_create(request):
+    if request.method == 'POST':
+        form = LeaveForm(request.POST)
+        if form.is_valid():
+            leave = form.save()
+            messages.success(request, 'Leave request submitted successfully!')
+            return redirect('leave_detail', pk=leave.pk)
+    else:
+        form = LeaveForm()
+    
+    return render(request, 'leave/leave_form.html', {
+        'form': form,
+        'title': 'Create Leave Request'
+    })
+
+@login_required
+def leave_detail(request, pk):
+    leave = get_object_or_404(Leave, pk=pk)
+    
+    # Calculate leave duration
+    duration = (leave.end_date - leave.start_date).days + 1
+    
+    return render(request, 'leave/leave_detail.html', {
+        'leave': leave,
+        'duration': duration
+    })
+
+@login_required
+def leave_update(request, pk):
+    leave = get_object_or_404(Leave, pk=pk)
+    
+    if request.method == 'POST':
+        form = LeaveForm(request.POST, instance=leave)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Leave request updated successfully!')
+            return redirect('leave_detail', pk=leave.pk)
+    else:
+        form = LeaveForm(instance=leave)
+    
+    return render(request, 'leave/leave_form.html', {
+        'form': form,
+        'title': 'Update Leave Request',
+        'leave': leave
+    })
+
+@login_required
+def leave_delete(request, pk):
+    leave = get_object_or_404(Leave, pk=pk)
+    
+    if request.method == 'POST':
+        leave.delete()
+        messages.success(request, 'Leave request deleted successfully!')
+        return redirect('leave_list')
+    
+    return render(request, 'leave/leave_confirm_delete.html', {
+        'leave': leave
+    })
+
+@login_required
+def leave_list(request):
+    leaves = Leave.objects.all().order_by('-start_date')
+    
+    # Filtering
+    employee_id = request.GET.get('employee')
+    status = request.GET.get('status')
+    leave_type = request.GET.get('leave_type')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    if employee_id:
+        leaves = leaves.filter(employee__id=employee_id)
+    if status:
+        leaves = leaves.filter(status=status)
+    if leave_type:
+        leaves = leaves.filter(leave_type=leave_type)
+    if date_from:
+        leaves = leaves.filter(start_date__gte=date_from)
+    if date_to:
+        leaves = leaves.filter(end_date__lte=date_to)
+    
+    employees = Employee.objects.all()
+    
+    return render(request, 'leave/leave_list.html', {
+        'leaves': leaves,
+        'employees': employees,
+        'status_choices': Leave.STATUS_CHOICES,
+        'leave_type_choices': Leave.LEAVE_TYPE_CHOICES
+    })
+
+@login_required
+def leave_approve(request, pk):
+    leave = get_object_or_404(Leave, pk=pk)
+    if request.method == 'POST':
+        leave.status = 'approved'
+        leave.approved_by = request.user
+        leave.save()
+        messages.success(request, 'Leave request approved successfully!')
+    return redirect('leave_detail', pk=leave.pk)
+
+@login_required
+def leave_reject(request, pk):
+    leave = get_object_or_404(Leave, pk=pk)
+    if request.method == 'POST':
+        leave.status = 'rejected'
+        leave.approved_by = request.user
+        leave.save()
+        messages.success(request, 'Leave request rejected successfully!')
+    return redirect('leave_detail', pk=leave.pk)

@@ -19,9 +19,18 @@ urlpatterns = [
     path('employees/<int:pk>/delete/', views.employee_delete, name='employee_delete'),
 
     path('attendance_list/', views.attendance_list, name='attendance_list'),
-    path('create/', views.attendance_create, name='attendance_create'),
-    path('<int:pk>/', views.attendance_detail, name='attendance_detail'),
-    path('<int:pk>/update/', views.attendance_update, name='attendance_update'),
-    path('<int:pk>/delete/', views.attendance_delete, name='attendance_delete'),
+    path('attendance/create/', views.attendance_create, name='attendance_create'),
+    path('attendance/<int:pk>/', views.attendance_detail, name='attendance_detail'),
+    path('attendance/<int:pk>/update/', views.attendance_update, name='attendance_update'),
+    path('attendance/<int:pk>/delete/', views.attendance_delete, name='attendance_delete'),
+
+
+    path('leave_list', views.leave_list, name='leave_list'),
+    path('create_leave/', views.leave_create, name='leave_create'),
+    path('leave/<int:pk>/', views.leave_detail, name='leave_detail'),
+    path('leave/<int:pk>/update/', views.leave_update, name='leave_update'),
+    path('leave/<int:pk>/delete/', views.leave_delete, name='leave_delete'),
+    path('leave/<int:pk>/approve/', views.leave_approve, name='leave_approve'),
+    path('leave/<int:pk>/reject/', views.leave_reject, name='leave_reject'),
     
 ]
