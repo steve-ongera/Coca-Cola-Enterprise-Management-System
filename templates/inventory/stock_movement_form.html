@@ -1,0 +1,296 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <div class="row justify-content-center">
+        <div class="col-lg-12">
+            <!-- Form Header with Coca-Cola Branding -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center">
+                    <img src="/static/assets/img/coca-cola-logo.png" alt="Coca-Cola" class="me-3" style="height: 40px;">
+                    <h2 class="mb-0">
+                        <i class="bi bi-arrow-left-right"></i> 
+                        {% if form.instance.pk %}Update{% else %}Create{% endif %} Stock Movement
+                    </h2>
+                </div>
+                <a href="{% url 'stock_movement_list' %}" class="btn btn-coca-light">
+                    <i class="bi bi-arrow-left"></i> Back to Movements
+                </a>
+            </div>
+
+            <!-- Stock Movement Form Card -->
+            <div class="card border-coca">
+                <div class="card-header bg-coca-red text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data"></i> Movement Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Hidden Fields -->
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        
+                        <!-- Form Errors -->
+                        {% if form.errors %}
+                        <div class="alert alert-coca-danger mb-4">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            Please correct the errors below.
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row g-3">
+                            <!-- Inventory Item -->
+                            <div class="col-md-6">
+                                <label for="{{ form.inventory_item.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-box-seam"></i> Inventory Item
+                                </label>
+                                {{ form.inventory_item }}
+                                {% if form.inventory_item.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.inventory_item.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Movement Type -->
+                            <div class="col-md-6">
+                                <label for="{{ form.movement_type.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-arrow-left-right"></i> Movement Type
+                                </label>
+                                {{ form.movement_type }}
+                                {% if form.movement_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.movement_type.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Date and Time -->
+                            <div class="col-md-6">
+                                <label for="{{ form.date.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-calendar"></i> Date & Time
+                                </label>
+                                {{ form.date }}
+                                {% if form.date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.date.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Quantity -->
+                            <div class="col-md-6">
+                                <label for="{{ form.quantity_change.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-123"></i> Quantity
+                                </label>
+                                <div class="input-group">
+                                    {{ form.quantity_change }}
+                                    <span class="input-group-text bg-coca-light text-coca-dark">
+                                        {% if form.instance.inventory_item %}
+                                            {{ form.instance.inventory_item.unit_of_measure }}
+                                        {% else %}
+                                            units
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% if form.quantity_change.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.quantity_change.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Reference -->
+                            <div class="col-12">
+                                <label for="{{ form.reference.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-file-text"></i> Reference (Optional)
+                                </label>
+                                {{ form.reference }}
+                                <small class="text-muted">PO number, sales order, or other reference</small>
+                                {% if form.reference.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.reference.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Notes -->
+                            <div class="col-12">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-pencil"></i> Notes
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.notes.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Current Stock Level (Display Only) -->
+                            {% if form.instance.inventory_item %}
+                            <div class="col-12">
+                                <div class="alert alert-coca-info">
+                                    <div class="d-flex justify-content-between">
+                                        <span>
+                                            <i class="bi bi-info-circle-fill"></i>
+                                            Current stock: 
+                                            <strong>{{ form.instance.inventory_item.quantity }}</strong> 
+                                            {{ form.instance.inventory_item.unit_of_measure }}
+                                        </span>
+                                        <span>
+                                            Reorder level: 
+                                            <strong>{{ form.instance.inventory_item.reorder_level }}</strong>
+                                            {{ form.instance.inventory_item.unit_of_measure }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Form Actions -->
+                            <div class="col-12 mt-4">
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <button type="submit" class="btn btn-coca-red me-md-2">
+                                        <i class="bi bi-save"></i> Save Movement
+                                    </button>
+                                    <button type="reset" class="btn btn-coca-light">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help Card -->
+            <div class="card border-coca mt-4">
+                <div class="card-header bg-coca-light text-coca-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-question-circle"></i> Stock Movement Help
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-coca-dark"><i class="bi bi-box-arrow-in-down"></i> Receiving Stock</h6>
+                            <p class="text-coca-dark">
+                                Use <span class="badge bg-coca-green">In</span> movement type when adding new inventory 
+                                from suppliers or transfers.
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-coca-dark"><i class="bi bi-box-arrow-up"></i> Dispatching Stock</h6>
+                            <p class="text-coca-dark">
+                                Use <span class="badge bg-coca-warning">Out</span> movement type when fulfilling orders 
+                                or transferring to other locations.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Coca-Cola Theme Extensions for Form */
+    .alert-coca-danger {
+        background-color: rgba(237, 28, 22, 0.1);
+        border-left: 4px solid #ED1C16;
+        color: #ED1C16;
+    }
+    
+    .alert-coca-info {
+        background-color: rgba(30, 138, 59, 0.1);
+        border-left: 4px solid #1E8A3B;
+        color: #1E8A3B;
+    }
+    
+    select.form-control, 
+    input.form-control,
+    textarea.form-control {
+        border: 1px solid #D0D0D0;
+        border-radius: 4px;
+    }
+    
+    select.form-control:focus, 
+    input.form-control:focus,
+    textarea.form-control:focus {
+        border-color: #ED1C16;
+        box-shadow: 0 0 0 0.25rem rgba(237, 28, 22, 0.25);
+    }
+    
+    .was-validated select.form-control:valid,
+    .was-validated input.form-control:valid,
+    .was-validated textarea.form-control:valid {
+        border-color: #1E8A3B;
+    }
+    
+    .was-validated select.form-control:invalid,
+    .was-validated input.form-control:invalid,
+    .was-validated textarea.form-control:invalid {
+        border-color: #ED1C16;
+    }
+    
+    .input-group-text {
+        border-color: #D0D0D0;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize date time picker
+    $('input[type="datetime-local"]').flatpickr({
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        time_24hr: true,
+        defaultDate: new Date()
+    });
+    
+    // Dynamic inventory item selection
+    $('#id_inventory_item').select2({
+        theme: 'bootstrap-5',
+        placeholder: "Select inventory item",
+        width: '100%'
+    });
+    
+    // Form validation
+    (function() {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })();
+    
+    // Show/hide reference field based on movement type
+    $('#id_movement_type').change(function() {
+        const refField = $('#id_reference').closest('.col-12');
+        if ($(this).val() === 'adjustment') {
+            refField.find('label').append(' <span class="text-danger">*</span>');
+            refField.find('small').text('Required for adjustments');
+        } else {
+            refField.find('label span').remove();
+            refField.find('small').text('PO number, sales order, or other reference');
+        }
+    }).trigger('change');
+});
+</script>
+{% endblock %}

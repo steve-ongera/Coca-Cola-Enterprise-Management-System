@@ -1,0 +1,196 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Header with Coca-Cola Branding -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+        <div class="d-flex align-items-center">
+            <img src="/static/assets/img/coca-cola-logo.png" alt="Coca-Cola" class="me-3" style="height: 40px;">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-file-earmark-text"></i> Purchase Orders
+            </h1>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'purchase_order_create' %}" class="btn btn-coca-red">
+                <i class="bi bi-plus-circle"></i> Create PO
+            </a>
+        </div>
+    </div>
+
+    <!-- Purchase Orders Card -->
+    <div class="card border-coca">
+        <div class="card-header bg-coca-red text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-card-checklist"></i> Purchase Order List
+            </h5>
+            <div class="d-flex align-items-center">
+                <div class="input-group" style="width: 200px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-funnel"></i></span>
+                    <select class="form-select form-select-sm" onchange="window.location.href='?status='+this.value">
+                        <option value="">All Statuses</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-coca-light">
+                        <tr>
+                            <th><i class="bi bi-hash"></i> PO Number</th>
+                            <th><i class="bi bi-truck"></i> Supplier</th>
+                            <th><i class="bi bi-calendar"></i> Order Date</th>
+                            <th><i class="bi bi-calendar-check"></i> Expected Delivery</th>
+                            <th><i class="bi bi-info-circle"></i> Status</th>
+                            <th><i class="bi bi-currency-dollar"></i> Total Amount</th>
+                            <th><i class="bi bi-gear"></i> Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in page_obj %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'purchase_order_detail' order.pk %}" class="text-coca-red fw-bold">
+                                    {{ order.order_number }}
+                                </a>
+                            </td>
+                            <td>{{ order.supplier.name }}</td>
+                            <td>{{ order.order_date|date:"Y-m-d" }}</td>
+                            <td>
+                                <span class="{% if order.is_overdue %}text-coca-danger{% else %}text-coca-dark{% endif %}">
+                                    {{ order.expected_delivery_date|date:"Y-m-d" }}
+                                </span>
+                                {% if order.is_overdue %}
+                                <i class="bi bi-exclamation-triangle-fill text-coca-danger ms-1"></i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if order.status == 'received' %}bg-coca-green
+                                    {% elif order.status == 'sent' %}bg-coca-blue
+                                    {% elif order.status == 'draft' %}bg-secondary
+                                    {% elif order.status == 'cancelled' %}bg-coca-danger
+                                    {% else %}bg-coca-warning{% endif %}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="fw-bold">Ksh {{ order.total_amount|floatformat:2 }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'purchase_order_detail' order.pk %}" class="btn btn-coca-outline" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="#" class="btn btn-coca-outline" title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    {% if order.status == 'draft' %}
+                                    <a href="#" class="btn btn-coca-outline" title="Send to Supplier">
+                                        <i class="bi bi-send"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-coca-dark">
+                                <i class="bi bi-exclamation-circle"></i> No purchase orders found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% include 'inventory/pagination.html' %}
+            
+            <!-- Summary Stats -->
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <div class="card bg-coca-light">
+                        <div class="card-body text-center">
+                            <h6 class="card-subtitle mb-1 text-coca-dark">Total Orders</h6>
+                            <h3 class="card-title">{{ page_obj.paginator.count }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-coca-blue text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-subtitle mb-1">Pending Receipt</h6>
+                            <h3 class="card-title">{{ pending_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-coca-green text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-subtitle mb-1">Completed</h6>
+                            <h3 class="card-title">{{ completed_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Coca-Cola Theme Extensions */
+    .bg-coca-blue {
+        background-color: #1DA1F2;
+    }
+    
+    .text-coca-danger {
+        color: #ED1C16;
+    }
+    
+    .table-coca-light {
+        background-color: #F5F5F5;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(237, 28, 22, 0.05);
+    }
+    
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-coca-outline {
+        border: 1px solid #ED1C16;
+        color: #ED1C16;
+    }
+    
+    .btn-coca-outline:hover {
+        background-color: #ED1C16;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add hover effect to table rows
+    $('table tbody tr').hover(
+        function() {
+            $(this).css('transform', 'translateX(5px)');
+        },
+        function() {
+            $(this).css('transform', 'translateX(0)');
+        }
+    );
+});
+</script>
+{% endblock %}

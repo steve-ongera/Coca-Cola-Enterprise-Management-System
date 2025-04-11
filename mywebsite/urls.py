@@ -58,6 +58,30 @@ urlpatterns = [
     path('products/<int:pk>/quickview/', views.quick_view, name='product_quick_view'),
     path('<int:pk>/toggle-status/', views.toggle_product_status, name='toggle_status'),
     path('import/', views.import_products, name='import_products'),
+
+
+    # Warehouses
+    path('warehouses/', views.warehouse_list, name='warehouse_list'),
+    path('warehouses/create/', views.warehouse_create, name='warehouse_create'),
+    path('warehouses/<int:pk>/', views.warehouse_detail, name='warehouse_detail'),
+    path('warehouses/<int:pk>/edit/', views.warehouse_update, name='warehouse_update'),
+    
+    # Stock Movements
+    path('stock-movements/', views.stock_movement_list, name='stock_movement_list'),
+    path('stock-movements/create/', views.stock_movement_create, name='stock_movement_create'),
+    
+    # Purchase Orders
+    path('purchase-orders/', views.purchase_order_list, name='purchase_order_list'),
+    path('purchase-orders/create/', views.purchase_order_create, name='purchase_order_create'),
+    path('purchase-orders/<int:pk>/', views.purchase_order_detail, name='purchase_order_detail'),
+    
+    # Suppliers
+    path('suppliers/', views.supplier_list, name='supplier_list'),
+    path('suppliers/create/', views.supplier_create, name='supplier_create'),
+    path('suppliers/<int:pk>/', views.supplier_detail, name='supplier_detail'),
+    
+    # Alerts
+    path('low-stock-alerts/', views.low_stock_alerts, name='low_stock_alerts'),
    
     
 ]

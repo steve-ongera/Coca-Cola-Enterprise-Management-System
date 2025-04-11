@@ -1,0 +1,376 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <div class="row justify-content-center">
+        <div class="col-lg-12">
+            <!-- Form Header with Coca-Cola Branding -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center">
+                    <img src="/static/assets/img/coca-cola-logo.png" alt="Coca-Cola" class="me-3" style="height: 40px;">
+                    <h2 class="mb-0">
+                        <i class="bi bi-file-earmark-text"></i> 
+                        {% if form.instance.pk %}Edit{% else %}Create{% endif %} Purchase Order
+                    </h2>
+                </div>
+                <a href="{% url 'purchase_order_list' %}" class="btn btn-coca-light">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+
+            <!-- Purchase Order Form Card -->
+            <div class="card border-coca">
+                <div class="card-header bg-coca-red text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data"></i> Purchase Order Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Main Form Fields -->
+                        <div class="row g-3 mb-4">
+                            <!-- Supplier Selection -->
+                            <div class="col-md-6">
+                                <label for="{{ form.supplier.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-truck"></i> Supplier <span class="text-danger">*</span>
+                                </label>
+                                {{ form.supplier }}
+                                {% if form.supplier.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.supplier.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Order Dates -->
+                            <div class="col-md-3">
+                                <label for="{{ form.order_date.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-calendar"></i> Order Date <span class="text-danger">*</span>
+                                </label>
+                                {{ form.order_date }}
+                                {% if form.order_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.order_date.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="{{ form.expected_delivery_date.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-calendar-check"></i> Delivery Date <span class="text-danger">*</span>
+                                </label>
+                                {{ form.expected_delivery_date }}
+                                {% if form.expected_delivery_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.expected_delivery_date.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Payment Terms -->
+                            <div class="col-md-6">
+                                <label for="{{ form.payment_terms.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-credit-card"></i> Payment Terms
+                                </label>
+                                {{ form.payment_terms }}
+                                {% if form.payment_terms.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.payment_terms.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Status (visible only when editing) -->
+                            {% if form.instance.pk %}
+                            <div class="col-md-6">
+                                <label for="{{ form.status.id_for_label }}" class="form-label text-coca-dark">
+                                    <i class="bi bi-info-circle"></i> Status
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.status.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Line Items Section -->
+                        <div class="mb-4">
+                            <h5 class="text-coca-dark mb-3">
+                                <i class="bi bi-list-check"></i> Order Items
+                            </h5>
+                            
+                            {{ formset.management_form }}
+                            <div id="order-items-container">
+                                {% for form in formset %}
+                                <div class="card mb-3 border-coca item-form" data-item-id="{{ forloop.counter0 }}">
+                                    <div class="card-header bg-coca-light text-coca-dark d-flex justify-content-between align-items-center">
+                                        <span>Item #{{ forloop.counter }}</span>
+                                        {% if formset.can_delete %}
+                                        <span class="delete-item">
+                                            {{ form.DELETE }} Delete Item
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-3">
+                                            <!-- Item Type Selection -->
+                                            <div class="col-md-5">
+                                                <label class="form-label text-coca-dark">Item Type</label>
+                                                {{ form.content_type }}
+                                                {% if form.content_type.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.content_type.errors|join:", " }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <!-- Item Selection -->
+                                            <div class="col-md-5">
+                                                <label class="form-label text-coca-dark">Item</label>
+                                                {{ form.object_id }}
+                                                {% if form.object_id.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.object_id.errors|join:", " }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <!-- Quantity -->
+                                            <div class="col-md-2">
+                                                <label class="form-label text-coca-dark">Qty</label>
+                                                {{ form.quantity }}
+                                                {% if form.quantity.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.quantity.errors|join:", " }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <!-- Unit Price -->
+                                            <div class="col-md-3">
+                                                <label class="form-label text-coca-dark">Unit Price (Ksh)</label>
+                                                {{ form.unit_price }}
+                                                {% if form.unit_price.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.unit_price.errors|join:", " }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <!-- Notes -->
+                                            <div class="col-md-9">
+                                                <label class="form-label text-coca-dark">Notes</label>
+                                                {{ form.notes }}
+                                                {% if form.notes.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.notes.errors|join:", " }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <button type="button" id="add-item" class="btn btn-coca-outline">
+                                <i class="bi bi-plus-circle"></i> Add Item
+                            </button>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <button type="submit" name="save_draft" class="btn btn-coca-light me-md-2">
+                                <i class="bi bi-save"></i> Save Draft
+                            </button>
+                            <button type="submit" name="submit_order" class="btn btn-coca-red">
+                                <i class="bi bi-send-check"></i> {% if form.instance.pk %}Update{% else %}Create{% endif %} PO
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Empty Form Template for Adding New Items -->
+<div id="empty-form-template" style="display: none;">
+    <div class="card mb-3 border-coca item-form" data-item-id="__prefix__">
+        <div class="card-header bg-coca-light text-coca-dark d-flex justify-content-between align-items-center">
+            <span>New Item</span>
+            <span class="delete-item">
+                <input type="checkbox" name="items-__prefix__-DELETE" id="id_items-__prefix__-DELETE"> Delete Item
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <select name="items-__prefix__-content_type" class="form-select content-type-select" id="id_items-__prefix__-content_type">
+                        {% for ct in content_types %}
+                        <option value="{{ ct.id }}">{{ ct.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <select name="items-__prefix__-object_id" class="form-select item-select" id="id_items-__prefix__-object_id"></select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" name="items-__prefix__-quantity" class="form-control" id="id_items-__prefix__-quantity" step="0.01">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" name="items-__prefix__-unit_price" class="form-control" id="id_items-__prefix__-unit_price" step="0.01">
+                </div>
+                <div class="col-md-9">
+                    <input type="text" name="items-__prefix__-notes" class="form-control" id="id_items-__prefix__-notes">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Form-specific Coca-Cola styling */
+    .item-form {
+        transition: all 0.3s ease;
+    }
+    
+    .item-form:hover {
+        transform: translateX(5px);
+    }
+    
+    .delete-item {
+        color: #ED1C16;
+        cursor: pointer;
+    }
+    
+    .delete-item:hover {
+        text-decoration: underline;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 1px solid #D0D0D0;
+        height: 38px;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: 36px;
+    }
+    
+    .flatpickr-input {
+        height: 38px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize date pickers
+    $('input[type="date"]').flatpickr({
+        dateFormat: "Y-m-d",
+        defaultDate: new Date()
+    });
+    
+    // Initialize select2 for supplier
+    $('#id_supplier').select2({
+        theme: 'bootstrap-5',
+        placeholder: "Select a supplier",
+        width: '100%'
+    });
+    
+    // Initialize select2 for content types
+    $('.content-type-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+    
+    // Initialize select2 for items
+    $('.item-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+    
+    // Dynamic item selection based on content type
+    $(document).on('change', '.content-type-select', function() {
+        const contentTypeId = $(this).val();
+        const itemSelect = $(this).closest('.row').find('.item-select');
+        const formPrefix = $(this).closest('.item-form').data('item-id');
+        
+        if (contentTypeId) {
+            $.ajax({
+                url: '{% url "get_items_for_content_type" %}',
+                data: {
+                    'content_type_id': contentTypeId
+                },
+                success: function(data) {
+                    itemSelect.empty();
+                    $.each(data.items, function(index, item) {
+                        itemSelect.append(new Option(item.text, item.id));
+                    });
+                }
+            });
+        } else {
+            itemSelect.empty();
+        }
+    });
+    
+    // Add new item form
+    $('#add-item').click(function() {
+        const formCount = $('#id_items-TOTAL_FORMS').val();
+        const template = $('#empty-form-template').html().replace(/__prefix__/g, formCount);
+        $('#order-items-container').append(template);
+        $('#id_items-TOTAL_FORMS').val(parseInt(formCount) + 1);
+        
+        // Initialize select2 for new fields
+        $('#id_items-' + formCount + '-content_type').select2({
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
+    });
+    
+    // Delete item handler
+    $(document).on('click', '.delete-item', function() {
+        $(this).closest('.item-form').remove();
+        // Update total forms count if needed
+    });
+    
+    // Form validation
+    (function() {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })();
+    
+    // Validate delivery date is after order date
+    $('#id_expected_delivery_date').change(function() {
+        const orderDate = new Date($('#id_order_date').val());
+        const deliveryDate = new Date($(this).val());
+        
+        if (deliveryDate <= orderDate) {
+            $(this).addClass('is-invalid');
+            $(this).next('.invalid-feedback').text('Delivery date must be after order date');
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).next('.invalid-feedback').text('');
+        }
+    });
+});
+</script>
+{% endblock %}

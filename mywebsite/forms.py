@@ -358,3 +358,238 @@ class ProductImportForm(forms.Form):
             raise forms.ValidationError('File too large. Maximum size is 5MB.')
         
         return csv_file
+    
+
+
+
+# inventory/forms.py
+from django import forms
+from .models import *
+
+class WarehouseForm(forms.ModelForm):
+    class Meta:
+        model = Warehouse
+        fields = ['name', 'location', 'capacity', 'manager', 'status']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'location': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'capacity': forms.NumberInput(attrs={'class': 'form-control'}),
+            'manager': forms.Select(attrs={'class': 'form-select'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+
+from django import forms
+from django.contrib.contenttypes.models import ContentType
+from .models import *
+
+class StockMovementForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Limit inventory items to active items
+        self.fields['inventory_item'].queryset = InventoryItem.objects.select_related(
+            'product_variant', 'warehouse'
+        ).filter(product_variant__status='active')
+        
+        # Set current user as default performer
+        if user:
+            self.fields['performed_by'].initial = user
+
+    class Meta:
+        model = StockMovement
+        fields = [
+            'inventory_item', 
+            'date', 
+            'quantity_change', 
+            'movement_type',
+            'content_type',  # Add these two fields to handle the GenericForeignKey
+            'object_id',     # relationship instead of directly using 'reference'
+            'performed_by'
+        ]
+        widgets = {
+            'inventory_item': forms.Select(attrs={
+                'class': 'form-select',
+                'data-live-search': 'true'
+            }),
+            'date': forms.DateTimeInput(attrs={
+                'class': 'form-control',
+                'type': 'datetime-local'
+            }),
+            'quantity_change': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0.01',
+                'step': '0.01'
+            }),
+            'movement_type': forms.Select(attrs={
+                'class': 'form-select',
+                'onchange': 'toggleReferenceField(this)'
+            }),
+            'content_type': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'object_id': forms.NumberInput(attrs={
+                'class': 'form-control',
+            }),
+            'performed_by': forms.HiddenInput()
+        }
+        labels = {
+            'quantity_change': 'Quantity',
+            'movement_type': 'Movement Type',
+            'content_type': 'Reference Type',
+            'object_id': 'Reference ID'
+        }
+
+    def clean_quantity_change(self):
+        quantity = self.cleaned_data['quantity_change']
+        if quantity <= 0:
+            raise forms.ValidationError("Quantity must be positive")
+        return quantity
+
+class PurchaseOrderForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        if user:
+            self.fields['created_by'].initial = user
+            self.fields['supplier'].queryset = Supplier.objects.filter(status='active')
+        
+        # Set default order date to today
+        self.fields['order_date'].initial = date.today()
+
+    class Meta:
+        model = PurchaseOrder
+        # Remove 'payment_terms' from the fields list if it's not in your model
+        fields = ['supplier', 'order_date', 'expected_delivery_date', 'status', 'created_by']
+        widgets = {
+            'supplier': forms.Select(attrs={
+                'class': 'form-select',
+                'data-live-search': 'true'
+            }),
+            'order_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'expected_delivery_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'min': date.today().isoformat()
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-select',
+                'disabled': True  # Initial status should be set programmatically
+            }),
+            'created_by': forms.HiddenInput()
+        }
+        help_texts = {
+            'expected_delivery_date': 'Must be after order date'
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        order_date = cleaned_data.get('order_date')
+        delivery_date = cleaned_data.get('expected_delivery_date')
+        
+        if order_date and delivery_date and delivery_date <= order_date:
+            raise forms.ValidationError({
+                'expected_delivery_date': 'Delivery date must be after order date'
+            })
+        
+        return cleaned_data
+    
+
+
+class PurchaseOrderItemForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Limit content types to allowed models
+        self.fields['content_type'].queryset = ContentType.objects.filter(
+            model__in=['ingredient', 'productvariant']
+        )
+        
+        # Add dynamic attributes for unit price
+        self.fields['unit_price'].widget.attrs.update({
+            'min': '0.01',
+            'step': '0.01',
+            'onchange': 'calculateLineTotal(this)'
+        })
+        self.fields['quantity'].widget.attrs.update({
+            'min': '1',
+            'onchange': 'calculateLineTotal(this)'
+        })
+
+    class Meta:
+        model = PurchaseOrderItem
+        fields = ['content_type', 'object_id', 'quantity', 'unit_price', 'notes']
+        widgets = {
+            'content_type': forms.Select(attrs={
+                'class': 'form-select content-type-select',
+                'onchange': 'updateItemChoices(this)'
+            }),
+            'object_id': forms.Select(attrs={
+                'class': 'form-select item-select'
+            }),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control quantity-input'
+            }),
+            'unit_price': forms.NumberInput(attrs={
+                'class': 'form-control price-input'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 1,
+                'placeholder': 'Item-specific notes'
+            }),
+        }
+        labels = {
+            'object_id': 'Item'
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        content_type = cleaned_data.get('content_type')
+        object_id = cleaned_data.get('object_id')
+        
+        if content_type and object_id:
+            model_class = content_type.model_class()
+            if not model_class.objects.filter(pk=object_id).exists():
+                raise forms.ValidationError({
+                    'object_id': 'Selected item does not exist'
+                })
+        
+        return cleaned_data
+
+PurchaseOrderItemFormSet = forms.inlineformset_factory(
+    PurchaseOrder,
+    PurchaseOrderItem,
+    form=PurchaseOrderItemForm,
+    extra=1,
+    can_delete=True,
+    min_num=1,
+    validate_min=True,
+    widgets={
+        'DELETE': forms.CheckboxInput(attrs={
+            'class': 'form-check-input delete-checkbox'
+        })
+    }
+)
+
+
+
+class SupplierForm(forms.ModelForm):
+    class Meta:
+        model = Supplier
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'contact_person': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'performance_rating': forms.NumberInput(attrs={'class': 'form-control'}),
+            'payment_terms': forms.TextInput(attrs={'class': 'form-control'}),
+        }

@@ -1211,3 +1211,215 @@ def variant_create(request, product_pk):
         'form': form,
         'product': product
     })
+
+
+# views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from django.core.paginator import Paginator
+from .models import Warehouse, InventoryItem
+from .forms import WarehouseForm
+
+def warehouse_list(request):
+    warehouses = Warehouse.objects.all().order_by('name')
+    paginator = Paginator(warehouses, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'warehouses': page_obj.object_list,
+    }
+    return render(request, 'inventory/warehouse_list.html', context)
+
+def warehouse_create(request):
+    if request.method == 'POST':
+        form = WarehouseForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('warehouse_list')
+    else:
+        form = WarehouseForm()
+    
+    return render(request, 'inventory/warehouse_form.html', {'form': form})
+
+def warehouse_update(request, pk):
+    warehouse = get_object_or_404(Warehouse, pk=pk)
+    if request.method == 'POST':
+        form = WarehouseForm(request.POST, instance=warehouse)
+        if form.is_valid():
+            form.save()
+            return redirect('warehouse_list')
+    else:
+        form = WarehouseForm(instance=warehouse)
+    
+    return render(request, 'inventory/warehouse_form.html', {'form': form})
+
+def warehouse_detail(request, pk):
+    warehouse = get_object_or_404(Warehouse, pk=pk)
+    inventory_items = InventoryItem.objects.filter(warehouse=warehouse)
+    
+    context = {
+        'warehouse': warehouse,
+        'inventory_items': inventory_items,
+    }
+    return render(request, 'inventory/warehouse_detail.html', context)
+
+
+
+# views.py
+from .models import StockMovement
+from .forms import StockMovementForm
+
+def stock_movement_list(request):
+    movements = StockMovement.objects.all().order_by('-date')
+    paginator = Paginator(movements, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'movements': page_obj.object_list,
+    }
+    return render(request, 'inventory/stock_movement_list.html', context)
+
+def stock_movement_create(request):
+    if request.method == 'POST':
+        form = StockMovementForm(request.POST)
+        if form.is_valid():
+            movement = form.save(commit=False)
+            movement.performed_by = request.user
+            movement.save()
+            
+            # Update inventory quantity
+            inventory_item = movement.inventory_item
+            if movement.movement_type == 'in':
+                inventory_item.quantity += movement.quantity_change
+            else:
+                inventory_item.quantity -= movement.quantity_change
+            inventory_item.save()
+            
+            return redirect('stock_movement_list')
+    else:
+        form = StockMovementForm()
+    
+    return render(request, 'inventory/stock_movement_form.html', {'form': form})
+
+
+
+
+# views.py
+from .models import PurchaseOrder, PurchaseOrderItem
+from .forms import PurchaseOrderForm, PurchaseOrderItemFormSet
+
+def purchase_order_list(request):
+    orders = PurchaseOrder.objects.all().order_by('-order_date')
+    status_filter = request.GET.get('status')
+    
+    if status_filter:
+        orders = orders.filter(status=status_filter)
+    
+    paginator = Paginator(orders, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'orders': page_obj.object_list,
+    }
+    return render(request, 'inventory/purchase_order_list.html', context)
+
+def purchase_order_create(request):
+    if request.method == 'POST':
+        form = PurchaseOrderForm(request.POST)
+        formset = PurchaseOrderItemFormSet(request.POST)
+        
+        if form.is_valid() and formset.is_valid():
+            order = form.save(commit=False)
+            order.created_by = request.user
+            order.save()
+            
+            for item_form in formset:
+                if item_form.cleaned_data:
+                    item = item_form.save(commit=False)
+                    item.purchase_order = order
+                    item.save()
+            
+            return redirect('purchase_order_detail', pk=order.pk)
+    else:
+        form = PurchaseOrderForm()
+        formset = PurchaseOrderItemFormSet()
+    
+    context = {
+        'form': form,
+        'formset': formset,
+    }
+    return render(request, 'inventory/purchase_order_form.html', context)
+
+def purchase_order_detail(request, pk):
+    order = get_object_or_404(PurchaseOrder, pk=pk)
+    items = order.items.all()
+    
+    context = {
+        'order': order,
+        'items': items,
+    }
+    return render(request, 'inventory/purchase_order_detail.html', context)
+
+
+
+
+# views.py
+from .models import Supplier
+from .forms import SupplierForm
+
+def supplier_list(request):
+    suppliers = Supplier.objects.all().order_by('name')
+    status_filter = request.GET.get('status')
+    
+    if status_filter:
+        suppliers = suppliers.filter(status=status_filter)
+    
+    paginator = Paginator(suppliers, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'suppliers': page_obj.object_list,
+    }
+    return render(request, 'inventory/supplier_list.html', context)
+
+def supplier_create(request):
+    if request.method == 'POST':
+        form = SupplierForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('supplier_list')
+    else:
+        form = SupplierForm()
+    
+    return render(request, 'inventory/supplier_form.html', {'form': form})
+
+def supplier_detail(request, pk):
+    supplier = get_object_or_404(Supplier, pk=pk)
+    purchase_orders = supplier.purchase_orders.all()
+    
+    context = {
+        'supplier': supplier,
+        'purchase_orders': purchase_orders,
+    }
+    return render(request, 'inventory/supplier_detail.html', context)
+
+
+
+# views.py
+def low_stock_alerts(request):
+    low_stock_items = InventoryItem.objects.filter(
+        quantity__lte=models.F('reorder_level')
+    ).select_related('product_variant', 'warehouse')
+    
+    context = {
+        'low_stock_items': low_stock_items,
+    }
+    return render(request, 'inventory/low_stock_alerts.html', context)
+

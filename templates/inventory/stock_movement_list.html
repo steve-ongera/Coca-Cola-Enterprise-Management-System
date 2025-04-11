@@ -1,0 +1,56 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Stock Movements</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'stock_movement_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Record Movement
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Recent Stock Movements</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Warehouse</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Performed By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movement in page_obj %}
+                    <tr>
+                        <td>{{ movement.date|date:"Y-m-d H:i" }}</td>
+                        <td>{{ movement.inventory_item.product_variant }}</td>
+                        <td>{{ movement.inventory_item.warehouse }}</td>
+                        <td>
+                            <span class="badge bg-{% if movement.movement_type == 'in' %}success{% else %}warning{% endif %}">
+                                {{ movement.get_movement_type_display }}
+                            </span>
+                        </td>
+                        <td>{{ movement.quantity_change }}</td>
+                        <td>{{ movement.performed_by.get_full_name }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No stock movements found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% include 'inventory/pagination.html' %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,466 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Warehouse Header with Coca-Cola branding -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+        <div class="d-flex align-items-center">
+           
+            <h1 class="h2 mb-0">
+                <i class="bi bi-house-gear"></i> {{ warehouse.name }}
+                <span class="badge bg-{% if warehouse.status == 'active' %}success{% else %}secondary{% endif %} fs-6">
+                    {{ warehouse.get_status_display }}
+                </span>
+            </h1>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'warehouse_update' warehouse.pk %}" class="btn btn-coca-red me-2">
+                <i class="bi bi-pencil-square"></i> Edit
+            </a>
+            <a href="{% url 'warehouse_list' %}" class="btn btn-coca-light">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Warehouse Details Card -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100 border-coca">
+                <div class="card-header bg-coca-red text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Warehouse Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-coca-dark"><i class="bi bi-geo-alt"></i> Location</h6>
+                            <p class="text-coca-dark">{{ warehouse.location|linebreaks }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-coca-dark"><i class="bi bi-arrows-fullscreen"></i> Capacity</h6>
+                            <p class="text-coca-dark">{{ warehouse.capacity }} m²</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-coca-dark"><i class="bi bi-person-badge"></i> Manager</h6>
+                            <p class="text-coca-dark">
+                                {% if warehouse.manager %}
+                                    <a href="{% url 'employee_detail' warehouse.manager.pk %}" class="text-coca-red">
+                                        {{ warehouse.manager.user.get_full_name }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Not assigned</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-coca-dark"><i class="bi bi-speedometer2"></i> Utilization</h6>
+                            <div class="progress mt-2" style="height: 20px;">
+                                {% with utilization=warehouse.get_utilization_percentage %}
+                                <div class="progress-bar {% if utilization > 90 %}bg-danger{% elif utilization > 75 %}bg-warning{% else %}bg-coca-green{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ utilization }}%" 
+                                     aria-valuenow="{{ utilization }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    <span class="fw-bold">{{ utilization|floatformat:0 }}%</span>
+                                </div>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <!-- Quick Actions Card -->
+        <div class="col-md-6">
+            <div class="card h-100 border-coca">
+                <div class="card-header bg-coca-red text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning-charge"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'stock_movement_create' %}?warehouse={{ warehouse.pk }}" 
+                           class="btn btn-outline-primary text-start">
+                            <i class="bi bi-arrow-left-right"></i> Record Stock Movement
+                        </a>
+                        <a href="#" class="btn btn-outline-success text-start" data-bs-toggle="modal" data-bs-target="#inventoryReportModal">
+                            <i class="bi bi-file-earmark-bar-graph"></i> Generate Inventory Report
+                        </a>
+                        <a href="#" class="btn btn-outline-info text-start">
+                            <i class="bi bi-geo-alt"></i> View on Map
+                        </a>
+                        {% if warehouse.status == 'active' %}
+                        <a href="#" class="btn btn-outline-danger text-start" data-bs-toggle="modal" data-bs-target="#deactivateModal">
+                            <i class="bi bi-slash-circle"></i> Deactivate Warehouse
+                        </a>
+                        {% else %}
+                        <a href="#" class="btn btn-outline-success text-start" data-bs-toggle="modal" data-bs-target="#activateModal">
+                            <i class="bi bi-check-circle"></i> Activate Warehouse
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Section -->
+    <div class="card mb-4 border-coca">
+        <div class="card-header bg-coca-red text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-box-seam"></i> Current Inventory</h5>
+            <div class="d-flex">
+                <div class="input-group" style="width: 250px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control form-control-sm" placeholder="Search inventory..." id="inventorySearch">
+                </div>
+                <div class="dropdown ms-2">
+                    <button class="btn btn-sm btn-coca-light dropdown-toggle" type="button" id="inventoryFilter" data-bs-toggle="dropdown">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#">All Items</a></li>
+                        <li><a class="dropdown-item" href="#">Low Stock (< reorder level)</a></li>
+                        <li><a class="dropdown-item" href="#">Active Products</a></li>
+                        <li><a class="dropdown-item" href="#">Discontinued</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="inventoryTable">
+                    <thead class="table-coca-light">
+                        <tr>
+                            <th><i class="bi bi-box"></i> Product</th>
+                            <th><i class="bi bi-tags"></i> Variant</th>
+                            <th><i class="bi bi-box-seam"></i> Packaging</th>
+                            <th><i class="bi bi-boxes"></i> Current Stock</th>
+                            <th><i class="bi bi-exclamation-triangle"></i> Reorder Level</th>
+                            <th><i class="bi bi-calendar-check"></i> Last Restocked</th>
+                            <th><i class="bi bi-info-circle"></i> Status</th>
+                            <th><i class="bi bi-gear"></i> Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in inventory_items %}
+                        <tr class="{% if item.quantity <= item.reorder_level %}table-warning{% endif %}">
+                            <td>
+                                <a href="{% url 'product_detail' item.product_variant.product.pk %}" class="text-coca-red">
+                                    <strong>{{ item.product_variant.product.name }}</strong>
+                                </a>
+                            </td>
+                            <td>{{ item.product_variant.name }} ({{ item.product_variant.size }})</td>
+                            <td>
+                                <span class="badge bg-coca-light text-coca-dark">
+                                    {{ item.product_variant.get_packaging_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-bold">{{ item.quantity }} {{ item.unit_of_measure }}</span>
+                                {% if item.quantity <= item.reorder_level %}
+                                <i class="bi bi-exclamation-triangle-fill text-coca-red ms-1"></i>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.reorder_level }} {{ item.unit_of_measure }}</td>
+                            <td>
+                                {% if item.last_restocked %}
+                                    <span class="text-coca-dark">{{ item.last_restocked|date:"Y-m-d" }}</span>
+                                {% else %}
+                                    <span class="text-muted">Never</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if item.product_variant.status == 'active' %}bg-coca-green{% else %}bg-secondary{% endif %}">
+                                    {{ item.product_variant.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'inventory_item_update' item.pk %}" class="btn btn-coca-outline" title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a href="{% url 'stock_movement_create' %}?inventory_item={{ item.pk }}" class="btn btn-coca-outline" title="Add Stock">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </a>
+                                    <a href="#" class="btn btn-coca-outline" title="View History">
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-coca-dark">No inventory items found in this warehouse</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Inventory Summary Cards -->
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <div class="card bg-coca-light text-coca-dark">
+                        <div class="card-body text-center">
+                            <h6 class="card-subtitle mb-1"><i class="bi bi-box-seam"></i> Total Items</h6>
+                            <h3 class="card-title fw-bold">{{ inventory_items.count }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-coca-warning text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-subtitle mb-1"><i class="bi bi-exclamation-triangle"></i> Low Stock Items</h6>
+                            <h3 class="card-title fw-bold">{{ low_stock_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-coca-green text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-subtitle mb-1"><i class="bi bi-check-circle"></i> Active Products</h6>
+                            <h3 class="card-title fw-bold">{{ active_products_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Stock Movements -->
+    <div class="card border-coca">
+        <div class="card-header bg-coca-red text-white">
+            <h5 class="mb-0"><i class="bi bi-arrow-left-right"></i> Recent Stock Movements</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead class="table-coca-light">
+                        <tr>
+                            <th><i class="bi bi-calendar"></i> Date</th>
+                            <th><i class="bi bi-box-seam"></i> Product</th>
+                            <th><i class="bi bi-arrow-left-right"></i> Type</th>
+                            <th><i class="bi bi-123"></i> Quantity</th>
+                            <th><i class="bi bi-file-text"></i> Reference</th>
+                            <th><i class="bi bi-person"></i> Performed By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for movement in recent_movements %}
+                        <tr>
+                            <td class="text-coca-dark">{{ movement.date|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <a href="#" class="text-coca-red">
+                                    {{ movement.inventory_item.product_variant }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge {% if movement.movement_type == 'in' %}bg-coca-green{% else %}bg-coca-warning{% endif %}">
+                                    {{ movement.get_movement_type_display }}
+                                </span>
+                            </td>
+                            <td class="fw-bold">{{ movement.quantity_change }} {{ movement.inventory_item.unit_of_measure }}</td>
+                            <td>
+                                {% if movement.reference %}
+                                    <span class="text-coca-dark">{{ movement.reference }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ movement.performed_by.get_full_name }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-3 text-coca-dark">No recent stock movements</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if recent_movements %}
+            <div class="text-end mt-2">
+                <a href="{% url 'stock_movement_list' %}?warehouse={{ warehouse.pk }}" class="btn btn-coca-outline">
+                    View All Movements <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="inventoryReportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-coca">
+            <div class="modal-header bg-coca-red text-white">
+                <h5 class="modal-title"><i class="bi bi-file-earmark-bar-graph"></i> Generate Inventory Report</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="#">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label text-coca-dark">Report Type</label>
+                        <select class="form-select border-coca" name="report_type">
+                            <option value="full">Full Inventory</option>
+                            <option value="low_stock">Low Stock Items</option>
+                            <option value="active">Active Products Only</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-coca-dark">Format</label>
+                        <select class="form-select border-coca" name="format">
+                            <option value="pdf">PDF</option>
+                            <option value="excel">Excel</option>
+                            <option value="csv">CSV</option>
+                        </select>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-coca-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-coca-red">Generate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deactivateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-coca">
+            <div class="modal-header bg-coca-warning text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Confirm Deactivation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-coca-dark">Are you sure you want to deactivate this warehouse?</p>
+                <p class="text-coca-red"><strong>Note:</strong> This will prevent new stock movements but won't affect existing inventory.</p>
+                <form method="post" action="#">
+                    {% csrf_token %}
+                    <div class="text-end">
+                        <button type="button" class="btn btn-coca-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-coca-warning">Confirm Deactivation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Coca-Cola Theme Colors */
+    .bg-coca-red { background-color: #ED1C16; }
+    .bg-coca-light { background-color: #F5F5F5; }
+    .bg-coca-dark { background-color: #000000; }
+    .bg-coca-green { background-color: #1E8A3B; }
+    .bg-coca-warning { background-color: #FFC72C; }
+    
+    .text-coca-red { color: #ED1C16; }
+    .text-coca-dark { color: #000000; }
+    .text-coca-light { color: #F5F5F5; }
+    
+    .btn-coca-red { 
+        background-color: #ED1C16; 
+        color: white;
+        border: none;
+    }
+    .btn-coca-red:hover {
+        background-color: #C81000;
+        color: white;
+    }
+    
+    .btn-coca-light {
+        background-color: #F5F5F5;
+        color: #000000;
+        border: 1px solid #D0D0D0;
+    }
+    
+    .btn-coca-outline {
+        border: 1px solid #ED1C16;
+        color: #ED1C16;
+    }
+    .btn-coca-outline:hover {
+        background-color: #ED1C16;
+        color: white;
+    }
+    
+    .btn-coca-action {
+        background-color: white;
+        color: #000000;
+        border: 1px solid #D0D0D0;
+        text-align: left;
+    }
+    .btn-coca-action:hover {
+        background-color: #F5F5F5;
+        color: #000000;
+    }
+    
+    .btn-coca-success {
+        background-color: #1E8A3B;
+        color: white;
+        border: none;
+    }
+    
+    .btn-coca-danger {
+        background-color: #ED1C16;
+        color: white;
+        border: none;
+    }
+    
+    .border-coca {
+        border: 1px solid #D0D0D0;
+        border-radius: 8px;
+    }
+    
+    .table-coca-light {
+        background-color: #F5F5F5;
+    }
+    
+    .coca-cola-theme {
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    .progress {
+        border-radius: 10px;
+    }
+    
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Inventory search functionality
+    $('#inventorySearch').keyup(function() {
+        const value = $(this).val().toLowerCase();
+        $('#inventoryTable tbody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animation to cards on hover
+    $('.card').hover(
+        function() {
+            $(this).css('transform', 'translateY(-5px)');
+        },
+        function() {
+            $(this).css('transform', 'translateY(0)');
+        }
+    );
+});
+</script>
+{% endblock %}
