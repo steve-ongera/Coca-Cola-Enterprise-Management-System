@@ -470,3 +470,130 @@ def staff_dashboard(request):
     }
     
     return render(request, 'dashboard/staff_dashboard.html', context)
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, permission_required
+from .models import Employee, Department
+from .forms import EmployeeForm
+@login_required
+@permission_required('employees.view_employee', raise_exception=True)
+def employee_list(request):
+    # Get filter parameters from request
+    department_id = request.GET.get('department')
+    status = request.GET.get('status')
+    
+    employees = Employee.objects.select_related('department', 'user').all()
+    
+    # Apply filters if provided
+    if department_id:
+        employees = employees.filter(department_id=department_id)
+    if status:
+        employees = employees.filter(employment_status=status)
+    
+    departments = Department.objects.all()
+    
+    context = {
+        'employees': employees,
+        'departments': departments,
+        'status_choices': Employee.EMPLOYMENT_STATUS_CHOICES,
+        'current_department': int(department_id) if department_id else None,
+        'current_status': status if status else None,
+    }
+    return render(request, 'employees/employee_list.html', context)
+
+@login_required
+@permission_required('employees.add_employee', raise_exception=True)
+def employee_create(request):
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, request.FILES)
+        if form.is_valid():
+            employee = form.save()
+            messages.success(request, f'Employee {employee.user.get_full_name()} created successfully!')
+            return redirect('employee_detail', pk=employee.pk)
+    else:
+        form = EmployeeForm()
+    
+    context = {'form': form, 'title': 'Add New Employee'}
+    return render(request, 'employees/employee_form.html', context)
+
+@login_required
+@permission_required('employees.view_employee', raise_exception=True)
+def employee_detail(request, pk):
+    employee = get_object_or_404(Employee.objects.select_related(
+        'user', 'department', 'manager'
+    ), pk=pk)
+    
+    # Get related data
+    documents = employee.documents.all()[:5]
+    training = employee.training_registrations.select_related('training')[:5]
+    
+    context = {
+        'employee': employee,
+        'documents': documents,
+        'training': training,
+    }
+    return render(request, 'employees/employee_detail.html', context)
+
+@login_required
+@permission_required('employees.change_employee', raise_exception=True)
+def employee_update(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, request.FILES, instance=employee)
+        if form.is_valid():
+            updated_employee = form.save()
+            messages.success(request, f'Employee {updated_employee.user.get_full_name()} updated successfully!')
+            return redirect('employee_detail', pk=employee.pk)
+    else:
+        form = EmployeeForm(instance=employee)
+    
+    context = {
+        'form': form,
+        'title': f'Edit {employee.user.get_full_name()}',
+        'employee': employee,
+    }
+    return render(request, 'employees/employee_form.html', context)
+
+@login_required
+@permission_required('employees.delete_employee', raise_exception=True)
+def employee_delete(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    
+    if request.method == 'POST':
+        full_name = employee.user.get_full_name()
+        employee.delete()
+        messages.success(request, f'Employee {full_name} deleted successfully!')
+        return redirect('employee_list')
+    
+    context = {'employee': employee}
+    return render(request, 'employees/employee_confirm_delete.html', context)
+
+@login_required
+@permission_required('employees.view_employee', raise_exception=True)
+def employee_documents(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    
+    if request.method == 'POST':
+        form = DocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            document = form.save(commit=False)
+            document.employee = employee
+            document.uploaded_by = request.user
+            document.save()
+            messages.success(request, 'Document uploaded successfully!')
+            return redirect('employee_documents', pk=employee.pk)
+    else:
+        form = DocumentForm()
+    
+    documents = employee.documents.all()
+    
+    context = {
+        'employee': employee,
+        'documents': documents,
+        'form': form,
+    }
+    return render(request, 'employees/employee_documents.html', context)
