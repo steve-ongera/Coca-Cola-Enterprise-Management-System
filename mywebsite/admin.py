@@ -60,12 +60,19 @@ class EmployeeAdmin(admin.ModelAdmin):
     raw_id_fields = ['user']
     
     def get_full_name(self, obj):
-        return f"{obj.user.first_name} {obj.user.last_name}"
+        if obj.user:
+            return f"{obj.user.first_name} {obj.user.last_name}"
+        return "No user assigned"
+
     get_full_name.short_description = 'Name'
     
     def get_employee_id(self, obj):
-        return obj.user.employee_id
+        if obj.user:
+            return obj.working_id
+        return "N/A"
+
     get_employee_id.short_description = 'Employee ID'
+
     
     def get_department(self, obj):
         current_position = obj.position_history.filter(end_date__isnull=True).first()

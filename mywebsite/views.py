@@ -564,14 +564,17 @@ def employee_update(request, pk):
         form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
             updated_employee = form.save()
-            messages.success(request, f'Employee {updated_employee.user.get_full_name()} updated successfully!')
+            messages.success(request, f'Employee  updated successfully!')
             return redirect('employee_detail', pk=employee.pk)
     else:
         form = EmployeeForm(instance=employee)
+
+
+    full_name = employee.user.get_full_name() if employee.user else "Unnamed"
     
     context = {
         'form': form,
-        'title': f'Edit {employee.user.get_full_name()}',
+        'title': f'Edit {full_name}',
         'employee': employee,
     }
     return render(request, 'employees/employee_form.html', context)
