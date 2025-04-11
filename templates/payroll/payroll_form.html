@@ -6,7 +6,7 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <div class="col-lg-8 mx-auto">
+        <div class="col-lg-12 mx-auto">
             <div class="card shadow-lg">
                 <div class="card-header bg-danger text-white">
                     <h3 class="card-title mb-0">
@@ -130,34 +130,106 @@
                             </div>
                         </div>
                         
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.allowances.id_for_label }}" class="form-label">
-                                        <i class="fas fa-plus-circle mr-1"></i> Allowances (JSON)
-                                    </label>
-                                    {{ form.allowances }}
-                                    {% if form.allowances.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.allowances.errors|join:", " }}
+                        <!-- Allowances Section -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-plus-circle mr-1"></i> Allowances
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.house_allowance.id_for_label }}" class="form-label">
+                                                House Allowance
+                                            </label>
+                                            {{ form.house_allowance }}
+                                            {% if form.house_allowance.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.house_allowance.errors|join:", " }}
+                                                </div>
+                                            {% endif %}
                                         </div>
-                                    {% endif %}
-                                    <small class="text-muted">Format: {"allowance_name": amount}</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.transport_allowance.id_for_label }}" class="form-label">
+                                                Transport Allowance
+                                            </label>
+                                            {{ form.transport_allowance }}
+                                            {% if form.transport_allowance.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.transport_allowance.errors|join:", " }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.medical_allowance.id_for_label }}" class="form-label">
+                                                Medical Allowance
+                                            </label>
+                                            {{ form.medical_allowance }}
+                                            {% if form.medical_allowance.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.medical_allowance.errors|join:", " }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.deductions.id_for_label }}" class="form-label">
-                                        <i class="fas fa-minus-circle mr-1"></i> Deductions (JSON)
-                                    </label>
-                                    {{ form.deductions }}
-                                    {% if form.deductions.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.deductions.errors|join:", " }}
+                        </div>
+                        
+                        <!-- Deductions Section -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-minus-circle mr-1"></i> Deductions
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.tax_deduction.id_for_label }}" class="form-label">
+                                                Tax
+                                            </label>
+                                            {{ form.tax_deduction }}
+                                            {% if form.tax_deduction.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.tax_deduction.errors|join:", " }}
+                                                </div>
+                                            {% endif %}
                                         </div>
-                                    {% endif %}
-                                    <small class="text-muted">Format: {"deduction_name": amount}</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.pension_deduction.id_for_label }}" class="form-label">
+                                                Pension
+                                            </label>
+                                            {{ form.pension_deduction }}
+                                            {% if form.pension_deduction.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.pension_deduction.errors|join:", " }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.loan_deduction.id_for_label }}" class="form-label">
+                                                Loan
+                                            </label>
+                                            {{ form.loan_deduction }}
+                                            {% if form.loan_deduction.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.loan_deduction.errors|join:", " }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -237,7 +309,15 @@
         });
         
         // Initialize number inputs
-        const numberInputs = ['id_basic_salary'];
+        const numberInputs = [
+            'id_basic_salary',
+            'id_house_allowance',
+            'id_transport_allowance', 
+            'id_medical_allowance',
+            'id_tax_deduction',
+            'id_pension_deduction',
+            'id_loan_deduction'
+        ];
         numberInputs.forEach(id => {
             const element = document.getElementById(id);
             if (element) {

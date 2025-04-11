@@ -229,19 +229,23 @@ class Leave(models.Model):
     def __str__(self):
         return f"{self.employee} - {self.leave_type} ({self.start_date} to {self.end_date})"
 
+from django.db import models
+from django.utils.functional import cached_property
+from decimal import Decimal
+from datetime import date
 
 class Payroll(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payroll_records')
+    employee = models.ForeignKey('Employee', on_delete=models.CASCADE, related_name='payroll_records')
     year = models.PositiveIntegerField()
-    month = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 13)] , null=True , blank=True )
+    month = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 13)], null=True, blank=True)
     period_start = models.DateField()
     period_end = models.DateField()
     basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
-    allowances = models.JSONField(default=dict)
-    deductions = models.JSONField(default=dict)
-    gross_salary = models.DecimalField(max_digits=12, decimal_places=2, editable=False , null=True , blank=True )
-    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, editable=False , null=True , blank=True )
-    net_salary = models.DecimalField(max_digits=12, decimal_places=2, editable=False, null=True , blank=True )
+    allowances = models.JSONField(default=dict, blank=True)
+    deductions = models.JSONField(default=dict, blank=True)
+    gross_salary = models.DecimalField(max_digits=12, decimal_places=2, editable=False, null=True, blank=True)
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, editable=False, null=True, blank=True)
+    net_salary = models.DecimalField(max_digits=12, decimal_places=2, editable=False, null=True, blank=True)
     payment_date = models.DateField()
     PAYMENT_STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -258,12 +262,43 @@ class Payroll(models.Model):
     def __str__(self):
         return f"{self.employee} - {self.get_month_display()}/{self.year}"
     
+    def get_allowances_dict(self):
+        """Safely get allowances as a dictionary"""
+        if isinstance(self.allowances, str):
+            try:
+                import json
+                return json.loads(self.allowances)
+            except (ValueError, TypeError):
+                return {}
+        return self.allowances or {}
+    
+    def get_deductions_dict(self):
+        """Safely get deductions as a dictionary"""
+        if isinstance(self.deductions, str):
+            try:
+                import json
+                return json.loads(self.deductions)
+            except (ValueError, TypeError):
+                return {}
+        return self.deductions or {}
+    
     def save(self, *args, **kwargs):
-        # Calculate allowances total
-        allowances_total = sum(float(v) for v in self.allowances.values())
+        # Ensure allowances and deductions are dictionaries
+        if not self.allowances or not isinstance(self.allowances, dict):
+            self.allowances = {}
         
-        # Calculate deductions total
-        deductions_total = sum(float(v) for v in self.deductions.values())
+        if not self.deductions or not isinstance(self.deductions, dict):
+            self.deductions = {}
+            
+        # Calculate allowances total - convert to Decimal
+        allowances_total = Decimal('0.00')
+        for value in self.get_allowances_dict().values():
+            allowances_total += Decimal(str(value))
+        
+        # Calculate deductions total - convert to Decimal
+        deductions_total = Decimal('0.00')
+        for value in self.get_deductions_dict().values():
+            deductions_total += Decimal(str(value))
         
         # Calculate gross salary
         self.gross_salary = self.basic_salary + allowances_total
@@ -289,12 +324,17 @@ class Payroll(models.Model):
     
     @property
     def total_allowances(self):
-        return sum(float(v) for v in self.allowances.values())
+        total = Decimal('0.00')
+        for value in self.get_allowances_dict().values():
+            total += Decimal(str(value))
+        return total
     
     @property
     def total_deductions(self):
-        return sum(float(v) for v in self.deductions.values())
-
+        total = Decimal('0.00')
+        for value in self.get_deductions_dict().values():
+            total += Decimal(str(value))
+        return total
 
 class PerformanceReview(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='performance_reviews')

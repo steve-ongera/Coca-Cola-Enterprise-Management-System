@@ -130,31 +130,105 @@ class LeaveForm(forms.ModelForm):
         
         return cleaned_data
     
-
 from django import forms
 from .models import Payroll
 from django.core.exceptions import ValidationError
 from datetime import date
+import json
+
+ALLOWANCE_OPTIONS = [
+    ('house', 'House Allowance'),
+    ('transport', 'Transport Allowance'),
+    ('medical', 'Medical Allowance'),
+]
+
+DEDUCTION_OPTIONS = [
+    ('tax', 'Tax'),
+    ('pension', 'Pension'),
+    ('loan', 'Loan'),
+]
 
 class PayrollForm(forms.ModelForm):
+    # Dynamic fields for allowances
+    house_allowance = forms.DecimalField(
+        required=False, 
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="House Allowance"
+    )
+    transport_allowance = forms.DecimalField(
+        required=False, 
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Transport Allowance"
+    )
+    medical_allowance = forms.DecimalField(
+        required=False, 
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Medical Allowance"
+    )
+    
+    # Dynamic fields for deductions
+    tax_deduction = forms.DecimalField(
+        required=False, 
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Tax"
+    )
+    pension_deduction = forms.DecimalField(
+        required=False, 
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Pension"
+    )
+    loan_deduction = forms.DecimalField(
+        required=False, 
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Loan"
+    )
+    
     class Meta:
         model = Payroll
         fields = [
             'employee', 'year', 'month', 
             'period_start', 'period_end', 
-            'basic_salary', 'allowances', 
-            'deductions', 'payment_date',
+            'basic_salary',
+            'payment_date',
             'payment_status', 'notes'
         ]
         widgets = {
-            'period_start': forms.DateInput(attrs={'type': 'date'}),
-            'period_end': forms.DateInput(attrs={'type': 'date'}),
-            'payment_date': forms.DateInput(attrs={'type': 'date'}),
-            'allowances': forms.Textarea(attrs={'rows': 3, 'placeholder': '{"housing": 1000, "transport": 500}'}),
-            'deductions': forms.Textarea(attrs={'rows': 3, 'placeholder': '{"loan": 200, "insurance": 150}'}),
-            'notes': forms.Textarea(attrs={'rows': 2}),
+            'employee': forms.Select(attrs={'class': 'form-control'}),
+            'year': forms.NumberInput(attrs={'class': 'form-control'}),
+            'month': forms.Select(attrs={'class': 'form-control'}),
+            'period_start': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'period_end': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'basic_salary': forms.NumberInput(attrs={'class': 'form-control'}),
+            'payment_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'payment_status': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # If we're editing an existing instance, populate the allowance and deduction fields
+        if self.instance.pk:
+            # Load allowances values safely
+            allowances = self.instance.get_allowances_dict()
+            if allowances:
+                if 'house' in allowances:
+                    self.fields['house_allowance'].initial = allowances['house']
+                if 'transport' in allowances:
+                    self.fields['transport_allowance'].initial = allowances['transport']
+                if 'medical' in allowances:
+                    self.fields['medical_allowance'].initial = allowances['medical']
+            
+            # Load deductions values safely
+            deductions = self.instance.get_deductions_dict()
+            if deductions:
+                if 'tax' in deductions:
+                    self.fields['tax_deduction'].initial = deductions['tax']
+                if 'pension' in deductions:
+                    self.fields['pension_deduction'].initial = deductions['pension']
+                if 'loan' in deductions:
+                    self.fields['loan_deduction'].initial = deductions['loan']
+
     def clean(self):
         cleaned_data = super().clean()
         period_start = cleaned_data.get('period_start')
@@ -177,7 +251,39 @@ class PayrollForm(forms.ModelForm):
                 raise ValidationError("Payment date cannot be before period end date")
         
         if employee and year and month:
-            if Payroll.objects.filter(employee=employee, year=year, month=month).exclude(pk=self.instance.pk).exists():
+            existing_query = Payroll.objects.filter(employee=employee, year=year, month=month)
+            if self.instance.pk:
+                existing_query = existing_query.exclude(pk=self.instance.pk)
+            if existing_query.exists():
                 raise ValidationError("Payroll record already exists for this employee in selected month/year")
         
         return cleaned_data
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        # Build allowances dict
+        allowances = {}
+        if self.cleaned_data.get('house_allowance'):
+            allowances['house'] = float(self.cleaned_data['house_allowance'])
+        if self.cleaned_data.get('transport_allowance'):
+            allowances['transport'] = float(self.cleaned_data['transport_allowance'])
+        if self.cleaned_data.get('medical_allowance'):
+            allowances['medical'] = float(self.cleaned_data['medical_allowance'])
+        
+        # Build deductions dict
+        deductions = {}
+        if self.cleaned_data.get('tax_deduction'):
+            deductions['tax'] = float(self.cleaned_data['tax_deduction'])
+        if self.cleaned_data.get('pension_deduction'):
+            deductions['pension'] = float(self.cleaned_data['pension_deduction'])
+        if self.cleaned_data.get('loan_deduction'):
+            deductions['loan'] = float(self.cleaned_data['loan_deduction'])
+        
+        # Set directly as dicts (JSONField handles serialization)
+        instance.allowances = allowances
+        instance.deductions = deductions
+        
+        if commit:
+            instance.save()
+        return instance
