@@ -519,22 +519,40 @@ def employee_create(request):
     context = {'form': form, 'title': 'Add New Employee'}
     return render(request, 'employees/employee_form.html', context)
 
-@login_required
-@permission_required('employees.view_employee', raise_exception=True)
+from django.shortcuts import render, get_object_or_404
+from datetime import date
+from .models import Employee, PositionHistory, Attendance, Leave, Payroll, PerformanceReview
+
 def employee_detail(request, pk):
-    employee = get_object_or_404(Employee.objects.select_related(
-        'user', 'department', 'manager'
-    ), pk=pk)
+    employee = get_object_or_404(Employee, pk=pk)
     
     # Get related data
-    documents = employee.documents.all()[:5]
-    training = employee.training_registrations.select_related('training')[:5]
+    position_history = PositionHistory.objects.filter(employee=employee).order_by('-start_date')
+    attendance_records = Attendance.objects.filter(employee=employee).order_by('-date')[:30]
+    leave_requests = Leave.objects.filter(employee=employee).order_by('-start_date')[:10]
+    payroll_records = Payroll.objects.filter(employee=employee).order_by('-period_start')[:12]
+    performance_reviews = PerformanceReview.objects.filter(employee=employee).order_by('-review_period')
+    
+    # Calculate tenure
+    tenure_years = None
+    tenure_months = None
+    if employee.hire_date:
+        today = date.today()
+        tenure = today - employee.hire_date
+        tenure_years = tenure.days // 365
+        tenure_months = (tenure.days % 365) // 30
     
     context = {
         'employee': employee,
-        'documents': documents,
-        'training': training,
+        'position_history': position_history,
+        'attendance_records': attendance_records,
+        'leave_requests': leave_requests,
+        'payroll_records': payroll_records,
+        'performance_reviews': performance_reviews,
+        'tenure_years': tenure_years,
+        'tenure_months': tenure_months,
     }
+    
     return render(request, 'employees/employee_detail.html', context)
 
 @login_required
@@ -559,7 +577,6 @@ def employee_update(request, pk):
     return render(request, 'employees/employee_form.html', context)
 
 @login_required
-@permission_required('employees.delete_employee', raise_exception=True)
 def employee_delete(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     

@@ -1,154 +1,537 @@
 {% extends "base/base.html" %}
+{% load time_filters %}
+{% block title %}{{ employee.user.get_full_name|default:employee.working_id }} - Employee Details - Coca-Cola ERP{% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-md-4">
-    <div class="card mb-4">
-      <div class="card-body text-center">
-        <img src="{{ employee.profile_image.url|default:'/static/images/default-profile.png' }}" 
-             class="rounded-circle mb-3" width="150" height="150">
-        <h4>{{ employee.user.get_full_name }}</h4>
-        <p class="text-muted mb-1">{{ employee.position }}</p>
-        <p class="text-muted">{{ employee.department.name }}</p>
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0" style="color: #F40009;">
+                    <i class="bi bi-person-badge me-2"></i>Employee Profile
+                </h2>
+                <div>
+                    <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-arrow-left me-1"></i> Back to List
+                    </a>
+                    <a href="{% url 'employee_update' employee.pk %}" class="btn btn-danger">
+                        <i class="bi bi-pencil me-1"></i> Edit Profile
+                    </a>
+                </div>
+            </div>
+            <hr class="mt-2 mb-4" style="border-color: #F40009; opacity: 0.2;">
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Left Column - Profile Card -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body text-center">
+                    <div class="position-relative d-inline-block">
+                        {% if employee.user.profile_image %}
+                        <img src="{{ employee.user.profile_image.url }}" 
+                             class="rounded-circle border" 
+                             width="150" 
+                             height="150" 
+                             alt="Profile image">
+                        {% else %}
+                        <div class="rounded-circle border d-flex align-items-center justify-content-center" 
+                             style="width: 150px; height: 150px; background-color: #f8f9fa;">
+                            <i class="bi bi-person text-muted" style="font-size: 3.5rem;"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <h3 class="mt-3 mb-1">{{ employee.user.get_full_name|default:"No Name Provided" }}</h3>
+                    <h5 class="text-muted mb-3">{{ employee.get_position_display }}</h5>
+                    
+                    <div class="d-flex justify-content-center mb-3">
+                        <span class="badge bg-{% if employee.employment_status == 'active' %}success{% elif employee.employment_status == 'on_leave' %}warning{% else %}danger{% endif %} me-2">
+                            {{ employee.get_employment_status_display }}
+                        </span>
+                        <span class="badge bg-secondary">
+                            {{ employee.get_contract_type_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="text-center px-3">
+                            <h6 class="mb-0">ID</h6>
+                            <p class="mb-0 fw-bold">{{ employee.working_id }}</p>
+                        </div>
+                        <div class="text-center px-3 border-start">
+                            <h6 class="mb-0">Department</h6>
+                            <p class="mb-0 fw-bold">{{ employee.department|default:"-" }}</p>
+                        </div>
+                        <div class="text-center px-3 border-start">
+                            <h6 class="mb-0">Tenure</h6>
+                            <p class="mb-0 fw-bold">
+                                {% if tenure_years %}{{ tenure_years }}y {{ tenure_months }}m{% else %}New hire{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-white border-top">
+                    <div class="row text-center">
+                        <div class="col-4 border-end">
+                            <a href="#" class="text-decoration-none">
+                                <i class="bi bi-telephone text-danger"></i>
+                                <small class="d-block">Call</small>
+                            </a>
+                        </div>
+                        <div class="col-4 border-end">
+                            <a href="#" class="text-decoration-none">
+                                <i class="bi bi-envelope text-danger"></i>
+                                <small class="d-block">Email</small>
+                            </a>
+                        </div>
+                        <div class="col-4">
+                            <a href="#" class="text-decoration-none">
+                                <i class="bi bi-chat-left-text text-danger"></i>
+                                <small class="d-block">Message</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Stats Card -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-speedometer2 me-2 text-danger"></i>Quick Stats
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="p-3 border rounded text-center">
+                                <h6 class="mb-1 text-muted">Attendance</h6>
+                                <h4 class="mb-0 text-success">94%</h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded text-center">
+                                <h6 class="mb-1 text-muted">Leaves</h6>
+                                <h4 class="mb-0 text-primary">12/25</h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded text-center">
+                                <h6 class="mb-1 text-muted">Performance</h6>
+                                <h4 class="mb-0 text-warning">4.2/5</h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded text-center">
+                                <h6 class="mb-1 text-muted">Tasks</h6>
+                                <h4 class="mb-0 text-info">85%</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Emergency Contact Card -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-exclamation-triangle me-2 text-danger"></i>Emergency Contact
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light rounded-circle p-3 me-3">
+                            <i class="bi bi-person-fill text-danger"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ employee.emergency_contact_name|default:"Not specified" }}</h6>
+                            <small class="text-muted">Emergency Contact</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-light rounded-circle p-3 me-3">
+                            <i class="bi bi-telephone-fill text-danger"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ employee.emergency_contact_number|default:"Not specified" }}</h6>
+                            <small class="text-muted">Phone Number</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         
-        <div class="d-flex justify-content-center mb-2">
-          <a href="{% url 'employee_update' employee.pk %}" class="btn btn-outline-danger me-2">
-            <i class="bi bi-pencil"></i> Edit
-          </a>
-          <a href="{% url 'employee_documents' employee.pk %}" class="btn btn-danger">
-            <i class="bi bi-folder"></i> Documents
-          </a>
-        </div>
-      </div>
-    </div>
-    
-    <div class="card mb-4">
-      <div class="card-header bg-white">
-        <h6 class="mb-0">Basic Information</h6>
-      </div>
-      <div class="card-body">
-        <div class="row mb-2">
-          <div class="col-6 fw-bold">Employee ID:</div>
-          <div class="col-6">{{ employee.employee_id }}</div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-6 fw-bold">Status:</div>
-          <div class="col-6">
-            <span class="badge bg-{% if employee.employment_status == 'active' %}success{% else %}warning{% endif %}">
-              {{ employee.get_employment_status_display }}
-            </span>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-6 fw-bold">Hire Date:</div>
-          <div class="col-6">{{ employee.hire_date|date:"M d, Y" }}</div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-6 fw-bold">Contract:</div>
-          <div class="col-6">{{ employee.get_contract_type_display }}</div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-6 fw-bold">Manager:</div>
-          <div class="col-6">
-            {% if employee.manager %}
-            <a href="{% url 'employee_detail' employee.manager.pk %}">
-              {{ employee.manager.user.get_full_name }}
-            </a>
-            {% else %}
-            -
-            {% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="col-md-8">
-    <div class="card mb-4">
-      <div class="card-header bg-white d-flex justify-content-between">
-        <h6 class="mb-0">Contact Information</h6>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-6">
-            <h6>Personal</h6>
-            <p>
-              <i class="bi bi-envelope me-2"></i> {{ employee.user.email }}<br>
-              <i class="bi bi-phone me-2"></i> {{ employee.user.employee_profile.phone_number|default:"-" }}
-            </p>
-          </div>
-          <div class="col-md-6">
-            <h6>Emergency Contact</h6>
-            <p>
-              <i class="bi bi-person me-2"></i> {{ employee.emergency_contact_name|default:"-" }}<br>
-              <i class="bi bi-telephone me-2"></i> {{ employee.emergency_contact_number|default:"-" }}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="card mb-4">
-      <div class="card-header bg-white">
-        <h6 class="mb-0">Recent Documents</h6>
-      </div>
-      <div class="card-body">
-        {% if documents %}
-        <div class="list-group">
-          {% for doc in documents %}
-          <a href="{{ doc.file.url }}" class="list-group-item list-group-item-action" target="_blank">
-            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="mb-1">{{ doc.name }}</h6>
-                <small class="text-muted">{{ doc.get_document_type_display }}</small>
-              </div>
-              <div>
-                <small>{{ doc.uploaded_at|date:"M d, Y" }}</small>
-              </div>
+        <!-- Right Column - Details -->
+        <div class="col-lg-8">
+            <!-- Personal Information Card -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-person-lines-fill me-2 text-danger"></i>Personal Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Full Name</label>
+                            <p class="mb-0 fw-bold">{{ employee.user.get_full_name|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Date of Birth</label>
+                            <p class="mb-0 fw-bold">{{ employee.date_of_birth|date:"M d, Y"|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Email</label>
+                            <p class="mb-0 fw-bold">{{ employee.user.email|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Phone</label>
+                            <p class="mb-0 fw-bold">{{ employee.phone_number|default:"-" }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label text-muted small mb-1">Address</label>
+                            <p class="mb-0 fw-bold">{{ employee.address|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Bank Account</label>
+                            <p class="mb-0 fw-bold">{{ employee.bank_account_number|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Salary</label>
+                            <p class="mb-0 fw-bold">${{ employee.salary|default:"-" }}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </a>
-          {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-muted">No documents uploaded</p>
-        {% endif %}
-        <div class="mt-3 text-end">
-          <a href="{% url 'employee_documents' employee.pk %}" class="btn btn-sm btn-outline-danger">
-            View All Documents
-          </a>
-        </div>
-      </div>
-    </div>
-    
-    <div class="card">
-      <div class="card-header bg-white">
-        <h6 class="mb-0">Upcoming Training</h6>
-      </div>
-      <div class="card-body">
-        {% if training %}
-        <div class="list-group">
-          {% for reg in training %}
-          <div class="list-group-item">
-            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="mb-1">{{ reg.training.title }}</h6>
-                <small class="text-muted">
-                  <i class="bi bi-calendar"></i> {{ reg.training.date|date:"M d, Y" }}
-                  <i class="bi bi-clock ms-2"></i> {{ reg.training.time|time:"H:i" }}
-                </small>
-              </div>
-              <span class="badge bg-{% if reg.training.is_mandatory %}danger{% else %}primary{% endif %}">
-                {% if reg.training.is_mandatory %}Mandatory{% else %}Optional{% endif %}
-              </span>
+            
+            <!-- Employment Information Card -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-briefcase-fill me-2 text-danger"></i>Employment Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Employee ID</label>
+                            <p class="mb-0 fw-bold">{{ employee.working_id|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Hire Date</label>
+                            <p class="mb-0 fw-bold">{{ employee.hire_date|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Department</label>
+                            <p class="mb-0 fw-bold">{{ employee.department|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Position</label>
+                            <p class="mb-0 fw-bold">{{ employee.get_position_display|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Role</label>
+                            <p class="mb-0 fw-bold">{{ employee.get_role_display|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Contract Type</label>
+                            <p class="mb-0 fw-bold">{{ employee.get_contract_type_display }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Contract End Date</label>
+                            <p class="mb-0 fw-bold">{{ employee.contract_end_date|date:"M d, Y"|default:"Permanent" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Last Promotion</label>
+                            <p class="mb-0 fw-bold">{{ employee.last_promotion_date|date:"M d, Y"|default:"-" }}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          {% endfor %}
+            
+            <!-- Tabs for Additional Information -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom p-0">
+                    <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="position-tab" data-bs-toggle="tab" data-bs-target="#position" type="button" role="tab">
+                                Position History
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button" role="tab">
+                                Attendance
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="leave-tab" data-bs-toggle="tab" data-bs-target="#leave" type="button" role="tab">
+                                Leave Records
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="payroll-tab" data-bs-toggle="tab" data-bs-target="#payroll" type="button" role="tab">
+                                Payroll
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
+                                Performance
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body p-0">
+                    <div class="tab-content p-3" id="employeeTabsContent">
+                        <!-- Position History Tab -->
+                        <div class="tab-pane fade show active" id="position" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Position</th>
+                                            <th>Department</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Salary</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for history in position_history %}
+                                        <tr>
+                                            <td>{{ history.job_title }}</td>
+                                            <td>{{ history.department }}</td>
+                                            <td>{{ history.start_date|date:"M d, Y" }}</td>
+                                            <td>{{ history.end_date|date:"M d, Y"|default:"Present" }}</td>
+                                            <td>${{ history.salary }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No position history found</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Attendance Tab -->
+                        <div class="tab-pane fade" id="attendance" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Check In</th>
+                                            <th>Check Out</th>
+                                            <th>Status</th>
+                                            <th>Hours</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for record in attendance_records %}
+                                        <tr>
+                                            <td>{{ record.date|date:"M d, Y" }}</td>
+                                            <td>{{ record.check_in_time|default:"-"|time:"H:i" }}</td>
+                                            <td>{{ record.check_out_time|default:"-"|time:"H:i" }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if record.status == 'present' %}success{% elif record.status == 'absent' %}danger{% else %}warning{% endif %}">
+                                                    {{ record.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if record.check_in_time and record.check_out_time %}
+                                                    {{ record.check_out_time|time_diff:record.check_in_time }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No attendance records found</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Leave Records Tab -->
+                        <div class="tab-pane fade" id="leave" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Days</th>
+                                            <th>Status</th>
+                                            <th>Reason</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for leave in leave_requests %}
+                                        <tr>
+                                            <td>{{ leave.get_leave_type_display }}</td>
+                                            <td>{{ leave.start_date|date:"M d, Y" }}</td>
+                                            <td>{{ leave.end_date|date:"M d, Y" }}</td>
+                                            <td>{{ leave.end_date|timeuntil:leave.start_date }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                                    {{ leave.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ leave.reason|truncatechars:30 }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">No leave records found</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Payroll Tab -->
+                        <div class="tab-pane fade" id="payroll" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Period</th>
+                                            <th>Basic Salary</th>
+                                            <th>Allowances</th>
+                                            <th>Deductions</th>
+                                            <th>Net Salary</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for payroll in payroll_records %}
+                                        <tr>
+                                            <td>
+                                                {{ payroll.period_start|date:"M d" }} - {{ payroll.period_end|date:"M d, Y" }}
+                                            </td>
+                                            <td>${{ payroll.basic_salary }}</td>
+                                            <td>${{ payroll.allowances.total|default:"0.00" }}</td>
+                                            <td>${{ payroll.deductions.total|default:"0.00" }}</td>
+                                            <td>${{ payroll.net_salary }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if payroll.payment_status == 'processed' %}success{% elif payroll.payment_status == 'failed' %}danger{% else %}warning{% endif %}">
+                                                    {{ payroll.get_payment_status_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">No payroll records found</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Performance Tab -->
+                        <div class="tab-pane fade" id="performance" role="tabpanel">
+                            {% for review in performance_reviews %}
+                            <div class="card mb-3 border-0 shadow-sm">
+                                <div class="card-header bg-white">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-0">Performance Review - {{ review.review_period }}</h6>
+                                        <span class="badge bg-{% if review.status == 'completed' %}success{% elif review.status == 'in_review' %}warning{% else %}secondary{% endif %}">
+                                            {{ review.get_status_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-muted">Strengths</h6>
+                                            <p>{{ review.strengths }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-muted">Areas for Improvement</h6>
+                                            <p>{{ review.areas_for_improvement }}</p>
+                                        </div>
+                                        <div class="col-12">
+                                            <h6 class="text-muted">Goals</h6>
+                                            <p>{{ review.goals }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-white text-muted small">
+                                    Reviewed by: {{ review.reviewer.user.get_full_name }} on {{ review.updated_at|date:"M d, Y" }}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center text-muted py-4">
+                                No performance reviews found
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% else %}
-        <p class="text-muted">No upcoming training sessions</p>
-        {% endif %}
-      </div>
     </div>
-  </div>
 </div>
+
+<style>
+    .nav-tabs .nav-link {
+        color: #495057;
+        border: none;
+        padding: 1rem 1.5rem;
+        font-weight: 500;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #F40009;
+        background: transparent;
+        border-bottom: 3px solid #F40009;
+    }
+    
+    .badge {
+        font-weight: 500;
+        padding: 0.35em 0.65em;
+    }
+    
+    .card {
+        border-radius: 0.5rem;
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
+    
+    .table th {
+        font-weight: 500;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Initialize Bootstrap tabs
+    var tabElms = [].slice.call(document.querySelectorAll('button[data-bs-toggle="tab"]'));
+    tabElms.forEach(function(tabEl) {
+        tabEl.addEventListener('click', function(event) {
+            event.preventDefault();
+            var tab = new bootstrap.Tab(tabEl);
+            tab.show();
+        });
+    });
+});
+</script>
 {% endblock %}

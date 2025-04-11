@@ -1,0 +1,83 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Delete Employee - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user-slash mr-2"></i>Confirm Employee Deletion
+                    </h3>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle"></i> Warning!
+                        </h4>
+                        <p>You are about to permanently delete this employee record from the Coca-Cola ERP system.</p>
+                        <hr>
+                        <p class="mb-0">This action cannot be undone. All associated records (attendance, payroll, etc.) will also be removed.</p>
+                    </div>
+
+                    <div class="employee-details p-4 border rounded bg-light">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                {% if employee.profile_picture %}
+                                    <img src="{{ employee.profile_picture.url }}" alt="{{ employee.user.get_full_name }}" class="img-fluid rounded-circle mb-3" style="max-height: 150px;">
+                                {% else %}
+                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+                                        <i class="fas fa-user text-white" style="font-size: 3rem;"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-9">
+                                <h4 class="text-danger">{{ employee.user.get_full_name }}</h4>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Employee ID:</strong> {{ employee.employee_id }}</p>
+                                        <p><strong>Department:</strong> {{ employee.department }}</p>
+                                        <p><strong>Position:</strong> {{ employee.position }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Hire Date:</strong> {{ employee.hire_date|date:"M d, Y" }}</p>
+                                        <p><strong>Email:</strong> {{ employee.user.email }}</p>
+                                        <p><strong>Status:</strong> <span class="badge bg-{{ employee.is_active|yesno:'success,danger' }}">{{ employee.is_active|yesno:'Active,Inactive' }}</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'employee_detail' employee.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left mr-2"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt mr-2"></i> Confirm Delete
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> For assistance, contact HR at hr@coca-cola.com
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Add any additional scripts if needed -->
+{% endblock %}
