@@ -1,0 +1,154 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <img src="{{ employee.profile_image.url|default:'/static/images/default-profile.png' }}" 
+             class="rounded-circle mb-3" width="150" height="150">
+        <h4>{{ employee.user.get_full_name }}</h4>
+        <p class="text-muted mb-1">{{ employee.position }}</p>
+        <p class="text-muted">{{ employee.department.name }}</p>
+        
+        <div class="d-flex justify-content-center mb-2">
+          <a href="{% url 'employee_update' employee.pk %}" class="btn btn-outline-danger me-2">
+            <i class="bi bi-pencil"></i> Edit
+          </a>
+          <a href="{% url 'employee_documents' employee.pk %}" class="btn btn-danger">
+            <i class="bi bi-folder"></i> Documents
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <h6 class="mb-0">Basic Information</h6>
+      </div>
+      <div class="card-body">
+        <div class="row mb-2">
+          <div class="col-6 fw-bold">Employee ID:</div>
+          <div class="col-6">{{ employee.employee_id }}</div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-6 fw-bold">Status:</div>
+          <div class="col-6">
+            <span class="badge bg-{% if employee.employment_status == 'active' %}success{% else %}warning{% endif %}">
+              {{ employee.get_employment_status_display }}
+            </span>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-6 fw-bold">Hire Date:</div>
+          <div class="col-6">{{ employee.hire_date|date:"M d, Y" }}</div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-6 fw-bold">Contract:</div>
+          <div class="col-6">{{ employee.get_contract_type_display }}</div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-6 fw-bold">Manager:</div>
+          <div class="col-6">
+            {% if employee.manager %}
+            <a href="{% url 'employee_detail' employee.manager.pk %}">
+              {{ employee.manager.user.get_full_name }}
+            </a>
+            {% else %}
+            -
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-8">
+    <div class="card mb-4">
+      <div class="card-header bg-white d-flex justify-content-between">
+        <h6 class="mb-0">Contact Information</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Personal</h6>
+            <p>
+              <i class="bi bi-envelope me-2"></i> {{ employee.user.email }}<br>
+              <i class="bi bi-phone me-2"></i> {{ employee.user.employee_profile.phone_number|default:"-" }}
+            </p>
+          </div>
+          <div class="col-md-6">
+            <h6>Emergency Contact</h6>
+            <p>
+              <i class="bi bi-person me-2"></i> {{ employee.emergency_contact_name|default:"-" }}<br>
+              <i class="bi bi-telephone me-2"></i> {{ employee.emergency_contact_number|default:"-" }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <h6 class="mb-0">Recent Documents</h6>
+      </div>
+      <div class="card-body">
+        {% if documents %}
+        <div class="list-group">
+          {% for doc in documents %}
+          <a href="{{ doc.file.url }}" class="list-group-item list-group-item-action" target="_blank">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="mb-1">{{ doc.name }}</h6>
+                <small class="text-muted">{{ doc.get_document_type_display }}</small>
+              </div>
+              <div>
+                <small>{{ doc.uploaded_at|date:"M d, Y" }}</small>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">No documents uploaded</p>
+        {% endif %}
+        <div class="mt-3 text-end">
+          <a href="{% url 'employee_documents' employee.pk %}" class="btn btn-sm btn-outline-danger">
+            View All Documents
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-header bg-white">
+        <h6 class="mb-0">Upcoming Training</h6>
+      </div>
+      <div class="card-body">
+        {% if training %}
+        <div class="list-group">
+          {% for reg in training %}
+          <div class="list-group-item">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="mb-1">{{ reg.training.title }}</h6>
+                <small class="text-muted">
+                  <i class="bi bi-calendar"></i> {{ reg.training.date|date:"M d, Y" }}
+                  <i class="bi bi-clock ms-2"></i> {{ reg.training.time|time:"H:i" }}
+                </small>
+              </div>
+              <span class="badge bg-{% if reg.training.is_mandatory %}danger{% else %}primary{% endif %}">
+                {% if reg.training.is_mandatory %}Mandatory{% else %}Optional{% endif %}
+              </span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">No upcoming training sessions</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

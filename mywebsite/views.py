@@ -572,28 +572,3 @@ def employee_delete(request, pk):
     context = {'employee': employee}
     return render(request, 'employees/employee_confirm_delete.html', context)
 
-@login_required
-@permission_required('employees.view_employee', raise_exception=True)
-def employee_documents(request, pk):
-    employee = get_object_or_404(Employee, pk=pk)
-    
-    if request.method == 'POST':
-        form = DocumentForm(request.POST, request.FILES)
-        if form.is_valid():
-            document = form.save(commit=False)
-            document.employee = employee
-            document.uploaded_by = request.user
-            document.save()
-            messages.success(request, 'Document uploaded successfully!')
-            return redirect('employee_documents', pk=employee.pk)
-    else:
-        form = DocumentForm()
-    
-    documents = employee.documents.all()
-    
-    context = {
-        'employee': employee,
-        'documents': documents,
-        'form': form,
-    }
-    return render(request, 'employees/employee_documents.html', context)

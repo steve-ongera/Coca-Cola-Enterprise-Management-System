@@ -1,0 +1,290 @@
+{% extends "base/base.html" %}
+
+{% block title %}{{ title }} - Coca-Cola ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0" style="color: #F40009;">
+                    <i class="bi bi-person-plus me-2"></i>{{ title }}
+                </h2>
+                <a href="{% if employee %}{% url 'employee_detail' employee.pk %}{% else %}{% url 'employee_list' %}{% endif %}" 
+                   class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </a>
+            </div>
+            <hr class="mt-2 mb-4" style="border-color: #F40009; opacity: 0.2;">
+        </div>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h4 class="mb-0 fw-semibold">
+                <i class="bi bi-person-vcard me-2" style="color: #F40009;"></i>
+                Employee Details
+            </h4>
+        </div>
+        
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data" novalidate class="needs-validation">
+                {% csrf_token %}
+                
+                <!-- Section 1: Basic Information -->
+                <div class="mb-4">
+                    <h5 class="mb-3 text-uppercase fw-semibold text-muted small">
+                        <i class="bi bi-person me-2"></i>Personal Information
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name*</label>
+                            {{ form.first_name }}
+                            <div class="invalid-feedback">Required field</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name*</label>
+                            {{ form.last_name }}
+                            <div class="invalid-feedback">Required field</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth</label>
+                            {{ form.date_of_birth }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone</label>
+                            {{ form.phone_number }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email*</label>
+                            {{ form.email }}
+                            <div class="invalid-feedback">Valid email required</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                            {{ form.address }}
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Section 2: Employment Details -->
+                <div class="mb-4">
+                    <h5 class="mb-3 text-uppercase fw-semibold text-muted small">
+                        <i class="bi bi-briefcase me-2"></i>Employment Information
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="{{ form.working_id.id_for_label }}" class="form-label">Employee ID</label>
+                            {{ form.working_id }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.department.id_for_label }}" class="form-label">Department</label>
+                            {{ form.department }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.position.id_for_label }}" class="form-label">Position</label>
+                            {{ form.position }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.role.id_for_label }}" class="form-label">Role</label>
+                            {{ form.role }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.user.id_for_label }}" class="form-label">User Account</label>
+                            {{ form.user }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.hire_date.id_for_label }}" class="form-label">Hire Date</label>
+                            {{ form.hire_date }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.employment_status.id_for_label }}" class="form-label">Status</label>
+                            {{ form.employment_status }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.contract_type.id_for_label }}" class="form-label">Contract Type</label>
+                            {{ form.contract_type }}
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Section 3: Financial & Emergency Info -->
+                <div class="mb-4">
+                    <h5 class="mb-3 text-uppercase fw-semibold text-muted small">
+                        <i class="bi bi-currency-dollar me-2"></i>Financial & Emergency
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.salary.id_for_label }}" class="form-label">Salary</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ form.salary }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.bank_account_number.id_for_label }}" class="form-label">Bank Account</label>
+                            {{ form.bank_account_number }}
+                        </div>
+                        <div class="col-md-2">
+                            <label for="{{ form.emergency_contact_name.id_for_label }}" class="form-label">Emergency Name</label>
+                            {{ form.emergency_contact_name }}
+                        </div>
+                        <div class="col-md-2">
+                            <label for="{{ form.emergency_contact_number.id_for_label }}" class="form-label">Emergency Phone</label>
+                            {{ form.emergency_contact_number }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 4: Profile Image -->
+                <div class="mb-4">
+                    <h5 class="mb-3 text-uppercase fw-semibold text-muted small">
+                        <i class="bi bi-image me-2"></i>Profile Image
+                    </h5>
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            {% if employee and employee.profile_image %}
+                            <img src="{{ employee.profile_image.url }}" 
+                                 class="rounded-circle border" 
+                                 width="120" 
+                                 height="120" 
+                                 alt="Current profile"
+                                 id="profileImagePreview">
+                            {% else %}
+                            <div class="rounded-circle border d-flex align-items-center justify-content-center" 
+                                 style="width: 120px; height: 120px; background-color: #f8f9fa;"
+                                 id="profileImagePlaceholder">
+                                <i class="bi bi-person text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-10">
+                            <label for="{{ form.profile_image.id_for_label }}" class="form-label">Upload Image</label>
+                            <div class="input-group">
+                                {{ form.profile_image }}
+                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('id_profile_image').click()">
+                                    <i class="bi bi-upload me-1"></i> Browse
+                                </button>
+                            </div>
+                            <div class="form-text">Recommended: 300x300px (JPG/PNG)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top">
+                    <button type="reset" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
+                    </button>
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="bi bi-save me-2"></i>Save Employee
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Enhanced Form Styling */
+    .card {
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .form-control, .form-select {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.9rem;
+        height: calc(1.5em + 0.75rem + 2px);
+    }
+    
+    .btn-danger {
+        background-color: #F40009;
+        border-color: #F40009;
+    }
+    
+    .btn-danger:hover {
+        background-color: #D10008;
+        border-color: #D10008;
+    }
+    
+    #id_profile_image {
+        position: absolute;
+        opacity: 0;
+        z-index: -1;
+    }
+    
+    .text-uppercase {
+        letter-spacing: 0.5px;
+    }
+    
+    .invalid-feedback {
+        font-size: 0.75rem;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Profile image preview
+    const profileImageInput = document.getElementById('id_profile_image');
+    let profileImagePreview = document.getElementById('profileImagePreview') || 
+                           document.getElementById('profileImagePlaceholder');
+    
+    profileImageInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (profileImagePreview.tagName === 'IMG') {
+                    profileImagePreview.src = e.target.result;
+                } else {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'rounded-circle border';
+                    img.width = 120;
+                    img.height = 120;
+                    img.alt = 'Preview';
+                    img.id = 'profileImagePreview';
+                    profileImagePreview.replaceWith(img);
+                    profileImagePreview = img;
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+    
+    // Initialize Select2 if needed
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('.select2').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Select an option'
+        });
+    }
+});
+</script>
+{% endblock %}

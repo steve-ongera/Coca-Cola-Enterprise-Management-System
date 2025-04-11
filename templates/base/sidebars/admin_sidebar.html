@@ -5,7 +5,7 @@
 
         <!-- Dashboard -->
         <li class="nav-item">
-            <a class="nav-link" href="#">
+            <a class="nav-link" href="{% url 'admin_dashboard'%}">
                 <i class="bi bi-speedometer2"></i>
                 <span>Executive Dashboard</span>
             </a>
@@ -19,7 +19,7 @@
                 <i class="bi bi-chevron-down ms-auto"></i>
             </a>
             <ul id="hr-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-                <li><a href="#"><i class="bi bi-person-vcard"></i> Employee Records</a></li>
+                <li><a href="{% url 'employee_list'%}"><i class="bi bi-person-vcard"></i> Employee Records</a></li>
                 <li><a href="#"><i class="bi bi-calendar-check"></i> Attendance</a></li>
                 <li><a href="#"><i class="bi bi-airplane"></i> Leave Management</a></li>
                 <li><a href="#"><i class="bi bi-cash-coin"></i> Payroll</a></li>

@@ -18,6 +18,4 @@ urlpatterns = [
     path('employees/<int:pk>/edit/', views.employee_update, name='employee_update'),
     path('employees/<int:pk>/delete/', views.employee_delete, name='employee_delete'),
     
-    # Employee Documents URLs
-    path('employees/<int:pk>/documents/', views.employee_documents, name='employee_documents'),
 ]
