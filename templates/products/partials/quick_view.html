@@ -1,0 +1,45 @@
+<div class="modal-header bg-danger text-white">
+    <h5 class="modal-title">{{ product.name }}</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-5">
+            <img src="{{ product.image.url|default:'/static/images/default-product.png' }}" 
+                 class="img-fluid rounded" alt="{{ product.name }}">
+        </div>
+        <div class="col-md-7">
+            <h6 class="text-muted">{{ product.product_code }}</h6>
+            <p>{{ product.description }}</p>
+            
+            <div class="mb-3">
+                <span class="badge bg-{{ product.status == 'active'|yesno:'success,secondary' }}">
+                    {{ product.get_status_display }}
+                </span>
+                <span class="badge bg-info ms-2">
+                    {{ product.variants.count }} variant{{ product.variants.count|pluralize }}
+                </span>
+            </div>
+            
+            <h6>Variants:</h6>
+            <ul class="list-group">
+                {% for variant in variants %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <div>
+                        <strong>{{ variant.name }}</strong>
+                        <div class="text-muted small">
+                            {{ variant.size }} | {{ variant.get_packaging_type_display }}
+                        </div>
+                    </div>
+                    <span class="badge bg-light text-dark">{{ variant.barcode }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-danger">
+        <i class="fas fa-edit me-2"></i>Edit Product
+    </a>
+</div>

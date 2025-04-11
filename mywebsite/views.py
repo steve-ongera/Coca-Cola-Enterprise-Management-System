@@ -1068,7 +1068,8 @@ def product_list(request):
     }
     
     # AJAX response for HTMX requests
-    if request.htmx:
+    # HTMX check - using headers instead of middleware
+    if request.headers.get('HX-Request') == 'true':
         html = render_to_string(
             'products/partials/product_grid.html', 
             {'products': page_obj},

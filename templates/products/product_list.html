@@ -36,7 +36,7 @@
                         <i class="fas fa-search position-absolute mt-2 ms-3 text-muted"></i>
                         <input type="text" id="product-search" class="form-control ps-5" 
                                placeholder="Search products, codes, categories..." 
-                               hx-get="{% url 'products:search' %}"
+                               hx-get="{% url 'product_search' %}"
                                hx-trigger="keyup changed delay:300ms"
                                hx-target="#product-results"
                                hx-indicator=".search-indicator">
@@ -64,7 +64,7 @@
                     <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="fas fa-file-import me-2"></i>Import
                     </button>
-                    <a href="{% url 'products:product_create' %}" class="btn btn-dark">
+                    <a href="{% url 'product_create' %}" class="btn btn-dark">
                         <i class="fas fa-plus me-2"></i>New Product
                     </a>
                 </div>
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#startImport').click(function() {
         const formData = new FormData(document.getElementById('importForm'));
         $.ajax({
-            url: "{% url 'products:import' %}",
+            url: "{% url 'import' %}",
             type: 'POST',
             data: formData,
             processData: false,
@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (category) params.append('category', category);
         if (status) params.append('status', status);
         
-        fetch(`{% url 'products:product_list' %}?${params.toString()}`)
+        fetch(`{% url 'product_list' %}?${params.toString()}`)
             .then(response => response.text())
             .then(html => {
                 document.getElementById('product-results').innerHTML = html;
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
 document.getElementById('startImport').addEventListener('click', function() {
     const formData = new FormData(document.getElementById('importForm'));
     
-    fetch("{% url 'products:import_products' %}", {
+    fetch("{% url 'import_products' %}", {
         method: 'POST',
         body: formData,
         headers: {
