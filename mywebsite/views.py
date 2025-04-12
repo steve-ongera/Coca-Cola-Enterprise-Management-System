@@ -1419,13 +1419,24 @@ def supplier_detail(request, pk):
 
 
 # views.py
+from django.db.models import Q
+
 def low_stock_alerts(request):
     low_stock_items = InventoryItem.objects.filter(
         quantity__lte=models.F('reorder_level')
     ).select_related('product_variant', 'warehouse')
     
+    # Calculate critical items (below 50% of reorder level)
+    critical_count = low_stock_items.filter(
+        quantity__lte=models.F('reorder_level') * 0.5
+    ).count()
+    
+    # Warning items are the rest (above 50% but below reorder level)
+    warning_count = low_stock_items.count() - critical_count
+    
     context = {
         'low_stock_items': low_stock_items,
+        'critical_count': critical_count,
+        'warning_count': warning_count,
     }
     return render(request, 'inventory/low_stock_alerts.html', context)
-

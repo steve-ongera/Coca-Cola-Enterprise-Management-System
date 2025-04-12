@@ -1,0 +1,276 @@
+{% extends 'base/base.html' %}
+{% load custom_filters %}
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div class="d-flex align-items-center">
+            <h1 class="h2">
+                <i class="bi bi-exclamation-triangle-fill text-danger"></i> Low Stock Alerts
+            </h1>
+            <span class="badge bg-danger ms-2">{{ low_stock_items|length }}</span>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="#" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Inventory
+                </a>
+                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#exportModal">
+                    <i class="bi bi-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Critical Items</h6>
+                            <h2 class="mb-0">{{ critical_count }}</h2>
+                        </div>
+                        <i class="bi bi-exclamation-octagon-fill" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Warning Items</h6>
+                            <h2 class="mb-0">{{ warning_count }}</h2>
+                        </div>
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Alerts</h6>
+                            <h2 class="mb-0">{{ low_stock_items|length }}</h2>
+                        </div>
+                        <i class="bi bi-clipboard2-pulse-fill" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Items Table -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Low Stock Items
+                </h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="?filter=all">All Alerts</a></li>
+                        <li><a class="dropdown-item" href="?filter=critical">Critical Only</a></li>
+                        <li><a class="dropdown-item" href="?filter=warning">Warning Only</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Variant</th>
+                            <th>Warehouse</th>
+                            <th class="text-end">Current Stock</th>
+                            <th class="text-end">Reorder Level</th>
+                            <th>Status</th>
+                            <th>Last Restocked</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in low_stock_items %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'product_detail' item.product_variant.product.id %}">
+                                    {{ item.product_variant.product.name }}
+                                </a>
+                            </td>
+                            <td>{{ item.product_variant.name }}</td>
+                            <td>
+                                <a href="{% url 'warehouse_detail' item.warehouse.id %}">
+                                    {{ item.warehouse.name }}
+                                </a>
+                            </td>
+                            <td class="text-end">
+                                {{ item.quantity }} {{ item.unit_of_measure }}
+                            </td>
+                            <td class="text-end">
+                                {{ item.reorder_level }} {{ item.unit_of_measure }}
+                            </td>
+                            <td>
+                                {% if item.quantity <= item.reorder_level|mul:0.5 %}
+                                <span class="badge bg-danger">Critical</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Warning</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.last_restocked %}
+                                {{ item.last_restocked|date:"M d, Y" }}
+                                {% else %}
+                                <span class="text-muted">Never</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="#" 
+                                       class="btn btn-outline-primary" title="Create PO">
+                                        <i class="bi bi-file-earmark-plus"></i>
+                                    </a>
+                                    <a href="#" 
+                                       class="btn btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a href="#" 
+                                       class="btn btn-outline-info" title="View History">
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="bi bi-check-circle-fill text-success"></i> No low stock items!
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalLabel">Export Low Stock Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="get" action="#">
+                    <div class="mb-3">
+                        <label for="exportFormat" class="form-label">Format</label>
+                        <select class="form-select" id="exportFormat" name="format">
+                            <option value="csv">CSV</option>
+                            <option value="excel">Excel</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exportFilter" class="form-label">Filter</label>
+                        <select class="form-select" id="exportFilter" name="filter">
+                            <option value="all">All Alerts</option>
+                            <option value="critical">Critical Only</option>
+                            <option value="warning">Warning Only</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Export</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom styling for the table */
+    .table-hover tbody tr:hover {
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+    
+    /* Status badge styling */
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+    }
+    
+    .badge.bg-warning {
+        background-color: #ffc107 !important;
+    }
+    
+    /* Card header styling */
+    .card-header.bg-light {
+        background-color: #f8f9fa !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 0.5rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Initialize popovers
+    $('[data-bs-toggle="popover"]').popover();
+    
+    // Export form submission
+    $('#exportModal form').on('submit', function(e) {
+        e.preventDefault();
+        const format = $('#exportFormat').val();
+        const filter = $('#exportFilter').val();
+        window.location.href = `{% url 'export_low_stock' %}?format=${format}&filter=${filter}`;
+        $('#exportModal').modal('hide');
+    });
+    
+    // Submit export form when Export button is clicked
+    $('#exportModal .btn-primary').on('click', function() {
+        $('#exportModal form').submit();
+    });
+    
+    // Highlight critical rows
+    $('tbody tr').each(function() {
+        if ($(this).find('.badge.bg-danger').length) {
+            $(this).addClass('table-danger');
+        } else if ($(this).find('.badge.bg-warning').length) {
+            $(this).addClass('table-warning');
+        }
+    });
+});
+</script>
+{% endblock %}
