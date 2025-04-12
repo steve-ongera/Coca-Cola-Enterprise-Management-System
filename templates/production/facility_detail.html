@@ -1,0 +1,212 @@
+{% extends "base/base.html" %}
+
+{% block title %}{{ facility.name }} | Coca-Cola Production Facility{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-industry mr-2"></i>{{ facility.name }}
+            <span class="badge ml-2 {% if facility.status == 'active' %}badge-success{% else %}badge-secondary{% endif %}">
+                {{ facility.get_status_display }}
+            </span>
+        </h1>
+        <div class="btn-group">
+            <a href="{% url 'facility_update' facility.id %}" class="btn btn-primary">
+                <i class="fas fa-edit mr-2"></i>Edit Facility
+            </a>
+            <a href="{% url 'facility_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i>Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Facility Details Card -->
+    <div class="row">
+        <!-- Main Facility Info -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Facility Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-group">
+                                <label>Location:</label>
+                                <p>{{ facility.location }}</p>
+                            </div>
+                            <div class="detail-group">
+                                <label>Daily Capacity:</label>
+                                <p>{{ facility.capacity|floatformat:2 }} Liters</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-group">
+                                <label>Plant Manager:</label>
+                                <p>
+                                    {% if facility.manager %}
+                                    <a href="{% url 'employee_detail' facility.manager.id %}">
+                                        {{ facility.manager.get_full_name }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">Not assigned</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="detail-group">
+                                <label>Facility ID:</label>
+                                <p>{{ facility.id }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Production Lines Section -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Production Lines</h6>
+                    <a href="{% url 'line_create' facility.id %}" class="btn btn-sm btn-success">
+                        <i class="fas fa-plus mr-1"></i>Add Line
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if facility.production_lines.all %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Line Name</th>
+                                    <th>Capacity (units/hour)</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for line in facility.production_lines.all %}
+                                <tr>
+                                    <td>{{ line.name }}</td>
+                                    <td>{{ line.capacity_per_hour|floatformat:2 }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if line.status == 'operational' %}badge-success
+                                            {% elif line.status == 'maintenance' %}badge-warning
+                                            {% else %}badge-secondary{% endif %}">
+                                            {{ line.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'line_detail' line.id %}" class="btn btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'line_update' line.id %}" class="btn btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        No production lines configured for this facility.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar with Stats and Activity -->
+        <div class="col-lg-4">
+            <!-- Capacity Utilization -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Capacity Utilization</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="capacityChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-primary"></i> Utilized
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-gray-200"></i> Available
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush small">
+                        {% for log in facility.change_logs.all|slice:":5" %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ log.changed_fields }}</h6>
+                                <small>{{ log.changed_at|timesince }} ago</small>
+                            </div>
+                            <p class="mb-1">{{ log.notes|default:"No additional notes" }}</p>
+                            <small>Modified by {{ log.user.get_full_name }}</small>
+                        </div>
+                        {% empty %}
+                        <div class="text-muted p-3">No recent activity</div>
+                        {% endfor %}
+                    </div>
+                    <a href="{% url 'facility_changelog' facility.id %}" class="btn btn-link btn-sm float-right mt-2">
+                        View Full History <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Capacity Utilization Pie Chart
+$(document).ready(function() {
+    var ctx = document.getElementById('capacityChart').getContext('2d');
+    var capacityChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Utilized Capacity', 'Available Capacity'],
+            datasets: [{
+                data: [70, 30], // Replace with actual data from your view
+                backgroundColor: ['#4e73df', '#e5e9f2'],
+                hoverBackgroundColor: ['#2e59d9', '#d1d7e0'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+            legend: {
+                display: false
+            },
+            cutoutPercentage: 80,
+        },
+    });
+});
+</script>
+{% endblock %}

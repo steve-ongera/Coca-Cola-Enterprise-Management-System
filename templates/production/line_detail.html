@@ -1,0 +1,250 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Header with Breadcrumb -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom border-coca">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'line_list' %}">Production Lines</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ line.name }}</li>
+            </ol>
+        </nav>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="#" class="btn btn-sm btn-coca-outline me-2">
+                <i class="bi bi-pencil-square"></i> Edit
+            </a>
+            <a href="{% url 'batch_create' %}?line={{ line.pk }}" class="btn btn-sm btn-coca-red">
+                <i class="bi bi-plus-circle"></i> Start Batch
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="card border-coca mb-4">
+        <div class="card-header bg-coca-red text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">
+                <i class="bi bi-cpu"></i> {{ line.facility.name }} - {{ line.name }}
+            </h3>
+            <span class="badge 
+                {% if line.status == 'operational' %}bg-coca-green
+                {% elif line.status == 'maintenance' %}bg-coca-orange
+                {% else %}bg-secondary{% endif %}">
+                {{ line.get_status_display }}
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-6">
+                    <!-- Line Details -->
+                    <div class="card border-coca mb-4">
+                        <div class="card-header bg-coca-light">
+                            <h5 class="mb-0"><i class="bi bi-info-circle"></i> Line Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <dt class="col-sm-4">Capacity</dt>
+                                <dd class="col-sm-8">{{ line.capacity_per_hour }} units/hour</dd>
+                                
+                                <dt class="col-sm-4">Uptime (7d)</dt>
+                                <dd class="col-sm-8">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-coca-green" 
+                                             role="progressbar" 
+                                             style="width: {{ uptime_last_week }}%" 
+                                             aria-valuenow="{{ uptime_last_week }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ uptime_last_week }}%
+                                        </div>
+                                    </div>
+                                </dd>
+                                
+                                <dt class="col-sm-4">Product Types</dt>
+                                <dd class="col-sm-8">
+                                    {% for product in product_types %}
+                                    <span class="badge bg-coca-blue me-1">{{ product.name }}</span>
+                                    {% empty %}
+                                    <span class="text-muted">None assigned</span>
+                                    {% endfor %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Batches -->
+                    <div class="card border-coca">
+                        <div class="card-header bg-coca-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-collection"></i> Active Batches</h5>
+                            <span class="badge bg-coca-red">{{ active_batches.count }}</span>
+                        </div>
+                        <div class="card-body">
+                            {% if active_batches %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Batch #</th>
+                                            <th>Product</th>
+                                            <th>Started</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for batch in active_batches %}
+                                        <tr>
+                                            <td><a href="#">{{ batch.batch_number }}</a></td>
+                                            <td>{{ batch.product.name }}</td>
+                                            <td>{{ batch.start_time|timesince }} ago</td>
+                                            <td>
+                                                <span class="badge bg-coca-yellow">
+                                                    {{ batch.get_quality_check_status_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted mb-0">No active batches</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column -->
+                <div class="col-md-6">
+                    <!-- Maintenance -->
+                    <div class="card border-coca mb-4">
+                        <div class="card-header bg-coca-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-tools"></i> Maintenance</h5>
+                            <a href="{% url 'maintenance_create' %}?line={{ line.pk }}" 
+                               class="btn btn-sm btn-coca-outline">
+                                <i class="bi bi-plus"></i> Schedule
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if scheduled_maintenance %}
+                            <ul class="list-group list-group-flush">
+                                {% for maintenance in scheduled_maintenance %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ maintenance.maintenance_type }}</h6>
+                                        <small class="text-muted">
+                                            {{ maintenance.scheduled_date|date:"M d, Y H:i" }} 
+                                            ({{ maintenance.assigned_technician.get_full_name }})
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-coca-blue">
+                                        {{ maintenance.get_status_display }}
+                                    </span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted mb-0">No maintenance scheduled</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Downtime -->
+                    <div class="card border-coca">
+                        <div class="card-header bg-coca-light">
+                            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Downtime</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_downtime %}
+                            <div class="timeline">
+                                {% for incident in recent_downtime %}
+                                <div class="timeline-item mb-3">
+                                    <div class="timeline-badge bg-coca-red">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="timeline-panel">
+                                        <div class="timeline-heading">
+                                            <h6 class="timeline-title">{{ incident.reason|truncatechars:40 }}</h6>
+                                            <p class="text-muted small mb-1">
+                                                {{ incident.start_time|date:"M d, H:i" }} - 
+                                                {{ incident.end_time|date:"H:i" }} | 
+                                                {{ incident.reported_by.get_full_name }}
+                                            </p>
+                                        </div>
+                                        <div class="timeline-body">
+                                            <p class="small">{{ incident.resolution|truncatechars:60 }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <a href="{% url 'downtime_create' %}?line={{ line.pk }}" 
+                               class="btn btn-sm btn-coca-outline mt-2">
+                                <i class="bi bi-plus"></i> Report New Downtime
+                            </a>
+                            {% else %}
+                            <p class="text-muted mb-0">No downtime recorded</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Timeline styling */
+    .timeline {
+        position: relative;
+        padding-left: 50px;
+    }
+    
+    .timeline:before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 15px;
+    }
+    
+    .timeline-badge {
+        position: absolute;
+        left: -50px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .timeline-panel {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Custom colors */
+    .bg-coca-orange {
+        background-color: #FF7F00;
+    }
+    
+    .bg-coca-yellow {
+        background-color: #FFC72C;
+        color: #1A1A1A;
+    }
+</style>
+{% endblock %}

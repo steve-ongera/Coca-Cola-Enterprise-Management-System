@@ -99,5 +99,31 @@ urlpatterns = [
     path('vehicles/<int:pk>/update-status/', views.vehicle_update_status, name='vehicle_update_status'),
     path('vehicles/<int:pk>/upload-image/', views.vehicle_upload_image, name='vehicle_upload_image'),
     path('vehicles/<int:pk>/add-maintenance/',  views.vehicle_add_maintenance,    name='vehicle_add_maintenance'),
+
+    # Facilities
+    path('facilities/', views.facility_list, name='facility_list'),
+    path('facilities/create/', views.facility_create, name='facility_create'),
+    path('facilities/<int:pk>/', views.facility_detail, name='facility_detail'),
+    path('facilities/<int:pk>/update/', views.facility_update, name='facility_update'),
+    path('facilities/<int:pk>/changelog/',views.facility_changelog,name='facility_changelog'),
+    
+    # Production Lines
+    
+    path('facilities/<int:facility_id>/lines/create/',views.create_production_line,name='line_create'),
+    path('lines/', views.production_line_list, name='line_list'),
+    path('lines/create/', views.production_line_create, name='line_create'),
+    path('lines/<int:pk>/', views.production_line_detail, name='line_detail'),
+    
+    # Batches
+    path('batches/', views.batch_list, name='batch_list'),
+    path('batches/create/', views.batch_create, name='batch_create'),
+    
+    # Maintenance
+    path('maintenance/', views.maintenance_list, name='maintenance_list'),
+    path('maintenance/create/', views.maintenance_create, name='maintenance_create'),
+    
+    # Downtime
+    path('downtime/', views.downtime_list, name='downtime_list'),
+    path('downtime/create/', views.downtime_create, name='downtime_create'),
     
 ]

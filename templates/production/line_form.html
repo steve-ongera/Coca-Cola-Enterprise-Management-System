@@ -1,0 +1,199 @@
+{% extends "base/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header with Coca-Cola Red Accent -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-conveyor-belt mr-2" style="color: #ED1C24;"></i>{{ title }}
+        </h1>
+        <div>
+            {% if object %}  {# Only show delete button for existing records #}
+            <a href="{% url 'line_delete' object.id %}" class="btn btn-danger mr-2" style="background-color: #ED1C24; border-color: #ED1C24;">
+                <i class="fas fa-trash-alt mr-1"></i>Delete
+            </a>
+            {% endif %}
+            <a href="{% if facility %}{% url 'facility_detail' facility.id %}{% else %}{% url 'line_list' %}{% endif %}" 
+            class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-1"></i>Cancel
+            </a>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3" style="border-top: 4px solid #ED1C24;">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-{% if object %}edit{% else %}plus-circle{% endif %} mr-1"></i>
+                Production Line {% if object %}Update{% else %}Creation{% endif %}
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" id="productionLineForm">
+                {% csrf_token %}
+                
+                <!-- System Messages -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Form Fields -->
+                <div class="form-group row">
+                    <div class="col-md-3 mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="font-weight-bold">Line Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.name.errors.as_text }}
+                        </div>
+                        {% endif %}
+                        <small class="form-text text-muted">Unique identifier for this production line</small>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label for="{{ form.facility.id_for_label }}" class="font-weight-bold">Facility</label>
+                        <div class="input-group">
+                            {{ form.facility }}
+                            
+                        </div>
+                       
+                       
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="{{ form.capacity_per_hour.id_for_label }}" class="font-weight-bold">Capacity</label>
+                        <div class="input-group">
+                            {{ form.capacity_per_hour }}
+                            <div class="input-group-append">
+                                <span class="input-group-text">units/hour</span>
+                            </div>
+                        </div>
+                        {% if form.capacity_per_hour.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.capacity_per_hour.errors.as_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.product_types.id_for_label }}" class="font-weight-bold">Product Types</label>
+                        {{ form.product_types }}
+                        {% if form.product_types.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.product_types.errors.as_text }}
+                        </div>
+                        {% endif %}
+                        <small class="form-text text-muted">Hold CTRL/CMD to select multiple</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="font-weight-bold">Status</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.status.errors.as_text }}
+                        </div>
+                        {% endif %}
+                        {% if object %}
+                        <div class="mt-2">
+                            <small class="font-weight-bold">Last Updated:</small>
+                            <small class="text-muted"> {{ object.updated_at|default:"N/A" }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Additional Fields for Existing Records -->
+                {% if object %}
+                <div class="form-group row">
+                    <div class="col-md-6 mb-3">
+                        <label class="font-weight-bold">Facility</label>
+                        <p class="form-control-plaintext">
+                            <a href="{% url 'facility_detail' object.facility.id %}">
+                                {{ object.facility.name }}
+                            </a>
+                        </p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="font-weight-bold">Line ID</label>
+                        <p class="form-control-plaintext">{{ object.id }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Form Actions -->
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary mr-3" style="background-color: #ED1C24; border-color: #ED1C24;">
+                        <i class="fas fa-save mr-1"></i>{% if object %}Update{% else %}Create{% endif %} Line
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo mr-1"></i>Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Change Log for Existing Records -->
+    {% if object %}
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-history mr-1"></i>Recent Changes
+            </h6>
+            <a href="{% url 'line_changelog' object.id %}" class="btn btn-sm btn-link">
+                View Full History <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        <div class="card-body">
+            {% with changes=object.change_logs.all|slice:":3" %}
+                {% if changes %}
+                <div class="list-group list-group-flush">
+                    {% for log in changes %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ log.changed_at|date:"M d, Y H:i" }}</h6>
+                            <small>{{ log.get_action_display }}</small>
+                        </div>
+                        <p class="mb-1">{{ log.changed_fields_display }}</p>
+                        <small>Modified by {{ log.user.get_full_name|default:log.user.username }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No change history available</p>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Initialize Select2 with Coca-Cola theme -->
+<script>
+$(document).ready(function() {
+    $('.select2').select2({
+        placeholder: "Select product types",
+        allowClear: true,
+        theme: 'bootstrap4',
+        width: '100%'
+    });
+    
+    // Form validation
+    $('#productionLineForm').on('submit', function() {
+        $(this).find('button[type="submit"]').prop('disabled', true)
+               .html('<i class="fas fa-spinner fa-spin mr-1"></i> Processing...');
+    });
+});
+</script>
+{% endblock %}

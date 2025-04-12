@@ -634,3 +634,71 @@ class DeliveryVehicleForm(forms.ModelForm):
                 self.fields[field].widget.attrs['class'] = 'form-control'
             if self.fields[field].required:
                 self.fields[field].widget.attrs['required'] = 'required'
+
+
+from django import forms
+from .models import *
+
+class ProductionFacilityForm(forms.ModelForm):
+    class Meta:
+        model = ProductionFacility
+        fields = '__all__'
+        widgets = {
+            'location': forms.Textarea(attrs={'rows': 3}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'manager': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+from django import forms
+from .models import ProductionLine
+
+class ProductionLineForm(forms.ModelForm):
+    class Meta:
+        model = ProductionLine
+        fields = ['name', 'facility', 'product_types', 'capacity_per_hour', 'status']
+        widgets = {
+            'product_types': forms.SelectMultiple(attrs={'class': 'select2'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+        }
+        
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({'class': 'form-control'})
+
+class ProductionBatchForm(forms.ModelForm):
+    class Meta:
+        model = ProductionBatch
+        fields = '__all__'
+        widgets = {
+            'production_line': forms.Select(attrs={'class': 'form-select'}),
+            'product': forms.Select(attrs={'class': 'form-select'}),
+            'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'quality_check_status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+class MaintenanceScheduleForm(forms.ModelForm):
+    class Meta:
+        model = MaintenanceSchedule
+        fields = '__all__'
+        widgets = {
+            'production_line': forms.Select(attrs={'class': 'form-select'}),
+            'scheduled_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'assigned_technician': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+class DowntimeIncidentForm(forms.ModelForm):
+    class Meta:
+        model = DowntimeIncident
+        fields = '__all__'
+        widgets = {
+            'production_line': forms.Select(attrs={'class': 'form-select'}),
+            'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'reported_by': forms.Select(attrs={'class': 'form-select'}),
+            'reason': forms.Textarea(attrs={'rows': 3}),
+            'resolution': forms.Textarea(attrs={'rows': 3}),
+        }

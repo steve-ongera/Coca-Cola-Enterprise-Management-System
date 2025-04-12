@@ -1049,6 +1049,18 @@ class ProductionFacility(models.Model):
     def __str__(self):
         return self.name
 
+class FacilityChangeLog(models.Model):
+    facility = models.ForeignKey(ProductionFacility, on_delete=models.CASCADE, related_name='change_logs')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    changed_at = models.DateTimeField(auto_now_add=True)
+    changed_fields = models.TextField()
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-changed_at']
+        
+    def __str__(self):
+        return f"{self.facility.name} updated by {self.user} at {self.changed_at}"
 
 class ProductionLine(models.Model):
     facility = models.ForeignKey(ProductionFacility, on_delete=models.CASCADE, related_name='production_lines')

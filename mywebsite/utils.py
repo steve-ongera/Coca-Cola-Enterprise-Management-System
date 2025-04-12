@@ -115,3 +115,29 @@ def parse_date(date_str):
             continue
     
     raise ValidationError(f"Invalid date format: {date_str}")
+
+
+from django.utils import timezone
+from datetime import timedelta
+from .models import ProductionLine, DowntimeIncident
+
+def calculate_uptime(line):
+    """Calculate uptime percentage for the last 7 days"""
+    week_ago = timezone.now() - timedelta(days=7)
+    
+    total_hours = 7 * 24  # Total possible hours
+    downtime_hours = 0
+    
+    # Get all downtime incidents in the last week
+    incidents = DowntimeIncident.objects.filter(
+        production_line=line,
+        start_time__gte=week_ago,
+        end_time__isnull=False
+    )
+    
+    for incident in incidents:
+        duration = incident.end_time - incident.start_time
+        downtime_hours += duration.total_seconds() / 3600  # Convert to hours
+    
+    uptime_percent = 100 - (downtime_hours / total_hours * 100)
+    return round(max(0, min(100, uptime_percent)), 1)  # Ensure between 0-100

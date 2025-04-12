@@ -1703,3 +1703,272 @@ def vehicle_add_maintenance(request, pk):
             messages.error(request, f"Error adding maintenance record: {str(e)}")
     
     return redirect('vehicle_detail', pk=vehicle.pk)
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import *
+from .forms import *
+
+# Facilities
+from django.db.models import Sum
+from django.shortcuts import render
+from .models import ProductionFacility, FacilityChangeLog
+
+from django.db.models import Sum
+from django.shortcuts import render
+from .models import ProductionFacility, FacilityChangeLog
+
+def facility_list(request):
+    facilities = ProductionFacility.objects.select_related('manager').all()
+    active_count = facilities.filter(status='active').count()
+    
+    # Get recent changes for the sidebar
+    recent_changes = FacilityChangeLog.objects.select_related(
+        'facility', 'user'
+    ).order_by('-changed_at')[:5]
+    
+    # Calculate total capacity in the view instead of template
+    total_capacity = facilities.aggregate(total=Sum('capacity'))['total'] or 0
+    
+    return render(request, 'production/facility_list.html', {
+        'facilities': facilities,
+        'active_count': active_count,
+        'total_capacity': total_capacity,
+        'recent_changes': recent_changes,
+        'page_title': 'Production Facilities Management',
+    })
+
+def facility_create(request):
+    if request.method == 'POST':
+        form = ProductionFacilityForm(request.POST)
+        if form.is_valid():
+            facility = form.save()
+            messages.success(request, f'{facility.name} created successfully!')
+            return redirect('facility_detail', pk=facility.pk)
+    else:
+        form = ProductionFacilityForm()
+    return render(request, 'production/facility_form.html', {'form': form})
+
+@login_required
+def facility_update(request, pk):
+    facility = get_object_or_404(ProductionFacility, pk=pk)
+    
+    if request.method == 'POST':
+        form = ProductionFacilityForm(request.POST, instance=facility)
+        if form.is_valid():
+            updated_facility = form.save()
+            
+            # Log the change
+            FacilityChangeLog.objects.create(
+                facility=updated_facility,
+                user=request.user,
+                changed_fields=', '.join(form.changed_data),
+                notes=f"Updated via facility update form"
+            )
+            
+            messages.success(
+                request, 
+                f"{updated_facility.name} updated successfully"
+            )
+            return redirect('production:facility_detail', pk=updated_facility.pk)
+    else:
+        form = ProductionFacilityForm(instance=facility)
+    
+    context = {
+        'form': form,
+        'facility': facility,
+        'title': f'Update {facility.name}',
+        'action': 'Update'
+    }
+    return render(request, 'production/facility_form.html', context)
+
+def facility_detail(request, pk):
+    facility = get_object_or_404(ProductionFacility.objects.prefetch_related('production_lines'), pk=pk)
+    return render(request, 'production/facility_detail.html', {'facility': facility})
+
+
+from django.shortcuts import render, get_object_or_404
+from django.core.paginator import Paginator
+from .models import ProductionFacility, FacilityChangeLog
+
+def facility_changelog(request, pk):
+    facility = get_object_or_404(ProductionFacility, pk=pk)
+    changelog_entries = FacilityChangeLog.objects.filter(
+        facility=facility
+    ).select_related('user').order_by('-changed_at')
+    
+    # Pagination - 10 items per page
+    paginator = Paginator(changelog_entries, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'facility': facility,
+        'page_obj': page_obj,
+        'title': f'Change Log - {facility.name}',
+    }
+    return render(request, 'production/facility_changelog.html', context)
+# Production Lines
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.contrib import messages
+from .models import ProductionLine, ProductionFacility
+from .forms import ProductionLineForm
+
+def create_production_line(request, facility_id):
+    facility = get_object_or_404(ProductionFacility, pk=facility_id)
+    
+    if request.method == 'POST':
+        form = ProductionLineForm(request.POST)
+        if form.is_valid():
+            production_line = form.save(commit=False)
+            production_line.facility = facility
+            production_line.save()
+            form.save_m2m()  # Required for saving many-to-many relations (like product_types)
+            
+            messages.success(
+                request,
+                f"Successfully created new production line: {production_line.name}"
+            )
+            return redirect('facility_detail', pk=facility_id)
+    else:
+        initial = {'facility': facility_id}
+        form = ProductionLineForm(initial=initial)
+    
+    context = {
+        'form': form,
+        'facility': facility,
+        'title': f"Add New Production Line to {facility.name}",
+    }
+    
+    return render(request, 'production/line_form.html', context)
+
+
+from django.shortcuts import render
+from django.db.models import Count, Q
+from .models import ProductionLine
+
+def production_line_list(request):
+    # Get all production lines with optimized queries
+    lines = ProductionLine.objects.select_related('facility')\
+                                 .prefetch_related('product_types')\
+                                 .annotate(
+                                     product_count=Count('product_types')
+                                 ).order_by('facility__name', 'name')
+    
+    # Calculate status counts
+    status_counts = {
+        'operational': lines.filter(status='operational').count(),
+        'maintenance': lines.filter(status='maintenance').count(),
+        'inactive': lines.filter(status='inactive').count(),
+    }
+    
+    # Get total production capacity
+    total_capacity = lines.aggregate(total=Sum('capacity_per_hour'))['total'] or 0
+    
+    context = {
+        'lines': lines,
+        'status_counts': status_counts,
+        'total_capacity': total_capacity,
+        'total_lines': lines.count(),
+        'page_title': 'Production Lines Management',
+    }
+    return render(request, 'production/line_list.html', context)
+
+def production_line_create(request):
+    if request.method == 'POST':
+        form = ProductionLineForm(request.POST)
+        if form.is_valid():
+            line = form.save()
+            messages.success(request, f'Production line {line.name} created!')
+            return redirect('line_detail', pk=line.pk)
+    else:
+        form = ProductionLineForm()
+    return render(request, 'production/line_form.html', {'form': form})
+
+from .utils import calculate_uptime
+@login_required
+def production_line_detail(request, pk):
+    line = get_object_or_404(
+        ProductionLine.objects.select_related('facility')
+                            .prefetch_related('product_types', 'batches', 'maintenance_schedules'),
+        pk=pk
+    )
+    
+    # Get stats for dashboard
+    active_batches = line.batches.filter(end_time__isnull=True)
+    scheduled_maintenance = line.maintenance_schedules.filter(status='scheduled')
+    recent_downtime = DowntimeIncident.objects.filter(
+        production_line=line,
+        end_time__isnull=False
+    ).order_by('-start_time')[:3]
+    
+    context = {
+        'line': line,
+        'active_batches': active_batches,
+        'scheduled_maintenance': scheduled_maintenance,
+        'recent_downtime': recent_downtime,
+        'product_types': line.product_types.all(),
+        'uptime_last_week': calculate_uptime(line),  # Custom function you'd implement
+    }
+    return render(request, 'production/line_detail.html', context)
+
+# Batches
+def batch_list(request):
+    batches = ProductionBatch.objects.select_related('production_line', 'product')
+    return render(request, 'production/batch_list.html', {
+        'batches': batches,
+        'pending_quality': batches.filter(quality_check_status='pending').count(),
+    })
+
+def batch_create(request):
+    if request.method == 'POST':
+        form = ProductionBatchForm(request.POST)
+        if form.is_valid():
+            batch = form.save()
+            messages.success(request, f'Batch {batch.batch_number} started!')
+            return redirect('batch_list')
+    else:
+        form = ProductionBatchForm()
+    return render(request, 'production/batch_form.html', {'form': form})
+
+# Maintenance
+def maintenance_list(request):
+    schedules = MaintenanceSchedule.objects.select_related('production_line', 'assigned_technician')
+    return render(request, 'production/maintenance_list.html', {
+        'schedules': schedules,
+        'upcoming': schedules.filter(status='scheduled').count(),
+    })
+
+def maintenance_create(request):
+    if request.method == 'POST':
+        form = MaintenanceScheduleForm(request.POST)
+        if form.is_valid():
+            maintenance = form.save()
+            messages.success(request, f'Maintenance scheduled for {maintenance.production_line.name}')
+            return redirect('maintenance_list')
+    else:
+        form = MaintenanceScheduleForm()
+    return render(request, 'production/maintenance_form.html', {'form': form})
+
+# Downtime
+def downtime_list(request):
+    incidents = DowntimeIncident.objects.select_related('production_line', 'reported_by')
+    return render(request, 'production/downtime_list.html', {
+        'incidents': incidents,
+        'active': incidents.filter(end_time__isnull=True).count(),
+    })
+
+def downtime_create(request):
+    if request.method == 'POST':
+        form = DowntimeIncidentForm(request.POST)
+        if form.is_valid():
+            downtime = form.save()
+            messages.warning(request, f'Downtime reported for {downtime.production_line.name}')
+            return redirect('downtime_list')
+    else:
+        form = DowntimeIncidentForm()
+    return render(request, 'production/downtime_form.html', {'form': form})
