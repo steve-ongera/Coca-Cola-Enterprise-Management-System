@@ -10,7 +10,7 @@
                     <img src="/static/assets/img/coca-cola-logo.png" alt="Coca-Cola" class="me-3" style="height: 40px;">
                     <h2 class="mb-0">
                         <i class="bi bi-file-earmark-text"></i> 
-                        {% if form.instance.pk %}Edit{% else %}Create{% endif %} Purchase Order
+                        {% if order %}Edit{% else %}Create{% endif %} Purchase Order
                     </h2>
                 </div>
                 <a href="{% url 'purchase_order_list' %}" class="btn btn-coca-light">
@@ -83,17 +83,21 @@
                             </div>
                             
                             <!-- Status (visible only when editing) -->
-                            {% if form.instance.pk %}
+                            {% if order %}
                             <div class="col-md-6">
-                                <label for="{{ form.status.id_for_label }}" class="form-label text-coca-dark">
+                                <label class="form-label text-coca-dark">
                                     <i class="bi bi-info-circle"></i> Status
                                 </label>
-                                {{ form.status }}
-                                {% if form.status.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.status.errors|join:", " }}
+                                <div class="form-control-plaintext">
+                                    <span class="badge 
+                                        {% if order.status == 'received' %}bg-coca-green
+                                        {% elif order.status == 'sent' %}bg-coca-blue
+                                        {% elif order.status == 'draft' %}bg-secondary
+                                        {% elif order.status == 'cancelled' %}bg-coca-danger
+                                        {% else %}bg-coca-warning{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
                                 </div>
-                                {% endif %}
                             </div>
                             {% endif %}
                         </div>
@@ -107,14 +111,13 @@
                             {{ formset.management_form }}
                             <div id="order-items-container">
                                 {% for form in formset %}
-                                <div class="card mb-3 border-coca item-form" data-item-id="{{ forloop.counter0 }}">
+                                <div class="card mb-3 border-coca item-form" id="item-{{ forloop.counter0 }}">
                                     <div class="card-header bg-coca-light text-coca-dark d-flex justify-content-between align-items-center">
                                         <span>Item #{{ forloop.counter }}</span>
-                                        {% if formset.can_delete %}
-                                        <span class="delete-item">
-                                            {{ form.DELETE }} Delete Item
-                                        </span>
-                                        {% endif %}
+                                        <label class="delete-item mb-0">
+                                            {{ form.DELETE }}
+                                            <i class="bi bi-trash"></i> Remove Item
+                                        </label>
                                     </div>
                                     <div class="card-body">
                                         <div class="row g-3">
@@ -172,6 +175,10 @@
                                                 </div>
                                                 {% endif %}
                                             </div>
+                                            
+                                            <!-- Hidden Fields -->
+                                            {{ form.id }}
+                                            {{ form.purchase_order }}
                                         </div>
                                     </div>
                                 </div>
@@ -185,11 +192,13 @@
                         
                         <!-- Form Actions -->
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <button type="submit" name="save_draft" class="btn btn-coca-light me-md-2">
+                            {% if not order or order.status == 'draft' %}
+                            <button type="submit" name="action" value="save_draft" class="btn btn-coca-light me-md-2">
                                 <i class="bi bi-save"></i> Save Draft
                             </button>
-                            <button type="submit" name="submit_order" class="btn btn-coca-red">
-                                <i class="bi bi-send-check"></i> {% if form.instance.pk %}Update{% else %}Create{% endif %} PO
+                            {% endif %}
+                            <button type="submit" name="action" value="submit_order" class="btn btn-coca-red">
+                                <i class="bi bi-send-check"></i> {% if order %}Update{% else %}Create{% endif %} PO
                             </button>
                         </div>
                     </form>
@@ -201,12 +210,13 @@
 
 <!-- Empty Form Template for Adding New Items -->
 <div id="empty-form-template" style="display: none;">
-    <div class="card mb-3 border-coca item-form" data-item-id="__prefix__">
+    <div class="card mb-3 border-coca item-form" id="item-__prefix__">
         <div class="card-header bg-coca-light text-coca-dark d-flex justify-content-between align-items-center">
             <span>New Item</span>
-            <span class="delete-item">
-                <input type="checkbox" name="items-__prefix__-DELETE" id="id_items-__prefix__-DELETE"> Delete Item
-            </span>
+            <label class="delete-item mb-0">
+                <input type="checkbox" name="items-__prefix__-DELETE" id="id_items-__prefix__-DELETE">
+                <i class="bi bi-trash"></i> Remove Item
+            </label>
         </div>
         <div class="card-body">
             <div class="row g-3">
@@ -229,6 +239,8 @@
                 <div class="col-md-9">
                     <input type="text" name="items-__prefix__-notes" class="form-control" id="id_items-__prefix__-notes">
                 </div>
+                <input type="hidden" name="items-__prefix__-id" id="id_items-__prefix__-id">
+                <input type="hidden" name="items-__prefix__-purchase_order" id="id_items-__prefix__-purchase_order">
             </div>
         </div>
     </div>
@@ -249,10 +261,17 @@
     .delete-item {
         color: #ED1C16;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
     
     .delete-item:hover {
         text-decoration: underline;
+    }
+    
+    .delete-item input[type="checkbox"] {
+        margin-right: 5px;
     }
     
     .select2-container--bootstrap-5 .select2-selection {
@@ -267,10 +286,26 @@
     .flatpickr-input {
         height: 38px;
     }
+    
+    .is-invalid {
+        border-color: #ED1C16 !important;
+    }
+    
+    .invalid-feedback {
+        color: #ED1C16;
+    }
+    
+    .form-control-plaintext {
+        padding-top: calc(0.375rem + 1px);
+        padding-bottom: calc(0.375rem + 1px);
+        margin-bottom: 0;
+    }
 </style>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
     // Initialize date pickers
@@ -286,13 +321,13 @@ $(document).ready(function() {
         width: '100%'
     });
     
-    // Initialize select2 for content types
+    // Initialize select2 for content types in existing forms
     $('.content-type-select').select2({
         theme: 'bootstrap-5',
         width: '100%'
     });
     
-    // Initialize select2 for items
+    // Initialize select2 for items in existing forms
     $('.item-select').select2({
         theme: 'bootstrap-5',
         width: '100%'
@@ -302,7 +337,7 @@ $(document).ready(function() {
     $(document).on('change', '.content-type-select', function() {
         const contentTypeId = $(this).val();
         const itemSelect = $(this).closest('.row').find('.item-select');
-        const formPrefix = $(this).closest('.item-form').data('item-id');
+        const formPrefix = $(this).closest('.item-form').attr('id').split('-')[1];
         
         if (contentTypeId) {
             $.ajax({
@@ -312,9 +347,17 @@ $(document).ready(function() {
                 },
                 success: function(data) {
                     itemSelect.empty();
-                    $.each(data.items, function(index, item) {
-                        itemSelect.append(new Option(item.text, item.id));
-                    });
+                    if (data.items && data.items.length > 0) {
+                        $.each(data.items, function(index, item) {
+                            itemSelect.append(new Option(item.text, item.id));
+                        });
+                    } else {
+                        itemSelect.append(new Option('No items found', ''));
+                    }
+                    itemSelect.trigger('change');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading items:', error);
                 }
             });
         } else {
@@ -334,12 +377,24 @@ $(document).ready(function() {
             theme: 'bootstrap-5',
             width: '100%'
         });
-    });
-    
-    // Delete item handler
-    $(document).on('click', '.delete-item', function() {
-        $(this).closest('.item-form').remove();
-        // Update total forms count if needed
+        
+        $('#id_items-' + formCount + '-object_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
+        
+        // Update the new form's IDs and names
+        const newForm = $('#item-' + formCount);
+        newForm.find('input, select').each(function() {
+            const id = $(this).attr('id');
+            if (id) {
+                $(this).attr('id', id.replace('__prefix__', formCount));
+            }
+            const name = $(this).attr('name');
+            if (name) {
+                $(this).attr('name', name.replace('__prefix__', formCount));
+            }
+        });
     });
     
     // Form validation
@@ -365,10 +420,19 @@ $(document).ready(function() {
         
         if (deliveryDate <= orderDate) {
             $(this).addClass('is-invalid');
-            $(this).next('.invalid-feedback').text('Delivery date must be after order date');
+            if (!$(this).next('.invalid-feedback').length) {
+                $(this).after('<div class="invalid-feedback">Delivery date must be after order date</div>');
+            }
         } else {
             $(this).removeClass('is-invalid');
-            $(this).next('.invalid-feedback').text('');
+            $(this).next('.invalid-feedback').remove();
+        }
+    });
+    
+    // Trigger content type change for existing items
+    $('.content-type-select').each(function() {
+        if ($(this).val()) {
+            $(this).trigger('change');
         }
     });
 });

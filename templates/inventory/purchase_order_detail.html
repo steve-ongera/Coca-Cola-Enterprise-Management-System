@@ -1,0 +1,314 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Header with Coca-Cola Branding -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+        <div class="d-flex align-items-center">
+     
+            <h1 class="h2 mb-0">
+                <i class="bi bi-file-earmark-text"></i> Purchase Order #{{ order.order_number }}
+                <span class="badge {% if order.status == 'received' %}bg-coca-green
+                                    {% elif order.status == 'sent' %}bg-primary
+                                    {% elif order.status == 'draft' %}bg-secondary
+                                    {% elif order.status == 'cancelled' %}bg-coca-danger
+                                    {% else %}bg-coca-warning{% endif %} ms-2">
+                    {{ order.get_status_display }}
+                </span>
+            </h1>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="#" class="btn btn-coca-outline me-2">
+                <i class="bi bi-pencil-square"></i> Edit
+            </a>
+            <a href="{% url 'purchase_order_list' %}" class="btn btn-coca-light">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Purchase Order Summary Card -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100 border-coca">
+                <div class="card-header bg-coca-red text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Order Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-coca-dark"><i class="bi bi-truck"></i> Supplier</h6>
+                            <p>{{ order.supplier.name }}</p>
+                            
+                            <h6 class="text-coca-dark"><i class="bi bi-person"></i> Contact</h6>
+                            <p>{{ order.supplier.contact_person }}<br>
+                            {{ order.supplier.email }}<br>
+                            {{ order.supplier.phone }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-coca-dark"><i class="bi bi-calendar"></i> Order Date</h6>
+                            <p>{{ order.order_date|date:"Y-m-d" }}</p>
+                            
+                            <h6 class="text-coca-dark"><i class="bi bi-calendar-check"></i> Expected Delivery</h6>
+                            <p class="{% if order.is_overdue %}text-coca-danger{% endif %}">
+                                {{ order.expected_delivery_date|date:"Y-m-d" }}
+                                {% if order.is_overdue %}<i class="bi bi-exclamation-triangle-fill"></i>{% endif %}
+                            </p>
+                            
+                            <h6 class="text-coca-dark"><i class="bi bi-person-plus"></i> Created By</h6>
+                            <p>{{ order.created_by.get_full_name }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100 border-coca">
+                <div class="card-header bg-coca-red text-white">
+                    <h5 class="mb-0"><i class="bi bi-currency-dollar"></i> Financial Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-coca-dark">Subtotal</h6>
+                            <p>Ksh {{ order.get_subtotal|floatformat:2 }}</p>
+                            
+                            <h6 class="text-coca-dark">Tax</h6>
+                            <p>Ksh {{ order.get_tax_amount|floatformat:2 }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-coca-dark">Discount</h6>
+                            <p>Ksh {{ order.get_discount_amount|floatformat:2 }}</p>
+                            
+                            <h6 class="text-coca-dark fw-bold">Total Amount</h6>
+                            <p class="fw-bold">Ksh {{ order.total_amount|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                    {% if order.payment_terms %}
+                    <div class="mt-3">
+                        <h6 class="text-coca-dark"><i class="bi bi-credit-card"></i> Payment Terms</h6>
+                        <p>{{ order.payment_terms }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Items Card -->
+    <div class="card mb-4 border-coca">
+        <div class="card-header bg-coca-red text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-list-check"></i> Order Items</h5>
+            <span class="badge bg-coca-light text-coca-dark">
+                {{ order.items.count }} items
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-coca-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Item</th>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Received</th>
+                            <th>Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <strong>{{ item.item }}</strong>
+                                {% if item.notes %}
+                                <p class="text-muted small mb-0">{{ item.notes }}</p>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.content_type.model == 'productvariant' %}
+                                {{ item.item.product.description|truncatechars:50 }}
+                                {% elif item.content_type.model == 'ingredient' %}
+                                {{ item.item.description|truncatechars:50 }}
+                                {% endif %}
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td>Ksh {{ item.unit_price|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge {% if item.received_quantity == item.quantity %}bg-coca-green
+                                                  {% elif item.received_quantity > 0 %}bg-coca-blue
+                                                  {% else %}bg-secondary{% endif %}">
+                                    {{ item.received_quantity|default:"0" }}
+                                </span>
+                            </td>
+                            <td class="fw-bold">Ksh {{ item.get_line_total|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-coca-dark">
+                                <i class="bi bi-exclamation-circle"></i> No items in this order
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-coca-light">
+                        <tr>
+                            <th colspan="6" class="text-end">Subtotal:</th>
+                            <th class="fw-bold">Ksh {{ order.get_subtotal|floatformat:2 }}</th>
+                        </tr>
+                        <tr>
+                            <th colspan="6" class="text-end">Tax:</th>
+                            <th class="fw-bold">Ksh {{ order.get_tax_amount|floatformat:2 }}</th>
+                        </tr>
+                        <tr>
+                            <th colspan="6" class="text-end">Total:</th>
+                            <th class="fw-bold">Ksh {{ order.total_amount|floatformat:2 }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-between mb-4">
+        <div>
+            {% if order.status == 'draft' %}
+            <a href="{% url 'purchase_order_update' order.pk %}" class="btn btn-coca-outline me-2">
+                <i class="bi bi-pencil-square"></i> Edit Order
+            </a>
+            <form method="post" action="{% url 'purchase_order_submit' order.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-coca-red me-2">
+                    <i class="bi bi-send-check"></i> Submit to Supplier
+                </button>
+            </form>
+            {% endif %}
+            
+            {% if order.status == 'sent' %}
+            <button class="btn btn-coca-green me-2" data-bs-toggle="modal" data-bs-target="#receiveOrderModal">
+                <i class="bi bi-check-circle"></i> Receive Order
+            </button>
+            {% endif %}
+        </div>
+        
+        <div>
+            <a href="#" class="btn btn-coca-light me-2" target="_blank">
+                <i class="bi bi-printer"></i> Print
+            </a>
+            <a href="#" class="btn btn-coca-outline">
+                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Activity Log Card -->
+    <div class="card border-coca">
+        <div class="card-header bg-coca-red text-white">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Activity Log</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <i class="bi bi-file-earmark-plus text-coca-blue"></i> Created by {{ order.created_by.get_full_name }}
+                    <span class="text-muted float-end">{{ order.created_at|date:"Y-m-d H:i" }}</span>
+                </li>
+                {% if order.status == 'sent' %}
+                <li class="list-group-item">
+                    <i class="bi bi-send-check text-coca-blue"></i> Submitted to supplier
+                    <span class="text-muted float-end">{{ order.updated_at|date:"Y-m-d H:i" }}</span>
+                </li>
+                {% endif %}
+                {% for log in order.activity_logs.all %}
+                <li class="list-group-item">
+                    <i class="bi bi-{{ log.get_icon }} text-coca-blue"></i> {{ log.message }}
+                    <span class="text-muted float-end">{{ log.created_at|date:"Y-m-d H:i" }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Receive Order Modal -->
+<div class="modal fade" id="receiveOrderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-coca">
+            <div class="modal-header bg-coca-green text-white">
+                <h5 class="modal-title"><i class="bi bi-check-circle"></i> Receive Order</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="#">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <p>Please confirm that you have received all items in this order.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Ordered</th>
+                                    <th>Received</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                <tr>
+                                    <td>{{ item.item }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>
+                                        <input type="number" name="received_{{ item.id }}" 
+                                               value="{{ item.quantity }}" min="0" max="{{ item.quantity }}"
+                                               class="form-control form-control-sm" step="0.01">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="receipt_notes" class="form-label">Receipt Notes</label>
+                        <textarea class="form-control" id="receipt_notes" name="receipt_notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-coca-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-coca-green">Confirm Receipt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Coca-Cola Theme Extensions */
+    .table-coca-light {
+        background-color: #F5F5F5;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(237, 28, 22, 0.05);
+    }
+    
+    .list-group-item {
+        border-left: none;
+        border-right: none;
+    }
+    
+    .list-group-item:first-child {
+        border-top: none;
+    }
+    
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}

@@ -1339,19 +1339,25 @@ def purchase_order_create(request):
             order.save()
             
             for item_form in formset:
-                if item_form.cleaned_data:
+                if item_form.cleaned_data and not item_form.cleaned_data.get('DELETE'):
                     item = item_form.save(commit=False)
                     item.purchase_order = order
                     item.save()
             
+            action = request.POST.get('action', 'save_draft')
+            if action == 'submit_order':
+                order.status = 'sent'
+                order.save()
+            
             return redirect('purchase_order_detail', pk=order.pk)
     else:
-        form = PurchaseOrderForm()
+        form = PurchaseOrderForm(initial={'status': 'draft'})  # Set default status
         formset = PurchaseOrderItemFormSet()
     
     context = {
         'form': form,
         'formset': formset,
+        'content_types': ContentType.objects.filter(model__in=['ingredient', 'productvariant'])
     }
     return render(request, 'inventory/purchase_order_form.html', context)
 

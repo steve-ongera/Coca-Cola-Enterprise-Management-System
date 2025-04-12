@@ -1,0 +1,408 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'supplier_list' %}">Suppliers</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ supplier.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Supplier Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-3">
+        <div class="d-flex align-items-center">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-building"></i> {{ supplier.name }}
+                <span class="badge ms-2 {% if supplier.status == 'active' %}bg-coca-green{% else %}bg-secondary{% endif %}">
+                    {{ supplier.get_status_display }}
+                </span>
+            </h1>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="#" class="btn btn-sm btn-coca-outline">
+                    <i class="bi bi-pencil-square"></i> Edit
+                </a>
+                <a href="{% url 'supplier_list' %}" class="btn btn-sm btn-coca-outline">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Supplier Card -->
+    <div class="card border-coca mb-4">
+        <div class="card-header bg-coca-red text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-info-circle"></i> Supplier Details
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Left Column - Basic Info -->
+                <div class="col-md-6">
+                    <div class="mb-4">
+                        <h5 class="text-coca-dark"><i class="bi bi-card-heading"></i> Basic Information</h5>
+                        <hr class="mt-1">
+                        <dl class="row">
+                            <dt class="col-sm-4">Supplier ID</dt>
+                            <dd class="col-sm-8">{{ supplier.supplier_id|default:"-" }}</dd>
+                            
+                            <dt class="col-sm-4">Contact Person</dt>
+                            <dd class="col-sm-8">{{ supplier.contact_person|default:"-" }}</dd>
+                            
+                            <dt class="col-sm-4">Email</dt>
+                            <dd class="col-sm-8">
+                                <a href="mailto:{{ supplier.email }}">{{ supplier.email|default:"-" }}</a>
+                            </dd>
+                            
+                            <dt class="col-sm-4">Phone</dt>
+                            <dd class="col-sm-8">
+                                <a href="tel:{{ supplier.phone }}">{{ supplier.phone|default:"-" }}</a>
+                            </dd>
+                            
+                            <dt class="col-sm-4">Address</dt>
+                            <dd class="col-sm-8">{{ supplier.address|linebreaksbr|default:"-" }}</dd>
+                        </dl>
+                    </div>
+                    
+                    <!-- Payment Terms -->
+                    <div class="mb-4">
+                        <h5 class="text-coca-dark"><i class="bi bi-credit-card"></i> Payment Terms</h5>
+                        <hr class="mt-1">
+                        <dl class="row">
+                            <dt class="col-sm-4">Payment Terms</dt>
+                            <dd class="col-sm-8">{{ supplier.payment_terms|default:"Standard" }}</dd>
+                            
+                            <dt class="col-sm-4">Tax ID</dt>
+                            <dd class="col-sm-8">{{ supplier.tax_id|default:"-" }}</dd>
+                            
+                            <dt class="col-sm-4">Bank Details</dt>
+                            <dd class="col-sm-8">{{ supplier.bank_details|default:"-"|linebreaksbr }}</dd>
+                        </dl>
+                    </div>
+                </div>
+                
+                <!-- Right Column - Performance & Additional Info -->
+                <div class="col-md-6">
+                    <!-- Performance Rating -->
+                    <div class="mb-4">
+                        <h5 class="text-coca-dark"><i class="bi bi-graph-up"></i> Performance</h5>
+                        <hr class="mt-1">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title text-muted">Rating</h6>
+                                        {% if supplier.performance_rating %}
+                                        <div class="display-4 text-coca-warning">
+                                            {{ supplier.performance_rating|floatformat:1 }}
+                                        </div>
+                                        <div class="rating-stars mb-2">
+                                            {% for i in "12345" %}
+                                            <i class="bi bi-star{% if supplier.performance_rating >= forloop.counter %}fill{% else %}{% endif %} 
+                                                {% if supplier.performance_rating >= forloop.counter %}text-coca-warning{% else %}text-muted{% endif %}"></i>
+                                            {% endfor %}
+                                        </div>
+                                        {% else %}
+                                        <div class="text-muted">Not rated</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title text-muted">On-Time Delivery</h6>
+                                        {% if supplier.on_time_delivery_rate %}
+                                        <div class="display-4 text-coca-green">
+                                            {{ supplier.on_time_delivery_rate }}%
+                                        </div>
+                                        <div class="progress mt-2" style="height: 6px;">
+                                            <div class="progress-bar bg-coca-green" role="progressbar" 
+                                                 style="width: {{ supplier.on_time_delivery_rate }}%" 
+                                                 aria-valuenow="{{ supplier.on_time_delivery_rate }}" 
+                                                 aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        {% else %}
+                                        <div class="text-muted">No data</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Information -->
+                    <div class="mb-4">
+                        <h5 class="text-coca-dark"><i class="bi bi-file-text"></i> Additional Information</h5>
+                        <hr class="mt-1">
+                        <dl class="row">
+                            <dt class="col-sm-4">Contract Start</dt>
+                            <dd class="col-sm-8">{{ supplier.contract_start_date|date:"M d, Y"|default:"-" }}</dd>
+                            
+                            <dt class="col-sm-4">Contract End</dt>
+                            <dd class="col-sm-8">{{ supplier.contract_end_date|date:"M d, Y"|default:"-" }}</dd>
+                            
+                            <dt class="col-sm-4">Products/Service</dt>
+                            <dd class="col-sm-8">{{ supplier.products_services|default:"-"|linebreaksbr }}</dd>
+                            
+                            <dt class="col-sm-4">Notes</dt>
+                            <dd class="col-sm-8">{{ supplier.notes|default:"-"|linebreaksbr }}</dd>
+                        </dl>
+                    </div>
+                    
+                    <!-- Documents & Files -->
+                    <div class="mb-4">
+                        <h5 class="text-coca-dark"><i class="bi bi-folder"></i> Documents</h5>
+                        <hr class="mt-1">
+                        {% if supplier.documents.exists %}
+                        <ul class="list-group list-group-flush">
+                            {% for doc in supplier.documents.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="{{ doc.file.url }}" target="_blank" class="text-coca-dark">
+                                    <i class="bi bi-file-earmark-text"></i> {{ doc.name }}
+                                </a>
+                                <span class="badge bg-light text-dark">{{ doc.get_file_type }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-muted">No documents attached</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Information Tabs -->
+    <div class="card border-coca">
+        <div class="card-header bg-coca-light">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#purchase-orders">
+                        <i class="bi bi-file-earmark-text"></i> Purchase Orders (12)
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#invoices">
+                        <i class="bi bi-receipt"></i> Invoices (8)
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#products">
+                        <i class="bi bi-box-seam"></i> Products (24)
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#communications">
+                        <i class="bi bi-chat-left-text"></i> Communications
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+                <!-- Purchase Orders Tab -->
+                <div class="tab-pane fade show active" id="purchase-orders">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-coca-light">
+                                <tr>
+                                    <th>PO Number</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Expected Delivery</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><a href="#" class="text-coca-red">PO-2023-0456</a></td>
+                                    <td>Jun 15, 2023</td>
+                                    <td>$12,450.00</td>
+                                    <td><span class="badge bg-coca-green">Delivered</span></td>
+                                    <td>Jun 25, 2023</td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-coca-outline"><i class="bi bi-eye"></i></a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><a href="#" class="text-coca-red">PO-2023-0421</a></td>
+                                    <td>May 28, 2023</td>
+                                    <td>$8,720.50</td>
+                                    <td><span class="badge bg-coca-yellow">In Transit</span></td>
+                                    <td>Jun 10, 2023</td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-coca-outline"><i class="bi bi-eye"></i></a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end mt-2">
+                        <a href="#" class="btn btn-sm btn-coca-outline">View All Purchase Orders</a>
+                    </div>
+                </div>
+                
+                <!-- Invoices Tab -->
+                <div class="tab-pane fade" id="invoices">
+                    <p class="text-muted">Invoice data would be displayed here.</p>
+                </div>
+                
+                <!-- Products Tab -->
+                <div class="tab-pane fade" id="products">
+                    <p class="text-muted">Product data would be displayed here.</p>
+                </div>
+                
+                <!-- Communications Tab -->
+                <div class="tab-pane fade" id="communications">
+                    <div class="d-flex mb-3">
+                        <div class="flex-grow-1 me-2">
+                            <input type="text" class="form-control" placeholder="Add a note or comment...">
+                        </div>
+                        <button class="btn btn-coca-red">Send</button>
+                    </div>
+                    
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-coca-red">
+                                <i class="bi bi-envelope"></i>
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h6 class="timeline-title">Email sent to supplier</h6>
+                                    <p class="text-muted small mb-1">
+                                        <i class="bi bi-clock"></i> 2 days ago by John Doe
+                                    </p>
+                                </div>
+                                <div class="timeline-body">
+                                    <p>Regarding the delayed shipment of PO-2023-0421. Supplier responded that the shipment will arrive by tomorrow.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-coca-green">
+                                <i class="bi bi-telephone"></i>
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h6 class="timeline-title">Phone call with supplier</h6>
+                                    <p class="text-muted small mb-1">
+                                        <i class="bi bi-clock"></i> 1 week ago by Jane Smith
+                                    </p>
+                                </div>
+                                <div class="timeline-body">
+                                    <p>Discussed new product line and pricing. Supplier agreed to send samples by next week.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Timeline styling for communications */
+    .timeline {
+        position: relative;
+        padding-left: 50px;
+    }
+    
+    .timeline:before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .timeline-badge {
+        position: absolute;
+        left: -50px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .timeline-panel {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-title {
+        font-weight: 600;
+        color: #ED1C16;
+    }
+    
+    /* Card styling for performance metrics */
+    .card.bg-light {
+        background-color: #f8f9fa!important;
+        border: 1px solid #dee2e6;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .timeline {
+            padding-left: 30px;
+        }
+        
+        .timeline-badge {
+            left: -30px;
+            width: 30px;
+            height: 30px;
+            font-size: 0.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Tab functionality
+    $('.nav-tabs a').on('click', function(e) {
+        e.preventDefault();
+        $(this).tab('show');
+    });
+    
+    // Smooth scrolling for anchor links
+    $('a[href^="#"]').on('click', function(event) {
+        var target = $(this.getAttribute('href'));
+        if (target.length) {
+            event.preventDefault();
+            $('html, body').stop().animate({
+                scrollTop: target.offset().top - 20
+            }, 800);
+        }
+    });
+});
+</script>
+{% endblock %}

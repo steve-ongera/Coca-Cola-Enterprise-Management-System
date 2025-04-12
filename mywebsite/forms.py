@@ -447,44 +447,25 @@ class StockMovementForm(forms.ModelForm):
             raise forms.ValidationError("Quantity must be positive")
         return quantity
 
-class PurchaseOrderForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        
-        if user:
-            self.fields['created_by'].initial = user
-            self.fields['supplier'].queryset = Supplier.objects.filter(status='active')
-        
-        # Set default order date to today
-        self.fields['order_date'].initial = date.today()
+from django import forms
+from django.contrib.contenttypes.models import ContentType
+from .models import PurchaseOrder, PurchaseOrderItem
 
+class PurchaseOrderForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrder
-        # Remove 'payment_terms' from the fields list if it's not in your model
-        fields = ['supplier', 'order_date', 'expected_delivery_date', 'status', 'created_by']
+        fields = ['supplier', 'order_date', 'expected_delivery_date', 'status']  # adjust based on your actual model fields
         widgets = {
-            'supplier': forms.Select(attrs={
-                'class': 'form-select',
-                'data-live-search': 'true'
-            }),
+            'supplier': forms.Select(attrs={'class': 'form-select'}),
             'order_date': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
             }),
             'expected_delivery_date': forms.DateInput(attrs={
                 'class': 'form-control',
-                'type': 'date',
-                'min': date.today().isoformat()
+                'type': 'date'
             }),
-            'status': forms.Select(attrs={
-                'class': 'form-select',
-                'disabled': True  # Initial status should be set programmatically
-            }),
-            'created_by': forms.HiddenInput()
-        }
-        help_texts = {
-            'expected_delivery_date': 'Must be after order date'
+            'status': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def clean(self):
@@ -493,74 +474,40 @@ class PurchaseOrderForm(forms.ModelForm):
         delivery_date = cleaned_data.get('expected_delivery_date')
         
         if order_date and delivery_date and delivery_date <= order_date:
-            raise forms.ValidationError({
-                'expected_delivery_date': 'Delivery date must be after order date'
-            })
-        
+            raise forms.ValidationError(
+                "Delivery date must be after order date"
+            )
         return cleaned_data
-    
-
 
 class PurchaseOrderItemForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseOrderItem
+        fields = ['content_type', 'object_id', 'quantity', 'unit_price', 'notes']
+        widgets = {
+            'content_type': forms.Select(attrs={'class': 'form-select'}),
+            'object_id': forms.Select(attrs={'class': 'form-select'}),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01'
+            }),
+            'unit_price': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01'
+            }),
+            'notes': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
         # Limit content types to allowed models
         self.fields['content_type'].queryset = ContentType.objects.filter(
             model__in=['ingredient', 'productvariant']
         )
         
-        # Add dynamic attributes for unit price
-        self.fields['unit_price'].widget.attrs.update({
-            'min': '0.01',
-            'step': '0.01',
-            'onchange': 'calculateLineTotal(this)'
-        })
-        self.fields['quantity'].widget.attrs.update({
-            'min': '1',
-            'onchange': 'calculateLineTotal(this)'
-        })
-
-    class Meta:
-        model = PurchaseOrderItem
-        fields = ['content_type', 'object_id', 'quantity', 'unit_price', 'notes']
-        widgets = {
-            'content_type': forms.Select(attrs={
-                'class': 'form-select content-type-select',
-                'onchange': 'updateItemChoices(this)'
-            }),
-            'object_id': forms.Select(attrs={
-                'class': 'form-select item-select'
-            }),
-            'quantity': forms.NumberInput(attrs={
-                'class': 'form-control quantity-input'
-            }),
-            'unit_price': forms.NumberInput(attrs={
-                'class': 'form-control price-input'
-            }),
-            'notes': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 1,
-                'placeholder': 'Item-specific notes'
-            }),
-        }
-        labels = {
-            'object_id': 'Item'
-        }
-
-    def clean(self):
-        cleaned_data = super().clean()
-        content_type = cleaned_data.get('content_type')
-        object_id = cleaned_data.get('object_id')
-        
-        if content_type and object_id:
-            model_class = content_type.model_class()
-            if not model_class.objects.filter(pk=object_id).exists():
-                raise forms.ValidationError({
-                    'object_id': 'Selected item does not exist'
-                })
-        
-        return cleaned_data
+        # Set object_id choices based on initial content_type
+        if self.initial.get('content_type'):
+            model_class = self.initial['content_type'].model_class()
+            self.fields['object_id'].queryset = model_class.objects.all()
 
 PurchaseOrderItemFormSet = forms.inlineformset_factory(
     PurchaseOrder,
@@ -569,15 +516,8 @@ PurchaseOrderItemFormSet = forms.inlineformset_factory(
     extra=1,
     can_delete=True,
     min_num=1,
-    validate_min=True,
-    widgets={
-        'DELETE': forms.CheckboxInput(attrs={
-            'class': 'form-check-input delete-checkbox'
-        })
-    }
+    validate_min=True
 )
-
-
 
 class SupplierForm(forms.ModelForm):
     class Meta:

@@ -1,0 +1,219 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Header with Coca-Cola Branding -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+        <div class="d-flex align-items-center">
+           
+            <h1 class="h2 mb-0">
+                <i class="bi bi-truck"></i> Suppliers
+            </h1>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'supplier_create' %}" class="btn btn-coca-red">
+                <i class="bi bi-plus-circle"></i> Add Supplier
+            </a>
+        </div>
+    </div>
+
+    <!-- Suppliers Card -->
+    <div class="card border-coca">
+        <div class="card-header bg-coca-red text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-card-checklist"></i> Supplier List
+            </h5>
+            <div class="d-flex">
+                <div class="input-group" style="width: 250px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control form-control-sm" placeholder="Search suppliers..." id="supplierSearch">
+                </div>
+                <div class="dropdown ms-2">
+                    <button class="btn btn-sm btn-coca-light dropdown-toggle" type="button" id="statusFilter" data-bs-toggle="dropdown">
+                        <i class="bi bi-funnel"></i> Status
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="?status=">All Statuses</a></li>
+                        <li><a class="dropdown-item" href="?status=active">Active</a></li>
+                        <li><a class="dropdown-item" href="?status=inactive">Inactive</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="supplierTable">
+                    <thead class="table-coca-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Rating</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'supplier_detail' supplier.pk %}" class="text-coca-red fw-bold">
+                                    {{ supplier.name }}
+                                </a>
+                                {% if supplier.payment_terms %}
+                                <div class="text-muted small">{{ supplier.payment_terms }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ supplier.contact_person }}</td>
+                            <td>
+                                <a href="mailto:{{ supplier.email }}">{{ supplier.email }}</a>
+                            </td>
+                            <td>
+                                <a href="tel:{{ supplier.phone }}">{{ supplier.phone }}</a>
+                            </td>
+                            <td>
+                                {% if supplier.performance_rating %}
+                                <div class="rating-stars">
+                                    {% for i in "12345" %}
+                                    <i class="bi bi-star{% if supplier.performance_rating >= forloop.counter %}fill{% else %}{% endif %} 
+                                        {% if supplier.performance_rating >= forloop.counter %}text-coca-warning{% else %}text-muted{% endif %}"></i>
+                                    {% endfor %}
+                                    <span class="ms-1 small">{{ supplier.performance_rating|floatformat:1 }}</span>
+                                </div>
+                                {% else %}
+                                <span class="text-muted">Not rated</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if supplier.status == 'active' %}bg-coca-green{% else %}bg-secondary{% endif %}">
+                                    {{ supplier.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'supplier_detail' supplier.pk %}" class="btn btn-coca-outline" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="#" class="btn btn-coca-outline" title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a href="#" class="btn btn-coca-outline" title="Purchase Orders">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-coca-dark">
+                                <i class="bi bi-exclamation-circle"></i> No suppliers found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Supplier pagination">
+                <ul class="pagination justify-content-center mt-4">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">&laquo;</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="page-item active" aria-current="page">
+                        <a class="page-link" href="#">{{ i }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">&raquo;</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Coca-Cola Theme Extensions */
+    .rating-stars {
+        color: #FFC72C;
+        white-space: nowrap;
+    }
+    
+    .table-coca-light {
+        background-color: #F5F5F5;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(237, 28, 22, 0.05);
+    }
+    
+    .page-link {
+        color: #ED1C16;
+    }
+    
+    .page-item.active .page-link {
+        background-color: #ED1C16;
+        border-color: #ED1C16;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Supplier search functionality
+    $('#supplierSearch').keyup(function() {
+        const value = $(this).val().toLowerCase();
+        $('#supplierTable tbody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add hover effect to table rows
+    $('table tbody tr').hover(
+        function() {
+            $(this).css('transform', 'translateX(5px)');
+        },
+        function() {
+            $(this).css('transform', 'translateX(0)');
+        }
+    );
+});
+</script>
+{% endblock %}
