@@ -1,0 +1,268 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Header with Coca-Cola Branding -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom border-coca">
+        <div class="d-flex align-items-center">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-people-fill text-coca-red"></i> Customer Management
+            </h1>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'customer_create' %}" class="btn btn-coca-red">
+                <i class="bi bi-plus-circle"></i> Add New Customer
+            </a>
+        </div>
+    </div>
+
+    <!-- Customers Card -->
+    <div class="card border-coca">
+        <div class="card-header bg-coca-red text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-card-list"></i> Customer Directory
+            </h5>
+            <div class="d-flex">
+                <div class="input-group" style="width: 250px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control form-control-sm" placeholder="Search customers..." id="customerSearch">
+                </div>
+                <div class="dropdown ms-2">
+                    <button class="btn btn-sm btn-coca-light dropdown-toggle" type="button" id="statusFilter" data-bs-toggle="dropdown">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="?status=">All Customers</a></li>
+                        <li><a class="dropdown-item" href="?status=active">Active Only</a></li>
+                        <li><a class="dropdown-item" href="?status=inactive">Inactive Only</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="?type=distributor">Distributors</a></li>
+                        <li><a class="dropdown-item" href="?type=retailer">Retailers</a></li>
+                        <li><a class="dropdown-item" href="?type=direct">Direct Consumers</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="customerTable">
+                    <thead class="table-coca-light">
+                        <tr>
+                            <th class="text-coca-dark">Name</th>
+                            <th class="text-coca-dark">Type</th>
+                            <th class="text-coca-dark">Contact</th>
+                            <th class="text-coca-dark">Email</th>
+                            <th class="text-coca-dark">Phone</th>
+                            <th class="text-coca-dark">Status</th>
+                            <th class="text-coca-dark">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr class="align-middle">
+                            <td>
+                                <a href="{% url 'customer_detail' customer.pk %}" class="text-coca-red fw-bold">
+                                    {{ customer.name }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if customer.customer_type == 'distributor' %}bg-coca-blue
+                                    {% elif customer.customer_type == 'retailer' %}bg-coca-light
+                                    {% else %}bg-coca-gray{% endif %}">
+                                    {{ customer.get_customer_type_display }}
+                                </span>
+                            </td>
+                            <td>{{ customer.contact_person }}</td>
+                            <td>
+                                <a href="mailto:{{ customer.email }}" class="text-coca-dark">
+                                    <i class="bi bi-envelope"></i> {{ customer.email }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="tel:{{ customer.phone }}" class="text-coca-dark">
+                                    <i class="bi bi-telephone"></i> {{ customer.phone }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge {% if customer.status == 'active' %}bg-coca-green{% else %}bg-secondary{% endif %}">
+                                    <i class="bi bi-{% if customer.status == 'active' %}check-circle{% else %}x-circle{% endif %}"></i>
+                                    {{ customer.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'customer_detail' customer.pk %}" class="btn btn-coca-outline" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'customer_update' customer.pk %}" class="btn btn-coca-outline" title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a href="#" class="btn btn-coca-outline" title="Sales History">
+                                        <i class="bi bi-graph-up"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-coca-dark">
+                                <i class="bi bi-exclamation-circle"></i> No customers found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Customer pagination">
+                <ul class="pagination justify-content-center mt-4">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">&laquo;</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="page-item active" aria-current="page">
+                        <a class="page-link" href="#">{{ i }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">&raquo;</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Coca-Cola Theme Extensions */
+    .table-coca-light {
+        background-color: #F5F5F5;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(237, 28, 22, 0.05);
+    }
+    
+    .text-coca-red {
+        color: #ED1C16;
+    }
+    
+    .text-coca-dark {
+        color: #1A1A1A;
+    }
+    
+    .bg-coca-red {
+        background-color: #ED1C16;
+    }
+    
+    .bg-coca-green {
+        background-color: #00843D;
+    }
+    
+    .bg-coca-blue {
+        background-color: #1D428A;
+    }
+    
+    .bg-coca-light {
+        background-color: #F5F5F5;
+        color: #1A1A1A;
+    }
+    
+    .bg-coca-gray {
+        background-color: #6C6C6C;
+    }
+    
+    .btn-coca-red {
+        background-color: #ED1C16;
+        color: white;
+        border-color: #ED1C16;
+    }
+    
+    .btn-coca-red:hover {
+        background-color: #C41712;
+        border-color: #C41712;
+        color: white;
+    }
+    
+    .btn-coca-outline {
+        border-color: #D9D9D9;
+        color: #1A1A1A;
+    }
+    
+    .btn-coca-outline:hover {
+        background-color: #F5F5F5;
+        border-color: #ED1C16;
+        color: #ED1C16;
+    }
+    
+    .border-coca {
+        border-color: #D9D9D9 !important;
+    }
+    
+    .page-link {
+        color: #ED1C16;
+    }
+    
+    .page-item.active .page-link {
+        background-color: #ED1C16;
+        border-color: #ED1C16;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Customer search functionality
+    $('#customerSearch').keyup(function() {
+        const value = $(this).val().toLowerCase();
+        $('#customerTable tbody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add hover effect to table rows
+    $('table tbody tr').hover(
+        function() {
+            $(this).css('transform', 'translateX(5px)');
+        },
+        function() {
+            $(this).css('transform', 'translateX(0)');
+        }
+    );
+});
+</script>
+{% endblock %}

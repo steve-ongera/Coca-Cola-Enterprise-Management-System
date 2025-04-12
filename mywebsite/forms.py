@@ -533,3 +533,67 @@ class SupplierForm(forms.ModelForm):
             'performance_rating': forms.NumberInput(attrs={'class': 'form-control'}),
             'payment_terms': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+from django import forms
+from .models import Customer
+
+class CustomerForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add Bootstrap classes to all fields
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-control'
+            if field_name == 'credit_limit':
+                field.widget.attrs['placeholder'] = '0.00'
+            if field_name == 'payment_terms':
+                field.widget.attrs['placeholder'] = 'e.g., Net 30'
+            if field.required:
+                field.widget.attrs['required'] = 'required'
+
+    class Meta:
+        model = Customer
+        fields = '__all__'
+        widgets = {
+            'address': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'placeholder': 'Enter full address'
+            }),
+            'customer_type': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'credit_limit': forms.NumberInput(attrs={
+                'step': '0.01',
+                'class': 'form-control',
+                'placeholder': '0.00'
+            }),
+            'email': forms.EmailInput(attrs={
+                'placeholder': 'example@domain.com'
+            }),
+            'phone': forms.TextInput(attrs={
+                'placeholder': '+1234567890'
+            })
+        }
+        labels = {
+            'name': 'Customer Name',
+            'contact_person': 'Primary Contact',
+            'credit_limit': 'Credit Limit ($)'
+        }
+        help_texts = {
+            'credit_limit': 'Enter the maximum credit amount allowed for this customer',
+            'payment_terms': 'Specify payment terms like "Net 30" or "Due on receipt"'
+        }
+
+    def clean_credit_limit(self):
+        credit_limit = self.cleaned_data.get('credit_limit')
+        if credit_limit is not None and credit_limit < 0:
+            raise forms.ValidationError("Credit limit cannot be negative")
+        return credit_limit
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        # Add your phone validation logic here if needed
+        return phone

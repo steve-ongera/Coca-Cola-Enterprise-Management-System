@@ -1,0 +1,252 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Header with Coca-Cola Branding -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom border-coca">
+        <div class="d-flex align-items-center">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-building text-coca-red"></i> {{ customer.name }}
+                <span class="badge ms-2 {% if customer.status == 'active' %}bg-coca-green{% else %}bg-secondary{% endif %}">
+                    {{ customer.get_status_display }}
+                </span>
+            </h1>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'customer_list' %}" class="btn btn-sm btn-coca-outline">
+                <i class="bi bi-arrow-left"></i> Back to Customers
+            </a>
+        </div>
+    </div>
+
+    <!-- Customer Details Cards -->
+    <div class="row">
+        <!-- Basic Information Card -->
+        <div class="col-md-6">
+            <div class="card border-coca mb-4">
+                <div class="card-header bg-coca-red text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Basic Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4 text-coca-dark">Customer Type</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge 
+                                {% if customer.customer_type == 'distributor' %}bg-coca-blue
+                                {% elif customer.customer_type == 'retailer' %}bg-coca-light
+                                {% else %}bg-coca-gray{% endif %}">
+                                {{ customer.get_customer_type_display }}
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-4 text-coca-dark">Contact Person</dt>
+                        <dd class="col-sm-8">{{ customer.contact_person }}</dd>
+                        
+                        <dt class="col-sm-4 text-coca-dark">Email</dt>
+                        <dd class="col-sm-8">
+                            <a href="mailto:{{ customer.email }}" class="text-coca-red">
+                                <i class="bi bi-envelope"></i> {{ customer.email }}
+                            </a>
+                        </dd>
+                        
+                        <dt class="col-sm-4 text-coca-dark">Phone</dt>
+                        <dd class="col-sm-8">
+                            <a href="tel:{{ customer.phone }}" class="text-coca-red">
+                                <i class="bi bi-telephone"></i> {{ customer.phone }}
+                            </a>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Information Card -->
+        <div class="col-md-6">
+            <div class="card border-coca mb-4">
+                <div class="card-header bg-coca-red text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text"></i> Additional Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4 text-coca-dark">Address</dt>
+                        <dd class="col-sm-8">{{ customer.address|linebreaksbr }}</dd>
+                        
+                        <dt class="col-sm-4 text-coca-dark">Payment Terms</dt>
+                        <dd class="col-sm-8">
+                            {% if customer.payment_terms %}
+                                <span class="badge bg-coca-light text-dark">
+                                    {{ customer.payment_terms }}
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-4 text-coca-dark">Credit Limit</dt>
+                        <dd class="col-sm-8">
+                            {% if customer.credit_limit %}
+                                <span class="text-coca-dark fw-bold">
+                                    <i class="bi bi-currency-dollar"></i> {{ customer.credit_limit }}
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-between border-top border-coca pt-3">
+        <div>
+            <a href="{% url 'customer_update' customer.pk %}" class="btn btn-coca-outline">
+                <i class="bi bi-pencil-square"></i> Edit Customer
+            </a>
+            <a href="#" class="btn btn-coca-outline ms-2" data-bs-toggle="modal" data-bs-target="#salesHistoryModal">
+                <i class="bi bi-graph-up"></i> View Sales
+            </a>
+        </div>
+        <div>
+            <a href="#" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="bi bi-trash"></i> Delete
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-coca-red text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to permanently delete <strong>{{ customer.name }}</strong>?</p>
+                <p class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-coca-outline" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'customer_delete' customer.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash-fill"></i> Delete Customer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales History Modal -->
+<div class="modal fade" id="salesHistoryModal" tabindex="-1" aria-labelledby="salesHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-coca-red text-white">
+                <h5 class="modal-title" id="salesHistoryModalLabel">Sales History - {{ customer.name }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Sales history data would be displayed here.</p>
+                <!-- Placeholder for sales history chart/data -->
+                <div class="text-center py-4 bg-light rounded">
+                    <i class="bi bi-graph-up text-coca-red" style="font-size: 3rem;"></i>
+                    <p class="mt-2">Sales trend visualization</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-coca-outline" data-bs-dismiss="modal">Close</button>
+                <a href="#" class="btn btn-coca-red">View Full Report</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Coca-Cola Theme Extensions */
+    .border-coca {
+        border-color: #D9D9D9 !important;
+    }
+    
+    .text-coca-red {
+        color: #ED1C16;
+    }
+    
+    .text-coca-dark {
+        color: #1A1A1A;
+    }
+    
+    .bg-coca-red {
+        background-color: #ED1C16;
+    }
+    
+    .bg-coca-green {
+        background-color: #00843D;
+    }
+    
+    .bg-coca-blue {
+        background-color: #1D428A;
+    }
+    
+    .bg-coca-light {
+        background-color: #F5F5F5;
+        color: #1A1A1A;
+    }
+    
+    .bg-coca-gray {
+        background-color: #6C6C6C;
+    }
+    
+    .btn-coca-red {
+        background-color: #ED1C16;
+        color: white;
+        border-color: #ED1C16;
+    }
+    
+    .btn-coca-red:hover {
+        background-color: #C41712;
+        border-color: #C41712;
+        color: white;
+    }
+    
+    .btn-coca-outline {
+        border-color: #D9D9D9;
+        color: #1A1A1A;
+    }
+    
+    .btn-coca-outline:hover {
+        background-color: #F5F5F5;
+        border-color: #ED1C16;
+        color: #ED1C16;
+    }
+    
+    .card {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    dt {
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Initialize popovers
+    $('[data-bs-toggle="popover"]').popover();
+});
+</script>
+{% endblock %}

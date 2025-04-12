@@ -1,0 +1,320 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Form Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom border-coca">
+        <div class="d-flex align-items-center">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-{% if form.instance.pk %}pencil-square{% else %}plus-circle{% endif %} text-coca-red"></i>
+                {% if form.instance.pk %}Update{% else %}Create New{% endif %} Customer
+            </h1>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'customer_list' %}" class="btn btn-sm btn-coca-outline">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="card border-coca">
+        <div class="card-header bg-coca-red text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-card-checklist"></i> Customer Details
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- Form Error Display -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-coca-red alert-dismissible fade show mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Please correct the errors below.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+                
+                <div class="row g-3">
+                    <!-- Left Column -->
+                    <div class="col-md-6">
+                        <!-- Basic Information Section -->
+                        <div class="mb-4">
+                            <h6 class="text-coca-dark border-bottom pb-2 mb-3">
+                                <i class="bi bi-info-circle"></i> Basic Information
+                            </h6>
+                            
+                            <!-- Name Field -->
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Customer Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.name.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Customer Type Field -->
+                            <div class="mb-3">
+                                <label for="{{ form.customer_type.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Customer Type <span class="text-danger">*</span>
+                                </label>
+                                {{ form.customer_type }}
+                                {% if form.customer_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.customer_type.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Contact Person Field -->
+                            <div class="mb-3">
+                                <label for="{{ form.contact_person.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Primary Contact <span class="text-danger">*</span>
+                                </label>
+                                {{ form.contact_person }}
+                                {% if form.contact_person.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.contact_person.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Email Field -->
+                            <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Email Address
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.email.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="col-md-6">
+                        <!-- Contact & Financial Section -->
+                        <div class="mb-4">
+                            <h6 class="text-coca-dark border-bottom pb-2 mb-3">
+                                <i class="bi bi-geo-alt"></i> Contact & Financial Information
+                            </h6>
+                            
+                            <!-- Phone Field -->
+                            <div class="mb-3">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Phone Number
+                                </label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.phone.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Address Field -->
+                            <div class="mb-3">
+                                <label for="{{ form.address.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Full Address
+                                </label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.address.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Payment Terms Field -->
+                            <div class="mb-3">
+                                <label for="{{ form.payment_terms.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Payment Terms
+                                </label>
+                                {{ form.payment_terms }}
+                                <small class="form-text text-muted">e.g., Net 30, Due on receipt</small>
+                                {% if form.payment_terms.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.payment_terms.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Credit Limit Field -->
+                            <div class="mb-3">
+                                <label for="{{ form.credit_limit.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Credit Limit ($)
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.credit_limit }}
+                                </div>
+                                <small class="form-text text-muted">Maximum allowed credit amount</small>
+                                {% if form.credit_limit.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.credit_limit.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Status Field -->
+                            <div class="mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Account Status <span class="text-danger">*</span>
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.status.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between border-top border-coca pt-4 mt-3">
+                    <div>
+                        {% if form.instance.pk %}
+                        <a href="{% url 'customer_delete' form.instance.pk %}" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-coca-red">
+                            <i class="bi bi-save"></i> Save Customer
+                        </button>
+                        <a href="{% url 'customer_list' %}" class="btn btn-coca-outline ms-2">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Coca-Cola Theme Extensions */
+    .border-coca {
+        border-color: #D9D9D9 !important;
+    }
+    
+    .text-coca-red {
+        color: #ED1C16;
+    }
+    
+    .text-coca-dark {
+        color: #1A1A1A;
+    }
+    
+    .bg-coca-red {
+        background-color: #ED1C16;
+    }
+    
+    .alert-coca-red {
+        color: #842029;
+        background-color: #f8d7da;
+        border-color: #f5c2c7;
+    }
+    
+    .btn-coca-red {
+        background-color: #ED1C16;
+        color: white;
+        border-color: #ED1C16;
+    }
+    
+    .btn-coca-red:hover {
+        background-color: #C41712;
+        border-color: #C41712;
+        color: white;
+    }
+    
+    .btn-coca-outline {
+        border-color: #D9D9D9;
+        color: #1A1A1A;
+    }
+    
+    .btn-coca-outline:hover {
+        background-color: #F5F5F5;
+        border-color: #ED1C16;
+        color: #ED1C16;
+    }
+    
+    /* Form Styling */
+    .form-control, .form-select {
+        border-radius: 4px;
+        border: 1px solid #ced4da;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #ED1C16;
+        box-shadow: 0 0 0 0.25rem rgba(237, 28, 22, 0.25);
+    }
+    
+    .is-invalid {
+        border-color: #dc3545;
+    }
+    
+    .is-invalid:focus {
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+    
+    .card {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .border-md-top {
+            border-top: 1px solid #dee2e6 !important;
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Form validation
+    (function() {
+        'use strict'
+        
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        var forms = document.querySelectorAll('.needs-validation')
+        
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms)
+            .forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Phone number formatting
+    $('#id_phone').inputmask('(999) 999-9999');
+});
+</script>
+{% endblock %}

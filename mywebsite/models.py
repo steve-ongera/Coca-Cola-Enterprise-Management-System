@@ -1445,3 +1445,6 @@ class IncidentReport(models.Model):
     
     def __str__(self):
         return f"{self.get_incident_type_display()} at {self.location} - {self.date_time.strftime('%Y-%m-%d')}"
+    
+
+
