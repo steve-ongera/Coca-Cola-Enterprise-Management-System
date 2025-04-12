@@ -107,17 +107,41 @@ class Employee(models.Model):
 
     # Job position/role with predefined choices
     POSITION_CHOICES = [
+        ('ceo', 'Chief Executive Officer'),
+        ('coo', 'Chief Operating Officer'),
+        ('cfo', 'Chief Financial Officer'),
+        ('cto', 'Chief Technology Officer'),
         ('manager', 'Manager'),
-        ('developer', 'Developer'),
-        ('analyst', 'Analyst'),
+        ('supervisor', 'Supervisor'),
+        ('developer', 'Software Developer'),
+        ('analyst', 'Business Analyst'),
+        ('qa_analyst', 'Quality Assurance Analyst'),
         ('hr', 'Human Resources'),
-        ('marketing', 'Marketing'),
-        ('sales', 'Sales'),
-        ('engineer', 'Engineer'),
-        ('support', 'Support'),
-        ('admin', 'Administrator'),
+        ('recruiter', 'Recruiter'),
+        ('payroll_specialist', 'Payroll Specialist'),
+        ('marketing', 'Marketing Specialist'),
+        ('brand_manager', 'Brand Manager'),
+        ('sales', 'Sales Executive'),
+        ('account_manager', 'Account Manager'),
+        ('engineer', 'Manufacturing Engineer'),
+        ('maintenance_tech', 'Maintenance Technician'),
+        ('logistics', 'Logistics Coordinator'),
+        ('warehouse', 'Warehouse Operator'),
+        ('forklift_operator', 'Forklift Operator'),
+        ('supply_chain', 'Supply Chain Manager'),
+        ('procurement', 'Procurement Officer'),
+        ('legal', 'Legal Counsel'),
+        ('support', 'IT Support'),
+        ('it_admin', 'IT Administrator'),
+        ('data_scientist', 'Data Scientist'),
+        ('driver', 'Delivery Driver'),
+        ('security', 'Security Officer'),
+        ('cleaner', 'Cleaner'),
+        ('intern', 'Intern'),
         ('consultant', 'Consultant'),
+        ('admin', 'Administrative Assistant'),
     ]
+
     position = models.CharField(max_length=100, choices=POSITION_CHOICES, null=True, blank=True)
 
     ROLE_CHOICES = [
@@ -639,8 +663,17 @@ class Invoice(models.Model):
 
 
 class DeliveryVehicle(models.Model):
+    VEHICLE_TYPE_CHOICES = [
+        ('van', 'Van'),
+        ('truck', 'Truck'),
+        ('pickup', 'Pickup'),
+        ('bike', 'Bike'),
+        ('trailer', 'Trailer'),
+    ]
     vehicle_number = models.CharField(max_length=20, unique=True)
-    vehicle_type = models.CharField(max_length=50)
+    vehicle_type = models.CharField(max_length=50, choices=VEHICLE_TYPE_CHOICES ,  null=True)
+    model = models.CharField(max_length=50 , null=True)  # e.g., Toyota Hiace
+    year = models.PositiveIntegerField(null=True)     # e.g., 2021
     image = models.ImageField(
         upload_to='delivery_vehicles/',
         null=True,

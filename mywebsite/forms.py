@@ -601,7 +601,7 @@ class CustomerForm(forms.ModelForm):
 
 
 from django import forms
-from .models import DeliveryVehicle
+from .models import DeliveryVehicle, Employee
 
 class DeliveryVehicleForm(forms.ModelForm):
     class Meta:
@@ -617,14 +617,20 @@ class DeliveryVehicleForm(forms.ModelForm):
                 'step': '0.01',
                 'placeholder': 'e.g. 5000 (kg)'
             }),
+            'model': forms.TextInput(attrs={'class': 'form-control'}),
+            'year': forms.NumberInput(attrs={'class': 'form-control', 'min': 1990, 'max': 2100}),
             'status': forms.Select(attrs={'class': 'form-select'}),
             'driver': forms.Select(attrs={'class': 'form-select'}),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Filter driver field to show only employees with position "driver"
+        self.fields['driver'].queryset = Employee.objects.filter(position='driver')
+
         for field in self.fields:
-            if field != 'status' and field != 'driver':
+            if field not in ['status', 'driver']:
                 self.fields[field].widget.attrs['class'] = 'form-control'
             if self.fields[field].required:
                 self.fields[field].widget.attrs['required'] = 'required'
