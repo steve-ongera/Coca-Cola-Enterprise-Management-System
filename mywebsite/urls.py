@@ -88,6 +88,16 @@ urlpatterns = [
     path('customers/<int:pk>/', views.customer_detail, name='customer_detail'),
     path('customers/<int:pk>/update/', views.customer_update, name='customer_update'),
     path('customers/<int:pk>/delete/', views.customer_delete, name='customer_delete'),
-   
+
+    # Delivery Vehicles
+    path('vehicles/', views.vehicle_list, name='vehicle_list'),
+    path('vehicles/create/', views.vehicle_create, name='vehicle_create'),
+    path('vehicles/<int:pk>/', views.vehicle_detail, name='vehicle_detail'),
+    path('vehicles/<int:pk>/update/', views.vehicle_update, name='vehicle_update'),
+    path('vehicles/<int:pk>/delete/', views.vehicle_delete, name='vehicle_delete'),
+    # Vehicle status update
+    path('vehicles/<int:pk>/update-status/', views.vehicle_update_status, name='vehicle_update_status'),
+    path('vehicles/<int:pk>/upload-image/', views.vehicle_upload_image, name='vehicle_upload_image'),
+    path('vehicles/<int:pk>/add-maintenance/',  views.vehicle_add_maintenance,    name='vehicle_add_maintenance'),
     
 ]

@@ -597,3 +597,34 @@ class CustomerForm(forms.ModelForm):
         phone = self.cleaned_data.get('phone')
         # Add your phone validation logic here if needed
         return phone
+
+
+
+from django import forms
+from .models import DeliveryVehicle
+
+class DeliveryVehicleForm(forms.ModelForm):
+    class Meta:
+        model = DeliveryVehicle
+        fields = '__all__'
+        widgets = {
+            'vehicle_type': forms.Select(attrs={
+                'class': 'form-select',
+                'data-placeholder': 'Select vehicle type'
+            }),
+            'capacity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'placeholder': 'e.g. 5000 (kg)'
+            }),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'driver': forms.Select(attrs={'class': 'form-select'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            if field != 'status' and field != 'driver':
+                self.fields[field].widget.attrs['class'] = 'form-control'
+            if self.fields[field].required:
+                self.fields[field].widget.attrs['required'] = 'required'

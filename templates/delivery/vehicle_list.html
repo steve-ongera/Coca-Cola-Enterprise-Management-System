@@ -1,0 +1,157 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom border-coca">
+        <div class="d-flex align-items-center">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-truck text-coca-red"></i> Delivery Fleet
+            </h1>
+            <span class="badge bg-coca-light text-dark ms-3">{{ vehicles.count }} vehicles</span>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'vehicle_create' %}" class="btn btn-coca-red">
+                <i class="bi bi-plus-circle"></i> Add Vehicle
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-coca-green">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Available</h6>
+                            <h2 class="mb-0">{{ status_counts.available }}</h2>
+                        </div>
+                        <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-coca-blue">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">In Transit</h6>
+                            <h2 class="mb-0">{{ status_counts.in_transit }}</h2>
+                        </div>
+                        <i class="bi bi-truck" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-coca-gray">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Maintenance</h6>
+                            <h2 class="mb-0">{{ status_counts.maintenance }}</h2>
+                        </div>
+                        <i class="bi bi-tools" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicles Table -->
+    <div class="card border-coca">
+        <div class="card-header bg-coca-red text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul"></i> Fleet Inventory
+            </h5>
+            <div class="d-flex">
+                <div class="input-group" style="width: 250px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control form-control-sm" placeholder="Search vehicles..." id="vehicleSearch">
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="vehicleTable">
+                    <thead class="table-coca-light">
+                        <tr>
+                            <th>Vehicle Number</th>
+                            <th>Type</th>
+                            <th>Capacity (kg)</th>
+                            <th>Driver</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vehicle in vehicles %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'vehicle_detail' vehicle.pk %}" class="text-coca-red fw-bold">
+                                    {{ vehicle.vehicle_number }}
+                                </a>
+                            </td>
+                            <td>{{ vehicle.vehicle_type }}</td>
+                            <td>{{ vehicle.capacity }}</td>
+                            <td>
+                                {% if vehicle.driver %}
+                                <a href="#">
+                                    {{ vehicle.driver.get_full_name }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if vehicle.status == 'available' %}bg-coca-green
+                                    {% elif vehicle.status == 'in_transit' %}bg-coca-blue
+                                    {% else %}bg-coca-gray{% endif %}">
+                                    {{ vehicle.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'vehicle_detail' vehicle.pk %}" class="btn btn-coca-outline" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'vehicle_update' vehicle.pk %}" class="btn btn-coca-outline" title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-coca-dark">
+                                <i class="bi bi-exclamation-circle"></i> No vehicles found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Vehicle search functionality
+    $('#vehicleSearch').keyup(function() {
+        const value = $(this).val().toLowerCase();
+        $('#vehicleTable tbody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+});
+</script>
+{% endblock %}

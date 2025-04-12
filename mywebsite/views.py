@@ -1482,3 +1482,220 @@ def customer_delete(request, pk):
         customer.delete()
         return redirect('customer_list')
     return render(request, 'customers/customer_confirm_delete.html', {'customer': customer})
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import DeliveryVehicle
+from .forms import DeliveryVehicleForm
+
+def vehicle_list(request):
+    vehicles = DeliveryVehicle.objects.select_related('driver').all()
+    context = {
+        'vehicles': vehicles,
+        'status_counts': {
+            'available': vehicles.filter(status='available').count(),
+            'in_transit': vehicles.filter(status='in_transit').count(),
+            'maintenance': vehicles.filter(status='maintenance').count()
+        }
+    }
+    return render(request, 'delivery/vehicle_list.html', context)
+
+def vehicle_create(request):
+    if request.method == 'POST':
+        form = DeliveryVehicleForm(request.POST)
+        if form.is_valid():
+            vehicle = form.save()
+            messages.success(request, f'Vehicle {vehicle.vehicle_number} created successfully!')
+            return redirect('vehicle_detail', pk=vehicle.pk)
+    else:
+        form = DeliveryVehicleForm()
+    
+    return render(request, 'delivery/vehicle_form.html', {
+        'form': form,
+        'title': 'Register New Vehicle',
+        'action': 'Create'
+    })
+
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, render
+from .models import DeliveryVehicle
+
+def vehicle_detail(request, pk):
+    vehicle = get_object_or_404(
+        DeliveryVehicle.objects.select_related('driver')
+                              .prefetch_related('maintenance_records'), 
+        pk=pk
+    )
+    
+    # Maintenance records pagination
+    maintenance_records = vehicle.maintenance_records.all().order_by('-date')
+    paginator = Paginator(maintenance_records, 5)  # Show 5 records per page
+    page_number = request.GET.get('page')
+    maintenance_page = paginator.get_page(page_number)
+    
+    context = {
+        'vehicle': vehicle,
+        'maintenance_page': maintenance_page,
+        'maintenance_count': maintenance_records.count(),
+        'last_maintenance': maintenance_records.first(),
+        #'maintenance_due': vehicle.maintenance_due,  # From the model property we added earlier
+    }
+    
+    return render(request, 'delivery/vehicle_detail.html', context)
+
+def vehicle_update(request, pk):
+    vehicle = get_object_or_404(DeliveryVehicle, pk=pk)
+    if request.method == 'POST':
+        form = DeliveryVehicleForm(request.POST, instance=vehicle)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Vehicle {vehicle.vehicle_number} updated successfully!')
+            return redirect('vehicle_detail', pk=vehicle.pk)
+    else:
+        form = DeliveryVehicleForm(instance=vehicle)
+    
+    return render(request, 'delivery/vehicle_form.html', {
+        'form': form,
+        'title': f'Update {vehicle.vehicle_number}',
+        'action': 'Update'
+    })
+
+def vehicle_delete(request, pk):
+    vehicle = get_object_or_404(DeliveryVehicle, pk=pk)
+    if request.method == 'POST':
+        vehicle_number = vehicle.vehicle_number
+        vehicle.delete()
+        messages.success(request, f'Vehicle {vehicle_number} deleted successfully!')
+        return redirect('vehicle_list')
+    
+    return render(request, 'delivery/vehicle_confirm_delete.html', {'vehicle': vehicle})
+
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import DeliveryVehicle
+
+@login_required
+def vehicle_update_status(request, pk):
+    """
+    View to handle vehicle status updates from the detail page
+    """
+    vehicle = get_object_or_404(DeliveryVehicle, pk=pk)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        
+        # Validate the status is one of our choices
+        valid_statuses = dict(DeliveryVehicle.STATUS_CHOICES).keys()
+        if new_status not in valid_statuses:
+            messages.error(request, 'Invalid status selected')
+            return redirect('vehicle_detail', pk=vehicle.pk)
+        
+        # Check for business logic constraints
+        if new_status == 'available' and vehicle.active_deliveries.exists():
+            messages.warning(
+                request,
+                f"Cannot set status to Available while vehicle has {vehicle.active_deliveries.count()} active deliveries"
+            )
+            return redirect('vehicle_detail', pk=vehicle.pk)
+        
+        # Check if driver is assigned when setting to in_transit
+        if new_status == 'in_transit' and not vehicle.driver:
+            messages.warning(
+                request,
+                "Cannot set status to In Transit without an assigned driver"
+            )
+            return redirect('vehicle_detail', pk=vehicle.pk)
+        
+        # Update the status
+        old_status = vehicle.get_status_display()
+        vehicle.status = new_status
+        vehicle.save()
+        
+        # Log the status change
+        vehicle.status_logs.create(
+            user=request.user,
+            from_status=old_status,
+            to_status=vehicle.get_status_display(),
+            notes=f"Status changed via quick update"
+        )
+        
+        messages.success(
+            request,
+            f"Vehicle {vehicle.vehicle_number} status updated from {old_status} to {vehicle.get_status_display()}"
+        )
+    
+    return redirect('vehicle_detail', pk=vehicle.pk)
+
+
+
+@login_required
+def vehicle_upload_image(request, pk):
+    vehicle = get_object_or_404(DeliveryVehicle, pk=pk)
+    
+    if request.method == 'POST':
+        # Check if image was provided
+        if 'image' not in request.FILES:
+            messages.error(request, "No image file provided")
+            return redirect('vehicle_detail', pk=vehicle.pk)
+        
+        # Validate image size (max 5MB)
+        image_file = request.FILES['image']
+        if image_file.size > 5 * 1024 * 1024:  # 5MB
+            messages.error(request, "Image file too large (max 5MB)")
+            return redirect('vehicle_detail', pk=vehicle.pk)
+        
+        # Save the new image
+        if vehicle.image:
+            vehicle.image.delete()  # Remove old image
+        vehicle.image = image_file
+        vehicle.save()
+        
+        messages.success(request, "Vehicle image updated successfully")
+        return redirect('vehicle_detail', pk=vehicle.pk)
+
+
+
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.utils.timezone import now
+from .models import DeliveryVehicle, MaintenanceRecord
+
+@login_required
+def vehicle_add_maintenance(request, pk):
+    vehicle = get_object_or_404(DeliveryVehicle, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            # Validate date is not in the future
+            date = request.POST.get('date')
+            if date > now().date().isoformat():
+                messages.error(request, "Maintenance date cannot be in the future")
+                return redirect('vehicle_detail', pk=vehicle.pk)
+            
+            # Create maintenance record
+            MaintenanceRecord.objects.create(
+                vehicle=vehicle,
+                maintenance_type=request.POST.get('maintenance_type'),
+                date=date,
+                description=request.POST.get('description'),
+                cost=request.POST.get('cost') or None,
+                created_by=request.user
+            )
+            
+            messages.success(request, "Maintenance record added successfully")
+            
+            # If vehicle was in maintenance, mark as available if appropriate
+            if vehicle.status == 'maintenance' and request.POST.get('maintenance_type') != 'repair':
+                vehicle.status = 'available'
+                vehicle.save()
+                messages.info(request, "Vehicle status changed to Available")
+                
+        except Exception as e:
+            messages.error(request, f"Error adding maintenance record: {str(e)}")
+    
+    return redirect('vehicle_detail', pk=vehicle.pk)

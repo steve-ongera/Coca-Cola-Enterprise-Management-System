@@ -1,0 +1,387 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid coca-cola-theme">
+    <!-- Form Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom border-coca">
+        <div class="d-flex align-items-center">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-{% if form.instance.pk %}pencil-square{% else %}plus-circle{% endif %} text-coca-red"></i>
+                {% if form.instance.pk %}Update {{ form.instance.vehicle_number }}{% else %}Register New Vehicle{% endif %}
+            </h1>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% if form.instance.pk %}{% url 'vehicle_detail' form.instance.pk %}{% else %}{% url 'vehicle_list' %}{% endif %}" 
+               class="btn btn-sm btn-coca-outline">
+                <i class="bi bi-arrow-left"></i> Cancel
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="card border-coca">
+        <div class="card-header bg-coca-red text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-card-checklist"></i> Vehicle Details
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- Form Error Display -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-coca-red alert-dismissible fade show mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Please correct the errors below.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+                
+                <div class="row g-3">
+                    <!-- Left Column -->
+                    <div class="col-md-6">
+                        <!-- Identification Section -->
+                        <div class="mb-4">
+                            <h6 class="text-coca-dark border-bottom pb-2 mb-3">
+                                <i class="bi bi-upc-scan"></i> Identification
+                            </h6>
+                            
+                            <!-- Vehicle Number -->
+                            <div class="mb-3">
+                                <label for="{{ form.vehicle_number.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Vehicle Number <span class="text-danger">*</span>
+                                </label>
+                                {{ form.vehicle_number }}
+                                <small class="form-text text-muted">Official registration/license plate number</small>
+                                {% if form.vehicle_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.vehicle_number.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Vehicle Type -->
+                            <div class="mb-3">
+                                <label for="{{ form.vehicle_type.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Vehicle Type <span class="text-danger">*</span>
+                                </label>
+                                {{ form.vehicle_type }}
+                                {% if form.vehicle_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.vehicle_type.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Model and Year -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.model.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                            Model
+                                        </label>
+                                        {{ form.model }}
+                                        {% if form.model.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.model.errors|join:", " }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.year.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                            Year
+                                        </label>
+                                        {{ form.year }}
+                                        {% if form.year.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.year.errors|join:", " }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Capacity Section -->
+                        <div class="mb-4">
+                            <h6 class="text-coca-dark border-bottom pb-2 mb-3">
+                                <i class="bi bi-box-seam"></i> Capacity & Status
+                            </h6>
+                            
+                            <!-- Capacity -->
+                            <div class="mb-3">
+                                <label for="{{ form.capacity.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Capacity (kg) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    {{ form.capacity }}
+                                    <span class="input-group-text">kg</span>
+                                </div>
+                                <small class="form-text text-muted">Maximum load capacity in kilograms</small>
+                                {% if form.capacity.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.capacity.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Status -->
+                            <div class="mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Status <span class="text-danger">*</span>
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.status.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="col-md-6">
+                        <!-- Assignment Section -->
+                        <div class="mb-4">
+                            <h6 class="text-coca-dark border-bottom pb-2 mb-3">
+                                <i class="bi bi-person-gear"></i> Assignment
+                            </h6>
+                            
+                            <!-- Driver -->
+                            <div class="mb-3">
+                                <label for="{{ form.driver.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Assigned Driver
+                                </label>
+                                {{ form.driver }}
+                                <small class="form-text text-muted">Primary operator for this vehicle</small>
+                                {% if form.driver.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.driver.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Current Route -->
+                            <div class="mb-3">
+                                <label for="{{ form.current_route.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Current Route
+                                </label>
+                                {{ form.current_route }}
+                                {% if form.current_route.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.current_route.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Assignment Date -->
+                            <div class="mb-3">
+                                <label for="{{ form.assignment_date.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    Assignment Date
+                                </label>
+                                {{ form.assignment_date }}
+                                {% if form.assignment_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.assignment_date.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Vehicle Image -->
+                        <div class="mb-4">
+                            <h6 class="text-coca-dark border-bottom pb-2 mb-3">
+                                <i class="bi bi-image"></i> Vehicle Image
+                            </h6>
+                            
+                            <!-- Current Image -->
+                            {% if form.instance.image %}
+                            <div class="mb-3 text-center">
+                                <img src="{{ form.instance.image.url }}" 
+                                     class="img-fluid rounded border border-coca mb-2" 
+                                     style="max-height: 150px;"
+                                     alt="Current vehicle image">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="image-clear" id="image-clear">
+                                    <label class="form-check-label text-coca-dark" for="image-clear">
+                                        Remove current image
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Image Upload -->
+                            <div class="mb-3">
+                                <label for="{{ form.image.id_for_label }}" class="form-label fw-medium text-coca-dark">
+                                    {% if form.instance.image %}Change{% else %}Upload{% endif %} Image
+                                </label>
+                                {{ form.image }}
+                                <small class="form-text text-muted">Recommended size: 800x600px</small>
+                                {% if form.image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.image.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between border-top border-coca pt-4 mt-3">
+                    <div>
+                        {% if form.instance.pk %}
+                        <a href="{% url 'vehicle_delete' form.instance.pk %}" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i> Delete Vehicle
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-coca-red">
+                            <i class="bi bi-save"></i> {% if form.instance.pk %}Update{% else %}Register{% endif %} Vehicle
+                        </button>
+                        <a href="{% if form.instance.pk %}{% url 'vehicle_detail' form.instance.pk %}{% else %}{% url 'vehicle_list' %}{% endif %}" 
+                           class="btn btn-coca-outline ms-2">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Coca-Cola Theme Extensions */
+    .border-coca {
+        border-color: #D9D9D9 !important;
+    }
+    
+    .text-coca-red {
+        color: #ED1C16;
+    }
+    
+    .text-coca-dark {
+        color: #1A1A1A;
+    }
+    
+    .bg-coca-red {
+        background-color: #ED1C16;
+    }
+    
+    .alert-coca-red {
+        color: #842029;
+        background-color: #f8d7da;
+        border-color: #f5c2c7;
+    }
+    
+    .btn-coca-red {
+        background-color: #ED1C16;
+        color: white;
+        border-color: #ED1C16;
+    }
+    
+    .btn-coca-outline {
+        border-color: #D9D9D9;
+        color: #1A1A1A;
+    }
+    
+    /* Form Styling */
+    .form-control, .form-select {
+        border-radius: 4px;
+        border: 1px solid #ced4da;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #ED1C16;
+        box-shadow: 0 0 0 0.25rem rgba(237, 28, 22, 0.25);
+    }
+    
+    .is-invalid {
+        border-color: #dc3545;
+    }
+    
+    .is-invalid:focus {
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+    
+    /* Card styling */
+    .card {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Section headers */
+    h6.border-bottom {
+        font-weight: 600;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .border-md-top {
+            border-top: 1px solid #dee2e6 !important;
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Form validation
+    (function() {
+        'use strict'
+        
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        var forms = document.querySelectorAll('.needs-validation')
+        
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms)
+            .forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Year input restriction
+    $('#id_year').attr('min', 1980);
+    $('#id_year').attr('max', new Date().getFullYear() + 1);
+    
+    // Date picker for assignment date
+    $('#id_assignment_date').attr('type', 'date');
+    $('#id_assignment_date').attr('max', new Date().toISOString().split('T')[0]);
+    
+    // Image preview
+    $('#id_image').on('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('.img-preview').remove();
+                $('#image-clear').parent().before(
+                    '<div class="mb-3 text-center">' +
+                    '<img src="' + e.target.result + '" class="img-fluid rounded border border-coca mb-2 img-preview" style="max-height: 150px;">' +
+                    '</div>'
+                );
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+{% endblock %}

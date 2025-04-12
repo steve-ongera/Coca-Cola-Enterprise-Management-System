@@ -641,6 +641,12 @@ class Invoice(models.Model):
 class DeliveryVehicle(models.Model):
     vehicle_number = models.CharField(max_length=20, unique=True)
     vehicle_type = models.CharField(max_length=50)
+    image = models.ImageField(
+        upload_to='delivery_vehicles/',
+        null=True,
+        blank=True,
+      
+    )
     capacity = models.DecimalField(max_digits=10, decimal_places=2)  # in kilograms or similar unit
     driver = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, related_name='assigned_vehicles')
     STATUS_CHOICES = [
@@ -653,7 +659,34 @@ class DeliveryVehicle(models.Model):
     def __str__(self):
         return f"{self.vehicle_type} - {self.vehicle_number}"
 
+from django.db import models
+from django.core.validators import MinValueValidator
 
+
+class MaintenanceRecord(models.Model):
+    MAINTENANCE_TYPES = [
+        ('routine', 'Routine Maintenance'),
+        ('repair', 'Repair'),
+        ('inspection', 'Inspection'),
+        ('other', 'Other'),
+    ]
+    
+    vehicle = models.ForeignKey(DeliveryVehicle, on_delete=models.CASCADE,related_name='maintenance_records')
+    maintenance_type = models.CharField(max_length=20,choices=MAINTENANCE_TYPES,default='routine')
+    date = models.DateField()
+    description = models.TextField()
+    cost = models.DecimalField(max_digits=10,decimal_places=2,null=True,blank=True,validators=[MinValueValidator(0)])
+    created_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name = 'Maintenance Record'
+        verbose_name_plural = 'Maintenance Records'
+
+    def __str__(self):
+        return f"{self.get_maintenance_type_display()} on {self.date}"
+    
 class DeliveryRoute(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
