@@ -99,7 +99,7 @@
                             <td>
                                 {% if vehicle.driver %}
                                 <a href="#">
-                                    {{ vehicle.driver.get_full_name }}
+                                    {{ vehicle.driver.first_name}} {{ vehicle.driver.last_name}}
                                 </a>
                                 {% else %}
                                 <span class="text-muted">Unassigned</span>
@@ -107,9 +107,9 @@
                             </td>
                             <td>
                                 <span class="badge 
-                                    {% if vehicle.status == 'available' %}bg-coca-green
-                                    {% elif vehicle.status == 'in_transit' %}bg-coca-blue
-                                    {% else %}bg-coca-gray{% endif %}">
+                                    {% if vehicle.status == 'available' %}bg-success
+                                    {% elif vehicle.status == 'in_transit' %}bg-primary
+                                    {% else %}bg-secondary{% endif %}">
                                     {{ vehicle.get_status_display }}
                                 </span>
                             </td>

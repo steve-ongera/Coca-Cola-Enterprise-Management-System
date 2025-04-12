@@ -128,7 +128,7 @@
                                         <dd class="col-sm-8">
                                             {% if vehicle.driver %}
                                             <a href="#" class="text-coca-red">
-                                                {{ vehicle.driver.get_full_name }}
+                                                {{ vehicle.driver.first_name}} {{ vehicle.driver.last_name}}
                                             </a>
                                             {% else %}
                                             <span class="text-muted">Unassigned</span>

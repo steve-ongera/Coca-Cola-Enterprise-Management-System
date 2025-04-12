@@ -1594,12 +1594,16 @@ def vehicle_update_status(request, pk):
             return redirect('vehicle_detail', pk=vehicle.pk)
         
         # Check for business logic constraints
-        if new_status == 'available' and vehicle.active_deliveries.exists():
-            messages.warning(
-                request,
-                f"Cannot set status to Available while vehicle has {vehicle.active_deliveries.count()} active deliveries"
-            )
-            return redirect('vehicle_detail', pk=vehicle.pk)
+        if new_status == 'available':
+            active_count = vehicle.deliveries.filter(
+                status__in=['scheduled', 'in_transit']
+            ).count()
+            if active_count > 0:
+                messages.warning(
+                    request,
+                    f"Cannot set status to Available while vehicle has {active_count} active deliveries"
+                )
+                return redirect('delivery:vehicle_detail', pk=vehicle.pk)
         
         # Check if driver is assigned when setting to in_transit
         if new_status == 'in_transit' and not vehicle.driver:
@@ -1607,7 +1611,7 @@ def vehicle_update_status(request, pk):
                 request,
                 "Cannot set status to In Transit without an assigned driver"
             )
-            return redirect('vehicle_detail', pk=vehicle.pk)
+            return redirect('delivery:vehicle_detail', pk=vehicle.pk)
         
         # Update the status
         old_status = vehicle.get_status_display()

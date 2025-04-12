@@ -67,9 +67,9 @@
                             </td>
                             <td>
                                 <span class="badge 
-                                    {% if customer.customer_type == 'distributor' %}bg-coca-blue
-                                    {% elif customer.customer_type == 'retailer' %}bg-coca-light
-                                    {% else %}bg-coca-gray{% endif %}">
+                                    {% if customer.customer_type == 'distributor' %}bg-primary
+                                    {% elif customer.customer_type == 'retailer' %}bg-warning
+                                    {% else %}bg-secondary{% endif %}">
                                     {{ customer.get_customer_type_display }}
                                 </span>
                             </td>
@@ -85,7 +85,7 @@
                                 </a>
                             </td>
                             <td>
-                                <span class="badge {% if customer.status == 'active' %}bg-coca-green{% else %}bg-secondary{% endif %}">
+                                <span class="badge {% if customer.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
                                     <i class="bi bi-{% if customer.status == 'active' %}check-circle{% else %}x-circle{% endif %}"></i>
                                     {{ customer.get_status_display }}
                                 </span>

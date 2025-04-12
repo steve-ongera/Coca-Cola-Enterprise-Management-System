@@ -655,6 +655,11 @@ class DeliveryVehicle(models.Model):
         ('maintenance', 'Maintenance'),
     ]
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='available')
+
+    @property
+    def active_deliveries(self):
+        """Returns queryset of active deliveries for this vehicle"""
+        return self.deliveries.filter(status__in=['scheduled', 'in_transit'])
     
     def __str__(self):
         return f"{self.vehicle_type} - {self.vehicle_number}"
@@ -686,13 +691,23 @@ class MaintenanceRecord(models.Model):
 
     def __str__(self):
         return f"{self.get_maintenance_type_display()} on {self.date}"
-    
+
+class StatusLog(models.Model):
+    vehicle = models.ForeignKey(DeliveryVehicle, on_delete=models.CASCADE,related_name='status_logs')
+    user = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+    from_status = models.CharField(max_length=50)
+    to_status = models.CharField(max_length=50)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class DeliveryRoute(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     regions_covered = models.JSONField()
     estimated_time = models.DurationField()  # e.g., 2 hours
     assigned_vehicle = models.ForeignKey(DeliveryVehicle, on_delete=models.SET_NULL, null=True, related_name='routes')
+    
     
     def __str__(self):
         return self.name
@@ -712,6 +727,12 @@ class Delivery(models.Model):
     ]
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='scheduled')
     notes = models.TextField(null=True, blank=True)
+
+    vehicle = models.ForeignKey(
+        DeliveryVehicle, 
+        on_delete=models.CASCADE,
+        related_name='deliveries'  # This creates the reverse relationship
+    )
     
     class Meta:
         verbose_name_plural = 'Deliveries'
