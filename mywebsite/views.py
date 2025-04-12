@@ -2086,3 +2086,236 @@ def batch_update(request, pk):
         'title': f'Update Batch {batch.batch_number}',
     }
     return render(request, 'production/batch_form.html', context)
+
+
+
+from django.shortcuts import render
+from django.db.models import Count, Q
+from django.utils import timezone
+from .models import MaintenanceSchedule
+
+def maintenance_dashboard(request):
+    # Get counts for different statuses
+    status_counts = MaintenanceSchedule.objects.values('status').annotate(
+        count=Count('id')
+    ).order_by('status')
+    
+    # Get overdue maintenance (scheduled but not completed past their date)
+    overdue = MaintenanceSchedule.objects.filter(
+        scheduled_date__lt=timezone.now(),
+        status__in=['scheduled', 'in_progress']
+    ).select_related('production_line', 'assigned_technician')
+    
+    # Get upcoming maintenance (next 7 days)
+    upcoming = MaintenanceSchedule.objects.filter(
+        scheduled_date__range=[
+            timezone.now(),
+            timezone.now() + timezone.timedelta(days=7)
+        ],
+        status='scheduled'
+    ).select_related('production_line', 'assigned_technician')
+    
+    # Maintenance by type statistics
+    maintenance_types = MaintenanceSchedule.objects.values(
+        'maintenance_type'
+    ).annotate(
+        count=Count('id'),
+        completed=Count('id', filter=Q(status='completed'))
+    )
+    
+    context = {
+        'status_counts': status_counts,
+        'overdue_maintenance': overdue,
+        'upcoming_maintenance': upcoming,
+        'maintenance_types': maintenance_types,
+        'current_date': timezone.now(),
+    }
+    return render(request, 'maintenance/dashboard.html', context)
+
+
+from django.contrib import messages
+from django.shortcuts import redirect, get_object_or_404
+from .forms import MaintenanceScheduleForm
+
+def create_maintenance_schedule(request, line_id=None):
+    initial = {}
+    if line_id:
+        production_line = get_object_or_404(ProductionLine, pk=line_id)
+        initial['production_line'] = production_line
+    
+    if request.method == 'POST':
+        form = MaintenanceScheduleForm(request.POST, initial=initial)
+        if form.is_valid():
+            maintenance = form.save()
+            
+            # Log maintenance creation
+            MaintenanceLog.objects.create(
+                maintenance=maintenance,
+                action='created',
+                user=request.user,
+                notes=f"Scheduled {maintenance.maintenance_type} maintenance"
+            )
+            
+            messages.success(
+                request,
+                f"{maintenance.maintenance_type} maintenance scheduled for "
+                f"{maintenance.production_line.name} on "
+                f"{maintenance.scheduled_date.strftime('%b %d, %Y %H:%M')}"
+            )
+            return redirect('maintenance_detail', pk=maintenance.pk)
+    else:
+        form = MaintenanceScheduleForm(initial=initial)
+    
+    context = {
+        'form': form,
+        'title': 'Schedule New Maintenance',
+        'production_line': production_line if line_id else None,
+    }
+    return render(request, 'maintenance/schedule_form.html', context)
+
+
+
+def start_maintenance(request, pk):
+    maintenance = get_object_or_404(MaintenanceSchedule, pk=pk)
+    
+    if maintenance.status != 'scheduled':
+        messages.error(
+            request,
+            "Maintenance can only be started from 'scheduled' status"
+        )
+        return redirect('maintenance_detail', pk=pk)
+    
+    maintenance.status = 'in_progress'
+    maintenance.actual_start = timezone.now()
+    maintenance.save()
+    
+    # Create log entry
+    MaintenanceLog.objects.create(
+        maintenance=maintenance,
+        action='started',
+        user=request.user,
+        notes="Maintenance work begun"
+    )
+    
+    messages.success(
+        request,
+        f"Maintenance on {maintenance.production_line.name} has begun"
+    )
+    return redirect('maintenance_detail', pk=pk)
+
+def complete_maintenance(request, pk):
+    maintenance = get_object_or_404(MaintenanceSchedule, pk=pk)
+    
+    if request.method == 'POST':
+        form = MaintenanceCompletionForm(request.POST, instance=maintenance)
+        if form.is_valid():
+            completed_maintenance = form.save(commit=False)
+            completed_maintenance.status = 'completed'
+            completed_maintenance.actual_end = timezone.now()
+            completed_maintenance.save()
+            
+            # Calculate downtime impact
+            downtime = (completed_maintenance.actual_end - completed_maintenance.actual_start)
+            
+            # Create log entry
+            MaintenanceLog.objects.create(
+                maintenance=completed_maintenance,
+                action='completed',
+                user=request.user,
+                notes=f"Completed with notes: {form.cleaned_data['completion_notes']}"
+            )
+            
+            messages.success(
+                request,
+                f"Maintenance completed successfully. Downtime: {downtime}"
+            )
+            return redirect('maintenance_detail', pk=pk)
+    else:
+        form = MaintenanceCompletionForm(instance=maintenance)
+    
+    context = {
+        'form': form,
+        'maintenance': maintenance,
+        'title': 'Complete Maintenance',
+    }
+    return render(request, 'maintenance/complete_form.html', context)
+
+
+from django.db.models.functions import TruncMonth
+from django.db.models import Avg, F
+
+def maintenance_analytics(request):
+    # Monthly maintenance counts
+    monthly_data = MaintenanceSchedule.objects.annotate(
+        month=TruncMonth('scheduled_date')
+    ).values('month').annotate(
+        total=Count('id'),
+        completed=Count('id', filter=Q(status='completed'))
+    ).order_by('month')
+    
+    # Average duration by type
+    duration_stats = MaintenanceSchedule.objects.filter(
+        status='completed'
+    ).values('maintenance_type').annotate(
+        avg_estimated=Avg(F('estimated_duration')),
+        avg_actual=Avg(F('actual_end') - F('actual_start'))
+    )
+    
+    # Technician workload
+    technician_workload = Employee.objects.filter(
+        maintenance_assignments__isnull=False
+    ).annotate(
+        assigned=Count('maintenance_assignments'),
+        completed=Count('maintenance_assignments', filter=Q(maintenance_assignments__status='completed'))
+    ).order_by('-assigned')
+    
+    context = {
+        'monthly_data': monthly_data,
+        'duration_stats': duration_stats,
+        'technician_workload': technician_workload,
+    }
+    return render(request, 'maintenance/analytics.html', context)
+
+
+from datetime import datetime, timedelta
+
+def maintenance_calendar(request):
+    # Default to current month
+    year = request.GET.get('year', datetime.now().year)
+    month = request.GET.get('month', datetime.now().month)
+    
+    # Calculate date range
+    start_date = datetime(int(year), int(month), 1)
+    if month == '12':
+        end_date = datetime(int(year)+1, 1, 1)
+    else:
+        end_date = datetime(int(year), int(month)+1, 1)
+    
+    # Get maintenance for this period
+    maintenance = MaintenanceSchedule.objects.filter(
+        scheduled_date__gte=start_date,
+        scheduled_date__lt=end_date
+    ).select_related('production_line', 'assigned_technician')
+    
+    # Prepare calendar data
+    calendar_days = []
+    current_day = start_date
+    while current_day < end_date:
+        day_maintenance = [
+            m for m in maintenance 
+            if m.scheduled_date.date() == current_day.date()
+        ]
+        calendar_days.append({
+            'date': current_day,
+            'maintenance': day_maintenance,
+            'is_weekend': current_day.weekday() >= 5
+        })
+        current_day += timedelta(days=1)
+    
+    context = {
+        'calendar_days': calendar_days,
+        'month': start_date.strftime('%B %Y'),
+        'prev_month': (start_date - timedelta(days=1)).strftime('%m/%Y'),
+        'next_month': end_date.strftime('%m/%Y'),
+    }
+    return render(request, 'maintenance/calendar.html', context)

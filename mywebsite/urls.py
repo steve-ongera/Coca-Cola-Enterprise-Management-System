@@ -123,9 +123,34 @@ urlpatterns = [
     # Maintenance
     path('maintenance/', views.maintenance_list, name='maintenance_list'),
     path('maintenance/create/', views.maintenance_create, name='maintenance_create'),
+    # Dashboard and List Views
+    path('maintenance/', views.maintenance_list, name="maintenance_list"),
+    path('maintenance/dashboard/', views.maintenance_dashboard, name="maintenance_dashboard"),
+    path('maintenance/calendar/', views.maintenance_calendar, name="maintenance_calendar"),
+    path('maintenance/analytics/', views.maintenance_analytics, name="maintenance_analytics"),
+
+    # CRUD Operations
+    path('maintenance/create/', views.maintenance_create, name="maintenance_create"),
+    # path('maintenance/<int:pk>/', views.maintenance_detail, name="maintenance_detail"),
+    # path('maintenance/<int:pk>/update/', views.maintenance_update, name="maintenance_update"),
+    # path('maintenance/<int:pk>/delete/', views.maintenance_delete, name="maintenance_delete"),
+
+    # # Workflow Actions
+    # path('maintenance/<int:pk>/start/', views.maintenance_start, name="maintenance_start"),
+    # path('maintenance/<int:pk>/complete/', views.maintenance_complete, name="maintenance_complete"),
+    # path('maintenance/<int:pk>/cancel/', views.maintenance_cancel, name="maintenance_cancel"),
+
+    # # Line-Specific Maintenance
+    # path('lines/<int:line_id>/maintenance/', views.line_maintenance_list, name="line_maintenance_list"),
+    # path('lines/<int:line_id>/maintenance/create/', views.line_maintenance_create, name="line_maintenance_create"),
+
+    # # Technician Views
+    # path('technicians/<int:tech_id>/assignments/', views.technician_assignments, name="technician_assignments"),
     
     # Downtime
     path('downtime/', views.downtime_list, name='downtime_list'),
     path('downtime/create/', views.downtime_create, name='downtime_create'),
+
+
     
 ]

@@ -1112,6 +1112,66 @@ class MaintenanceSchedule(models.Model):
     def __str__(self):
         return f"{self.production_line.name} - {self.maintenance_type} on {self.scheduled_date}"
 
+from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class MaintenanceLog(models.Model):
+    ACTION_CHOICES = [
+        ('created', 'Created'),
+        ('started', 'Work Started'),
+        ('completed', 'Work Completed'),
+        ('cancelled', 'Cancelled'),
+        ('updated', 'Updated'),
+        ('part_replaced', 'Part Replaced'),
+        ('note_added', 'Note Added'),
+    ]
+
+    maintenance = models.ForeignKey(
+        'MaintenanceSchedule',
+        on_delete=models.CASCADE,
+        related_name='logs'
+    )
+    action = models.CharField(
+        max_length=20,
+        choices=ACTION_CHOICES,
+        verbose_name="Action Type"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Performed By"
+    )
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Timestamp"
+    )
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Additional Notes"
+    )
+    parts_used = models.JSONField(
+        blank=True,
+        null=True,
+        verbose_name="Parts Inventory Used",
+        help_text="JSON of parts and quantities used"
+    )
+
+    class Meta:
+        verbose_name = "Maintenance Log Entry"
+        verbose_name_plural = "Maintenance Logs"
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['maintenance']),
+            models.Index(fields=['action']),
+            models.Index(fields=['timestamp']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_action_display()} by {self.user} at {self.timestamp}"
 
 class DowntimeIncident(models.Model):
     production_line = models.ForeignKey(ProductionLine, on_delete=models.CASCADE, related_name='downtime_incidents')

@@ -154,8 +154,8 @@
                             </td>
                             <td>
                                 <span class="badge 
-                                    {% if batch.quality_check_status == 'passed' %}badge-success
-                                    {% elif batch.quality_check_status == 'failed' %}badge-danger
+                                    {% if batch.quality_check_status == 'passed' %}bg-success
+                                    {% elif batch.quality_check_status == 'failed' %}bg-danger
                                     {% else %}badge-warning{% endif %}">
                                     {{ batch.get_quality_check_status_display }}
                                 </span>

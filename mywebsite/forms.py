@@ -693,6 +693,60 @@ class ProductionBatchForm(forms.ModelForm):
             self.fields[field].widget.attrs.update({'class': 'form-control'})
         self.fields['quality_check_status'].widget.attrs.update({'class': 'form-check-input'})
 
+
+from django import forms
+from django.core.validators import MinValueValidator
+from django.utils import timezone
+from .models import MaintenanceSchedule
+
+class MaintenanceCompletionForm(forms.ModelForm):
+    completion_notes = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}),
+        required=True,
+        label="Work Summary",
+        help_text="Describe the work performed and any findings"
+    )
+    parts_used = forms.JSONField(
+        required=False,
+        label="Parts Inventory Used",
+        help_text="Record parts consumed (format: {'part_number': quantity})"
+    )
+    actual_duration = forms.DurationField(
+        required=True,
+        label="Actual Duration",
+        help_text="HH:MM:SS format",
+        widget=forms.TextInput(attrs={'placeholder': '02:30:00'})
+    )
+
+    class Meta:
+        model = MaintenanceSchedule
+        fields = []  # We're not directly saving to model fields
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.actual_start:
+            default_duration = timezone.now() - self.instance.actual_start
+            self.fields['actual_duration'].initial = default_duration
+
+    def save(self, commit=True):
+        maintenance = super().save(commit=False)
+        maintenance.status = 'completed'
+        maintenance.actual_end = timezone.now()
+        
+        # Create log entry before saving
+        MaintenanceLog.objects.create(
+            maintenance=maintenance,
+            action='completed',
+            user=self.current_user,
+            notes=self.cleaned_data['completion_notes'],
+            parts_used=self.cleaned_data['parts_used']
+        )
+        
+        if commit:
+            maintenance.save()
+        return maintenance
+    
+    
 class MaintenanceScheduleForm(forms.ModelForm):
     class Meta:
         model = MaintenanceSchedule
