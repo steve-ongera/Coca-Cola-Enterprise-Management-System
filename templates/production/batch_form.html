@@ -1,0 +1,278 @@
+{% extends "base/base.html" %}
+
+{% block title %}{{ title }} | Coca-Cola{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header with Coca-Cola Red Accent -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0" style="color: #ED1C24;">
+            <i class="fas fa-{% if batch %}edit{% else %}plus-circle{% endif %} mr-2"></i>
+            {{ title }}
+        </h1>
+        <div>
+            {% if batch %}
+            <a href="{% url 'batch_detail' batch.pk %}" class="btn btn-secondary mr-2">
+                <i class="fas fa-times mr-1"></i>Cancel
+            </a>
+            {% else %}
+            <a href="{% url 'batch_list' %}" class="btn btn-secondary mr-2">
+                <i class="fas fa-times mr-1"></i>Cancel
+            </a>
+            {% endif %}
+            <button type="submit" form="batchForm" class="btn btn-danger" style="background-color: #ED1C24; border-color: #ED1C24;">
+                <i class="fas fa-save mr-1"></i>{% if batch %}Update{% else %}Create{% endif %} Batch
+            </button>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3" style="border-top: 4px solid #ED1C24;">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-info-circle mr-1"></i>
+                Batch Information
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" id="batchForm">
+                {% csrf_token %}
+                
+                <!-- System Messages -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    <!-- Left Column -->
+                    <div class="col-md-6">
+                        <!-- Batch Number (display only for existing) -->
+                        {% if batch %}
+                        <div class="form-group">
+                            <label class="font-weight-bold">Batch Number</label>
+                            <p class="form-control-plaintext bg-light p-2 rounded">
+                                {{ batch.batch_number }}
+                                <small class="text-muted d-block">Auto-generated</small>
+                            </p>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Production Line -->
+                        <div class="form-group">
+                            <label for="{{ form.production_line.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-industry mr-1"></i>Production Line
+                            </label>
+                            {{ form.production_line }}
+                            {% if form.production_line.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.production_line.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Product Selection -->
+                        <div class="form-group">
+                            <label for="{{ form.product.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-wine-bottle mr-1" style="color: #ED1C24;"></i>Product
+                            </label>
+                            {{ form.product }}
+                            {% if form.product.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.product.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="col-md-6">
+                        <!-- Quantity Produced -->
+                        <div class="form-group">
+                            <label for="{{ form.quantity_produced.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-boxes mr-1"></i>Quantity Produced
+                            </label>
+                            <div class="input-group">
+                                {{ form.quantity_produced }}
+                                <div class="input-group-append">
+                                    <span class="input-group-text">units</span>
+                                </div>
+                            </div>
+                            {% if form.quantity_produced.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.quantity_produced.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Time Fields -->
+                        <div class="form-group">
+                            <label class="font-weight-bold">
+                                <i class="fas fa-clock mr-1"></i>Production Timeline
+                            </label>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <label for="{{ form.start_time.id_for_label }}">Start Time</label>
+                                    {{ form.start_time }}
+                                    {% if form.start_time.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.start_time.errors.as_text }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label for="{{ form.end_time.id_for_label }}">End Time</label>
+                                    {{ form.end_time }}
+                                    {% if form.end_time.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.end_time.errors.as_text }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quality Status -->
+                        <div class="form-group">
+                            <label class="font-weight-bold d-block">
+                                <i class="fas fa-clipboard-check mr-1"></i>Quality Status
+                            </label>
+                            <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                                {% for choice in form.quality_check_status %}
+                                <label class="btn btn-outline-{% if choice.choice_value == 'passed' %}success{% elif choice.choice_value == 'failed' %}danger{% else %}warning{% endif %}">
+                                    {{ choice.tag }}
+                                    {{ choice.choice_label }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                            {% if form.quality_check_status.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.quality_check_status.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Batch History Section (for existing batches) -->
+    {% if batch %}
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-history mr-1"></i>Batch History
+            </h6>
+            <small class="text-muted">Created on {{ batch.start_time|date:"M d, Y" }}</small>
+        </div>
+        <div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-icon bg-{% if batch.quality_check_status == 'passed' %}success{% elif batch.quality_check_status == 'failed' %}danger{% else %}warning{% endif %}">
+                        <i class="fas fa-{% if batch.quality_check_status == 'passed' %}check{% elif batch.quality_check_status == 'failed' %}times{% else %}hourglass-half{% endif %}"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h5>Current Status</h5>
+                        <p>
+                            Quality check: <strong>{{ batch.get_quality_check_status_display }}</strong><br>
+                            Produced: <strong>{{ batch.quantity_produced|floatformat:0 }} units</strong>
+                        </p>
+                    </div>
+                </div>
+                {% if batch.end_time %}
+                <div class="timeline-item">
+                    <div class="timeline-icon bg-info">
+                        <i class="fas fa-flag-checkered"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h5>Production Completed</h5>
+                        <p>{{ batch.end_time|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="timeline-item">
+                    <div class="timeline-icon bg-primary">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h5>Production Started</h5>
+                        <p>{{ batch.start_time|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Coca-Cola themed timeline */
+    .timeline {
+        position: relative;
+        padding-left: 50px;
+    }
+    .timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+    .timeline-icon {
+        position: absolute;
+        left: -50px;
+        top: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    .timeline-content {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    /* Custom radio buttons */
+    .btn-group-toggle .btn input[type="radio"] {
+        position: absolute;
+        clip: rect(0,0,0,0);
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize datetime pickers
+    $('input[type="datetime-local"]').each(function() {
+        if (!this.value) {
+            var now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            this.value = now.toISOString().slice(0, 16);
+        }
+    });
+
+    // Form submission handler
+    $('#batchForm').on('submit', function() {
+        $(this).find('button[type="submit"]').prop('disabled', true)
+               .html('<i class="fas fa-spinner fa-spin mr-1"></i> Processing...');
+    });
+    
+    // Quality status button active state
+    $('.btn-group-toggle label').click(function() {
+        $('.btn-group-toggle label').removeClass('active');
+        $(this).addClass('active');
+    });
+    
+    // Set initial active state for quality status
+    $('input[name="quality_check_status"]:checked').parent().addClass('active');
+});
+</script>
+{% endblock %}

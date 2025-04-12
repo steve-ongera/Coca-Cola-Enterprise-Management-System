@@ -1916,24 +1916,8 @@ def production_line_detail(request, pk):
     }
     return render(request, 'production/line_detail.html', context)
 
-# Batches
-def batch_list(request):
-    batches = ProductionBatch.objects.select_related('production_line', 'product')
-    return render(request, 'production/batch_list.html', {
-        'batches': batches,
-        'pending_quality': batches.filter(quality_check_status='pending').count(),
-    })
 
-def batch_create(request):
-    if request.method == 'POST':
-        form = ProductionBatchForm(request.POST)
-        if form.is_valid():
-            batch = form.save()
-            messages.success(request, f'Batch {batch.batch_number} started!')
-            return redirect('batch_list')
-    else:
-        form = ProductionBatchForm()
-    return render(request, 'production/batch_form.html', {'form': form})
+
 
 # Maintenance
 def maintenance_list(request):
@@ -1972,3 +1956,133 @@ def downtime_create(request):
     else:
         form = DowntimeIncidentForm()
     return render(request, 'production/downtime_form.html', {'form': form})
+
+# Batches
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db.models import Q, Count, Sum
+from django.utils import timezone
+from .models import ProductionBatch, ProductionLine, Product
+
+def batch_list(request):
+    # Get all batches with optimized queries
+    batches = ProductionBatch.objects.select_related(
+        'production_line__facility',
+        'product'
+    ).order_by('-start_time')
+    
+    # Filters
+    status_filter = request.GET.get('status')
+    if status_filter in ['pending', 'passed', 'failed']:
+        batches = batches.filter(quality_check_status=status_filter)
+    
+    line_filter = request.GET.get('line')
+    if line_filter:
+        batches = batches.filter(production_line_id=line_filter)
+    
+    # Statistics
+    total_quantity = batches.aggregate(total=Sum('quantity_produced'))['total'] or 0
+    status_counts = batches.values('quality_check_status').annotate(count=Count('id'))
+    
+    context = {
+        'batches': batches,
+        'production_lines': ProductionLine.objects.all(),
+        'total_quantity': total_quantity,
+        'status_counts': status_counts,
+        'current_status_filter': status_filter,
+        'current_line_filter': line_filter,
+        'page_title': 'Production Batch Management',
+    }
+    return render(request, 'production/batch_list.html', context)
+
+
+
+from .forms import ProductionBatchForm
+
+def batch_create(request):
+    if request.method == 'POST':
+        form = ProductionBatchForm(request.POST)
+        if form.is_valid():
+            batch = form.save(commit=False)
+            batch.batch_number = generate_batch_number()  # Custom function needed
+            batch.save()
+            
+            messages.success(
+                request,
+                f'Batch {batch.batch_number} created successfully! '
+                f'Produced {batch.quantity_produced} units of {batch.product.name}'
+            )
+            return redirect('batch_detail', pk=batch.pk)
+    else:
+        form = ProductionBatchForm(initial={
+            'start_time': timezone.now(),
+            'quality_check_status': 'pending'
+        })
+    
+    context = {
+        'form': form,
+        'title': 'Create New Production Batch',
+    }
+    return render(request, 'production/batch_form.html', context)
+
+# Helper function (put in utils.py)
+def generate_batch_number():
+    now = timezone.now()
+    return f"CC-{now.year}{now.month:02d}{now.day:02d}-{now.hour:02d}{now.minute:02d}"
+
+
+
+def batch_detail(request, pk):
+    batch = get_object_or_404(
+        ProductionBatch.objects.select_related(
+            'production_line__facility',
+            'product'
+        ),
+        pk=pk
+    )
+    
+    # Calculate duration
+    duration = None
+    duration_hours = 0
+    duration_minutes = 0
+    if batch.end_time:
+        duration = batch.end_time - batch.start_time
+        duration_hours = duration.seconds // 3600
+        duration_minutes = (duration.seconds % 3600) // 60
+    
+    # Calculate approximate pallets (assuming 100 units per pallet)
+    pallets = batch.quantity_produced / 100
+    
+    context = {
+        'batch': batch,
+        'duration_hours': duration_hours,
+        'duration_minutes': duration_minutes,
+        'pallets': pallets,
+        'page_title': f'Batch {batch.batch_number}',
+    }
+    return render(request, 'production/batch_detail.html', context)
+
+
+
+def batch_update(request, pk):
+    batch = get_object_or_404(ProductionBatch, pk=pk)
+    
+    if request.method == 'POST':
+        form = ProductionBatchForm(request.POST, instance=batch)
+        if form.is_valid():
+            updated_batch = form.save()
+            
+            messages.success(
+                request,
+                f'Batch {updated_batch.batch_number} updated successfully!'
+            )
+            return redirect('batch_detail', pk=updated_batch.pk)
+    else:
+        form = ProductionBatchForm(instance=batch)
+    
+    context = {
+        'form': form,
+        'batch': batch,
+        'title': f'Update Batch {batch.batch_number}',
+    }
+    return render(request, 'production/batch_form.html', context)

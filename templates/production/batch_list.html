@@ -1,0 +1,219 @@
+{% extends "base/base.html" %}
+
+{% block title %}Coca-Cola | Production Batches{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header with Coca-Cola Red Accent -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0" style="color: #ED1C24;">
+            <i class="fas fa-boxes mr-2"></i>Production Batches
+        </h1>
+        <div>
+            <a href="{% url 'batch_create' %}" class="btn btn-danger" style="background-color: #ED1C24; border-color: #ED1C24;">
+                <i class="fas fa-plus mr-1"></i>New Batch
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <!-- Total Batches Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2" style="border-left-color: #ED1C24 !important;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Total Batches</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ batches.count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Production Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Production</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_quantity|floatformat:0 }} units</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-wine-bottle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quality Status Cards -->
+        {% for status in status_counts %}
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-{% if status.quality_check_status == 'passed' %}success{% elif status.quality_check_status == 'failed' %}danger{% else %}warning{% endif %} shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-{% if status.quality_check_status == 'passed' %}success{% elif status.quality_check_status == 'failed' %}danger{% else %}warning{% endif %} text-uppercase mb-1">
+                                {{ status.quality_check_status|title }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status.count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-{% if status.quality_check_status == 'passed' %}check-circle{% elif status.quality_check_status == 'failed' %}times-circle{% else %}hourglass-half{% endif %} fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Filter Row -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between" style="background-color: #f8f9fa;">
+            <h6 class="m-0 font-weight-bold text-primary">Filter Batches</h6>
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3">
+                    <label for="status" class="mr-2">Status:</label>
+                    <select class="form-control form-control-sm" name="status" id="status" onchange="this.form.submit()">
+                        <option value="">All</option>
+                        <option value="pending" {% if current_status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="passed" {% if current_status_filter == 'passed' %}selected{% endif %}>Passed</option>
+                        <option value="failed" {% if current_status_filter == 'failed' %}selected{% endif %}>Failed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="line" class="mr-2">Production Line:</label>
+                    <select class="form-control form-control-sm" name="line" id="line" onchange="this.form.submit()">
+                        <option value="">All Lines</option>
+                        {% for line in production_lines %}
+                        <option value="{{ line.id }}" {% if current_line_filter == line.id|stringformat:"s" %}selected{% endif %}>
+                            {{ line.facility.name }} - {{ line.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if current_status_filter or current_line_filter %}
+                <a href="{% url 'batch_list' %}" class="btn btn-sm btn-link ml-2">Clear Filters</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Batches Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3" style="background-color: #ED1C24;">
+            <h6 class="m-0 font-weight-bold text-white">Recent Production Batches</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Batch Number</th>
+                            <th>Product</th>
+                            <th>Production Line</th>
+                            <th>Quantity</th>
+                            <th>Start Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for batch in batches %}
+                        <tr>
+                            <td>
+                                <strong>{{ batch.batch_number }}</strong>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="mr-2" style="width: 30px; height: 30px; background-color: #f8f9fa; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-wine-bottle" style="color: #ED1C24;"></i>
+                                    </div>
+                                    {{ batch.product.name }}
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{% url 'line_detail' batch.production_line.id %}">
+                                    {{ batch.production_line.name }}
+                                </a>
+                                <small class="d-block text-muted">{{ batch.production_line.facility.name }}</small>
+                            </td>
+                            <td class="text-right">
+                                {{ batch.quantity_produced|floatformat:0 }}
+                            </td>
+                            <td>
+                                {{ batch.start_time|date:"M d, Y H:i" }}
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if batch.quality_check_status == 'passed' %}badge-success
+                                    {% elif batch.quality_check_status == 'failed' %}badge-danger
+                                    {% else %}badge-warning{% endif %}">
+                                    {{ batch.get_quality_check_status_display }}
+                                </span>
+                                {% if batch.end_time %}
+                                <small class="d-block text-muted">Completed</small>
+                                {% else %}
+                                <small class="d-block text-muted">In Progress</small>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'batch_detail' batch.pk %}" class="btn btn-info" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'batch_update' batch.pk %}" class="btn btn-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if batch.quality_check_status == 'pending' %}
+                                    <a href="#" class="btn btn-success" title="Quality Check">
+                                        <i class="fas fa-clipboard-check"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No production batches found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Page level plugins -->
+<script>
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        "order": [[4, "desc"]],  // Sort by start time by default
+        "responsive": true,
+        "columnDefs": [
+            { "orderable": false, "targets": [6] },  // Actions column
+            { "searchable": false, "targets": [6] }
+        ],
+        "language": {
+            "emptyTable": "No batches recorded yet",
+            "info": "Showing _START_ to _END_ of _TOTAL_ batches",
+            "infoEmpty": "Showing 0 to 0 of 0 batches",
+            "infoFiltered": "(filtered from _MAX_ total batches)",
+            "search": "Search batches:",
+            "zeroRecords": "No matching batches found"
+        }
+    });
+});
+</script>
+{% endblock %}

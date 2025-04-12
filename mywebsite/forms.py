@@ -660,24 +660,38 @@ class ProductionLineForm(forms.ModelForm):
             'product_types': forms.SelectMultiple(attrs={'class': 'select2'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
-        
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields:
             self.fields[field].widget.attrs.update({'class': 'form-control'})
 
+from django import forms
+from .models import ProductionBatch
+
 class ProductionBatchForm(forms.ModelForm):
     class Meta:
         model = ProductionBatch
-        fields = '__all__'
+        fields = [
+            'production_line',
+            'product',
+            'quantity_produced',
+            'start_time',
+            'end_time',
+            'quality_check_status'
+        ]
         widgets = {
-            'production_line': forms.Select(attrs={'class': 'form-select'}),
-            'product': forms.Select(attrs={'class': 'form-select'}),
             'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'quality_check_status': forms.Select(attrs={'class': 'form-select'}),
+            'quality_check_status': forms.RadioSelect(choices=ProductionBatch.QUALITY_CHECK_STATUS_CHOICES),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({'class': 'form-control'})
+        self.fields['quality_check_status'].widget.attrs.update({'class': 'form-check-input'})
 
 class MaintenanceScheduleForm(forms.ModelForm):
     class Meta:

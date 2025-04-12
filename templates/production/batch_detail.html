@@ -1,0 +1,387 @@
+{% extends "base/base.html" %}
+
+{% block title %}Batch {{ batch.batch_number }} | Coca-Cola{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header with Batch Info -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-0" style="color: #ED1C24;">
+                <i class="fas fa-barcode mr-2"></i>Batch {{ batch.batch_number }}
+            </h1>
+            <p class="mb-0 text-muted">
+                Produced on {{ batch.start_time|date:"M d, Y" }} 
+                {% if batch.end_time %}
+                - Completed in {{ duration_hours }}h {{ duration_minutes }}m
+                {% endif %}
+            </p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'batch_update' batch.pk %}" class="btn btn-warning mr-2">
+                <i class="fas fa-edit mr-1"></i>Edit Batch
+            </a>
+            <a href="{% url 'batch_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-1"></i>Back to Batches
+            </a>
+        </div>
+    </div>
+
+    <!-- Batch Summary Cards -->
+    <div class="row mb-4">
+        <!-- Product Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2" style="border-left-color: #ED1C24 !important;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Product</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ batch.product.name }}</div>
+                            <div class="mt-2">
+                                <span class="badge badge-primary">{{ batch.product.code }}</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon-circle" style="background-color: #f8f9fa;">
+                                <i class="fas fa-wine-bottle text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quantity Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Quantity Produced</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ batch.quantity_produced|floatformat:0 }}
+                                <small class="text-muted">units</small>
+                            </div>
+                            <div class="mt-2 text-xs text-muted">
+                                ≈ {{ pallets }} pallets
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon-circle" style="background-color: #f8f9fa;">
+                                <i class="fas fa-pallet text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Production Line Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Production Line</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <a href="{% url 'line_detail' batch.production_line.pk %}">
+                                    {{ batch.production_line.name }}
+                                </a>
+                            </div>
+                            <div class="mt-2 text-xs">
+                                <span class="text-muted">{{ batch.production_line.facility.name }}</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon-circle" style="background-color: #f8f9fa;">
+                                <i class="fas fa-industry text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quality Status Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-{% if batch.quality_check_status == 'passed' %}success{% elif batch.quality_check_status == 'failed' %}danger{% else %}warning{% endif %} shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-{% if batch.quality_check_status == 'passed' %}success{% elif batch.quality_check_status == 'failed' %}danger{% else %}warning{% endif %} text-uppercase mb-1">
+                                Quality Status</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ batch.get_quality_check_status_display }}
+                            </div>
+                            {% if batch.quality_check_status == 'pending' %}
+                            <div class="mt-2">
+                                <a href="#" class="btn btn-sm btn-success">Perform Quality Check</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon-circle bg-{% if batch.quality_check_status == 'passed' %}success{% elif batch.quality_check_status == 'failed' %}danger{% else %}warning{% endif %}">
+                                <i class="fas fa-{% if batch.quality_check_status == 'passed' %}check{% elif batch.quality_check_status == 'failed' %}times{% else %}hourglass-half{% endif %} text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline and Details Row -->
+    <div class="row">
+        <!-- Left Column - Timeline -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3" style="border-left: 4px solid #ED1C24;">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-history mr-1"></i>Production Timeline
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <!-- Quality Check Event -->
+                        <div class="timeline-event">
+                            <div class="timeline-event-icon bg-{% if batch.quality_check_status == 'passed' %}success{% elif batch.quality_check_status == 'failed' %}danger{% else %}warning{% endif %}">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                            <div class="timeline-event-content">
+                                <h5>Quality Check</h5>
+                                <p class="mb-1">Status: <strong>{{ batch.get_quality_check_status_display }}</strong></p>
+                                {% if batch.quality_check_status != 'pending' %}
+                                <small class="text-muted">Checked by Quality Control</small>
+                                {% else %}
+                                <a href="#" class="btn btn-sm btn-success mt-2">Perform Check Now</a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Completion Event -->
+                        {% if batch.end_time %}
+                        <div class="timeline-event">
+                            <div class="timeline-event-icon bg-info">
+                                <i class="fas fa-flag-checkered"></i>
+                            </div>
+                            <div class="timeline-event-content">
+                                <h5>Production Completed</h5>
+                                <p class="mb-1">{{ batch.end_time|date:"M d, Y H:i" }}</p>
+                                <small class="text-muted">Duration: {{ duration_hours }}h {{ duration_minutes }}m</small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Start Event -->
+                        <div class="timeline-event">
+                            <div class="timeline-event-icon bg-primary">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="timeline-event-content">
+                                <h5>Production Started</h5>
+                                <p class="mb-1">{{ batch.start_time|date:"M d, Y H:i" }}</p>
+                                <small class="text-muted">Batch initiated</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Batch Details -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center" style="border-left: 4px solid #ED1C24;">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle mr-1"></i>Batch Details
+                    </h6>
+                    <span class="badge badge-{% if batch.quality_check_status == 'passed' %}success{% elif batch.quality_check_status == 'failed' %}danger{% else %}warning{% endif %}">
+                        {{ batch.get_quality_check_status_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th class="w-25">Batch Number</th>
+                                    <td>{{ batch.batch_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Product</th>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="mr-2" style="width: 24px; height: 24px; background-color: #f8f9fa; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fas fa-wine-bottle text-danger" style="font-size: 12px;"></i>
+                                            </div>
+                                            {{ batch.product.name }} ({{ batch.product.code }})
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Production Line</th>
+                                    <td>
+                                        <a href="{% url 'line_detail' batch.production_line.pk %}">
+                                            {{ batch.production_line.name }}
+                                        </a>
+                                        <small class="d-block text-muted">{{ batch.production_line.facility.name }}</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Quantity</th>
+                                    <td>
+                                        {{ batch.quantity_produced|floatformat:0 }} units
+                                        <small class="text-muted d-block">≈ {{ pallets }} standard pallets</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Start Time</th>
+                                    <td>{{ batch.start_time|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>End Time</th>
+                                    <td>
+                                        {% if batch.end_time %}
+                                        {{ batch.end_time|date:"M d, Y H:i" }}
+                                        {% else %}
+                                        <span class="text-muted">In progress</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Duration</th>
+                                    <td>
+                                        {% if batch.end_time %}
+                                        {{ duration_hours }}h {{ duration_minutes }}m
+                                        {% else %}
+                                        <span class="text-muted">Ongoing</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Batch Notes Section -->
+                    <div class="mt-4">
+                        <h5 class="font-weight-bold text-primary">
+                            <i class="fas fa-clipboard mr-1"></i>Quality Notes
+                        </h5>
+                        {% if batch.quality_notes %}
+                        <div class="bg-light p-3 rounded">
+                            {{ batch.quality_notes|linebreaks }}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No quality notes recorded</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Documents Section -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3" style="border-left: 4px solid #ED1C24;">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-file-alt mr-1"></i>Batch Documents
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card border-left-primary h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                            <h5>Quality Report</h5>
+                            <a href="#" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-download mr-1"></i>Download PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card border-left-success h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                            <h5>Production Data</h5>
+                            <a href="#" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-download mr-1"></i>Download Excel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card border-left-info h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-image fa-3x text-info mb-3"></i>
+                            <h5>Batch Photos</h5>
+                            <a href="#" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-eye mr-1"></i>View Gallery
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Coca-Cola themed timeline */
+    .timeline {
+        position: relative;
+        padding-left: 60px;
+    }
+    .timeline-event {
+        position: relative;
+        padding-bottom: 25px;
+    }
+    .timeline-event:last-child {
+        padding-bottom: 0;
+    }
+    .timeline-event-icon {
+        position: absolute;
+        left: -60px;
+        top: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+    }
+    .timeline-event-content {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        position: relative;
+    }
+    .timeline-event-content:after {
+        content: '';
+        position: absolute;
+        left: -15px;
+        top: 20px;
+        width: 0;
+        height: 0;
+        border-top: 15px solid transparent;
+        border-bottom: 15px solid transparent;
+        border-right: 15px solid #f8f9fa;
+    }
+    .icon-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}

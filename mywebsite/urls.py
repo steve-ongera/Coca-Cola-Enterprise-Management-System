@@ -117,6 +117,8 @@ urlpatterns = [
     # Batches
     path('batches/', views.batch_list, name='batch_list'),
     path('batches/create/', views.batch_create, name='batch_create'),
+    path('batches/<int:pk>/', views.batch_detail, name='batch_detail'),
+    path('batches/<int:pk>/update/', views.batch_update, name='batch_update'),
     
     # Maintenance
     path('maintenance/', views.maintenance_list, name='maintenance_list'),
