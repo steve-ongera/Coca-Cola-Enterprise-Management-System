@@ -1,0 +1,184 @@
+{% extends "base/base.html" %}
+
+{% block title %}Maintenance Calendar | Coca-Cola{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Calendar Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0" style="color: #ED1C24;">
+            <i class="fas fa-calendar-alt mr-2"></i>Maintenance Calendar - {{ month }}
+        </h1>
+        <div>
+            <a href="?month={{ prev_month }}" class="btn btn-outline-secondary mr-2">
+                <i class="fas fa-chevron-left mr-1"></i>Previous
+            </a>
+            <a href="?month={{ next_month }}" class="btn btn-outline-secondary mr-2">
+                Next <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+            <a href="?month={% now 'm/Y' %}" class="btn btn-danger" style="background-color: #ED1C24; border-color: #ED1C24;">
+                <i class="fas fa-calendar-day mr-1"></i>Today
+            </a>
+        </div>
+    </div>
+
+    <!-- Calendar Navigation -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                <label class="btn btn-outline-danger active">
+                    <input type="radio" name="view" autocomplete="off" checked> Month
+                </label>
+                <label class="btn btn-outline-danger">
+                    <input type="radio" name="view" autocomplete="off"> Week
+                </label>
+                <label class="btn btn-outline-danger">
+                    <input type="radio" name="view" autocomplete="off"> Day
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3" style="background-color: #ED1C24;">
+            <h6 class="m-0 font-weight-bold text-white">
+                <i class="fas fa-industry mr-1"></i>Scheduled Maintenance
+            </h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0" style="min-height: 500px;">
+                    <thead>
+                        <tr class="bg-light">
+                            <th class="text-center" style="width: 14.28%; color: #ED1C24;">Sunday</th>
+                            <th class="text-center" style="width: 14.28%;">Monday</th>
+                            <th class="text-center" style="width: 14.28%;">Tuesday</th>
+                            <th class="text-center" style="width: 14.28%;">Wednesday</th>
+                            <th class="text-center" style="width: 14.28%;">Thursday</th>
+                            <th class="text-center" style="width: 14.28%;">Friday</th>
+                            <th class="text-center" style="width: 14.28%; color: #ED1C24;">Saturday</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for week in calendar_weeks %}
+                        <tr style="height: 100px;">
+                            {% for day in week %}
+                            <td class="{% if day.is_weekend %}bg-light{% endif %} position-relative" 
+                                style="vertical-align: top; {% if not day.in_month %}opacity: 0.5;{% endif %}">
+                                <div class="position-absolute top-0 start-0 p-1 font-weight-bold" 
+                                     style="color: {% if day.is_weekend %}#ED1C24{% else %}inherit{% endif %};">
+                                    {{ day.date.day }}
+                                </div>
+                                <div class="mt-4">
+                                    {% for maint in day.maintenance %}
+                                    <div class="calendar-event mb-1 p-1 rounded small 
+                                              {% if maint.status == 'completed' %}bg-success text-white
+                                              {% elif maint.status == 'in_progress' %}bg-warning
+                                              {% else %}bg-danger text-white{% endif %}"
+                                         data-toggle="tooltip" 
+                                         title="{{ maint.maintenance_type }} - {{ maint.production_line.name }} ({{ maint.assigned_technician.get_full_name }})">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-truncate">
+                                                <i class="fas fa-{% if maint.status == 'completed' %}check-circle{% elif maint.status == 'in_progress' %}hourglass-half{% else %}exclamation-triangle{% endif %} mr-1"></i>
+                                                {{ maint.production_line.name|truncatechars:10 }}
+                                            </span>
+                                            <small>{{ maint.scheduled_date|time:"H:i" }}</small>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Legend -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-key mr-1"></i>Calendar Legend
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-4 mb-2">
+                            <span class="badge badge-danger p-2 w-100">Scheduled</span>
+                        </div>
+                        <div class="col-4 mb-2">
+                            <span class="badge badge-warning p-2 w-100">In Progress</span>
+                        </div>
+                        <div class="col-4 mb-2">
+                            <span class="badge badge-success p-2 w-100">Completed</span>
+                        </div>
+                        <div class="col-4 mb-2">
+                            <span class="badge badge-secondary p-2 w-100">Other Month</span>
+                        </div>
+                        <div class="col-4 mb-2">
+                            <span class="badge" style="background-color: #ED1C24; color: white;" class="p-2 w-100">Weekend</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle mr-1"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'maintenance_create' %}" class="btn btn-danger btn-block mb-2" style="background-color: #ED1C24; border-color: #ED1C24;">
+                        <i class="fas fa-plus mr-1"></i>Schedule New Maintenance
+                    </a>
+                    <a href="{% url 'maintenance_dashboard' %}" class="btn btn-outline-secondary btn-block">
+                        <i class="fas fa-tachometer-alt mr-1"></i>View Maintenance Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Make calendar events clickable
+    $('.calendar-event').click(function() {
+        // In a real implementation, this would redirect to maintenance detail
+        console.log("Would navigate to maintenance detail view");
+    });
+});
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .calendar-event {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .calendar-event:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+    .table-bordered {
+        border-color: #e3e6f0;
+    }
+    .table-bordered td, .table-bordered th {
+        border-color: #e3e6f0;
+    }
+</style>
+{% endblock %}

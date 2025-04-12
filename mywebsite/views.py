@@ -2297,23 +2297,55 @@ def maintenance_calendar(request):
         scheduled_date__lt=end_date
     ).select_related('production_line', 'assigned_technician')
     
-    # Prepare calendar data
-    calendar_days = []
+    # Prepare calendar data in weekly chunks
+    calendar_weeks = []
     current_day = start_date
+    week = []
+    
+    # Add days from previous month if needed
+    if current_day.weekday() != 6:  # If not Sunday
+        prev_days = current_day.weekday() + 1
+        prev_date = current_day - timedelta(days=prev_days)
+        for i in range(prev_days):
+            week.append({
+                'date': prev_date + timedelta(days=i),
+                'maintenance': [],
+                'is_weekend': (prev_date + timedelta(days=i)).weekday() >= 5,
+                'in_month': False
+            })
+    
+    # Add current month days
     while current_day < end_date:
-        day_maintenance = [
-            m for m in maintenance 
-            if m.scheduled_date.date() == current_day.date()
-        ]
-        calendar_days.append({
+        day_maintenance = [m for m in maintenance if m.scheduled_date.date() == current_day.date()]
+        week.append({
             'date': current_day,
             'maintenance': day_maintenance,
-            'is_weekend': current_day.weekday() >= 5
+            'is_weekend': current_day.weekday() >= 5,
+            'in_month': True
         })
+        
+        if len(week) == 7:
+            calendar_weeks.append(week)
+            week = []
+        
         current_day += timedelta(days=1)
     
+    # Add days from next month if needed
+    if week:
+        # Fill remaining days of the week
+        remaining_days = 7 - len(week)
+        for i in range(1, remaining_days + 1):
+            week.append({
+                'date': current_day,
+                'maintenance': [],
+                'is_weekend': current_day.weekday() >= 5,
+                'in_month': False
+            })
+            current_day += timedelta(days=1)
+        calendar_weeks.append(week)
+    
     context = {
-        'calendar_days': calendar_days,
+        'calendar_weeks': calendar_weeks,
         'month': start_date.strftime('%B %Y'),
         'prev_month': (start_date - timedelta(days=1)).strftime('%m/%Y'),
         'next_month': end_date.strftime('%m/%Y'),

@@ -1,0 +1,265 @@
+{% extends "base/base.html" %}
+
+{% block title %}Maintenance Dashboard | Coca-Cola{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0" style="color: #ED1C24;">
+            <i class="fas fa-tools mr-2"></i>Maintenance Dashboard
+        </h1>
+        <div>
+            <a href="{% url 'create_maintenance_schedule' %}" class="btn btn-danger" style="background-color: #ED1C24; border-color: #ED1C24;">
+                <i class="fas fa-plus mr-1"></i>Schedule Maintenance
+            </a>
+            <a href="{% url 'maintenance_calendar' %}" class="btn btn-outline-secondary ml-2">
+                <i class="fas fa-calendar-alt mr-1"></i>View Calendar
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Summary Cards -->
+    <div class="row mb-4">
+        {% for status in status_counts %}
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-{% if status.status == 'completed' %}success{% elif status.status == 'in_progress' %}warning{% else %}danger{% endif %} shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-{% if status.status == 'completed' %}success{% elif status.status == 'in_progress' %}warning{% else %}danger{% endif %} text-uppercase mb-1">
+                                {{ status.status|title }} Maintenance
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status.count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-{% if status.status == 'completed' %}check-circle{% elif status.status == 'in_progress' %}hourglass-half{% else %}exclamation-triangle{% endif %} fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Overdue Maintenance -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3" style="border-left: 4px solid #ED1C24;">
+                    <h6 class="m-0 font-weight-bold text-danger">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        Overdue Maintenance ({{ overdue|length }})
+                        <small class="float-right">As of {{ current_date|date:"M d, Y" }}</small>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if overdue %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Line</th>
+                                    <th>Type</th>
+                                    <th>Scheduled</th>
+                                    <th>Technician</th>
+                                    <th>Days Overdue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in overdue %}
+                                <tr class="{% cycle '' 'bg-light' %}">
+                                    <td>
+                                        <a href="{% url 'line_detail' item.production_line.id %}">
+                                            {{ item.production_line.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ item.maintenance_type }}</td>
+                                    <td>{{ item.scheduled_date|date:"M d" }}</td>
+                                    <td>{{ item.assigned_technician.get_full_name }}</td>
+                                    <td class="text-center">
+                                        <span class="badge badge-danger">
+                                            {{ item.scheduled_date|timesince }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle mr-1"></i> No overdue maintenance tasks!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Maintenance -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3" style="border-left: 4px solid #ED1C24;">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-calendar-check mr-1"></i>
+                        Upcoming Maintenance (Next 7 Days)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if upcoming %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Line</th>
+                                    <th>Type</th>
+                                    <th>Duration</th>
+                                    <th>Technician</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in upcoming %}
+                                <tr>
+                                    <td>{{ item.scheduled_date|date:"D, M d" }}</td>
+                                    <td>
+                                        <a href="{% url 'line_detail' item.production_line.id %}">
+                                            {{ item.production_line.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ item.maintenance_type }}</td>
+                                    <td>{{ item.estimated_duration|time:"H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'technician_assignments' item.assigned_technician.id %}">
+                                            {{ item.assigned_technician.get_full_name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-1"></i> No upcoming maintenance scheduled for next week
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Type Statistics -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3" style="border-left: 4px solid #ED1C24;">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-pie mr-1"></i>
+                        Maintenance Type Distribution
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="chart-bar">
+                                <canvas id="maintenanceTypeChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Total</th>
+                                            <th>Completed</th>
+                                            <th>%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for type in maintenance_types %}
+                                        <tr>
+                                            <td>{{ type.maintenance_type }}</td>
+                                            <td>{{ type.count }}</td>
+                                            <td>{{ type.completed }}</td>
+                                            <td>
+                                                {% widthratio type.completed type.count 100 %}%
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Maintenance Type Chart
+document.addEventListener('DOMContentLoaded', function() {
+    var ctx = document.getElementById('maintenanceTypeChart').getContext('2d');
+    var labels = [];
+    var data = [];
+    var backgroundColors = [
+        'rgba(237, 28, 36, 0.7)',  // Coca-Cola Red
+        'rgba(255, 193, 7, 0.7)',   // Yellow
+        'rgba(13, 110, 253, 0.7)',  // Blue
+        'rgba(25, 135, 84, 0.7)',   // Green
+        'rgba(108, 117, 125, 0.7)', // Gray
+    ];
+
+    {% for type in maintenance_types %}
+    labels.push("{{ type.maintenance_type }}");
+    data.push({{ type.count }});
+    {% endfor %}
+
+    var chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Maintenance Count',
+                data: data,
+                backgroundColor: backgroundColors,
+                borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + ' maintenance tasks';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

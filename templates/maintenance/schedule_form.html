@@ -1,0 +1,227 @@
+{% extends "base/base.html" %}
+
+{% block title %}{{ title }} | Coca-Cola{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header with Coca-Cola Red Accent -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0" style="color: #ED1C24;">
+            <i class="fas fa-calendar-plus mr-2"></i>{{ title }}
+            {% if production_line %}
+            <small class="text-muted d-block mt-1">
+                For {{ production_line.name }} at {{ production_line.facility.name }}
+            </small>
+            {% endif %}
+        </h1>
+        <a href="{% if production_line %}{% url 'line_detail' production_line.pk %}{% else %}{% url 'maintenance_dashboard' %}{% endif %}" 
+           class="btn btn-secondary">
+            <i class="fas fa-arrow-left mr-1"></i>Cancel
+        </a>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3" style="border-left: 4px solid #ED1C24;">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-tools mr-1"></i>Maintenance Details
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" id="maintenanceForm">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    <!-- Left Column -->
+                    <div class="col-md-6">
+                        <!-- Production Line (hidden if pre-selected) -->
+                        {% if not production_line %}
+                        <div class="form-group">
+                            <label for="{{ form.production_line.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-industry mr-1"></i>Production Line
+                            </label>
+                            {{ form.production_line }}
+                            {% if form.production_line.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.production_line.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <input type="hidden" name="production_line" value="{{ production_line.pk }}">
+                        {% endif %}
+                        
+                        <!-- Maintenance Type -->
+                        <div class="form-group">
+                            <label for="{{ form.maintenance_type.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-wrench mr-1"></i>Maintenance Type
+                            </label>
+                            {{ form.maintenance_type }}
+                            {% if form.maintenance_type.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.maintenance_type.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Scheduled Date -->
+                        <div class="form-group">
+                            <label for="{{ form.scheduled_date.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-calendar-day mr-1"></i>Scheduled Date & Time
+                            </label>
+                            {{ form.scheduled_date }}
+                            {% if form.scheduled_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.scheduled_date.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="col-md-6">
+                        <!-- Assigned Technician -->
+                        <div class="form-group">
+                            <label for="{{ form.assigned_technician.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-user-cog mr-1"></i>Assigned Technician
+                            </label>
+                            {{ form.assigned_technician }}
+                            {% if form.assigned_technician.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.assigned_technician.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Estimated Duration -->
+                        <div class="form-group">
+                            <label for="{{ form.estimated_duration.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-clock mr-1"></i>Estimated Duration
+                            </label>
+                            <div class="input-group">
+                                {{ form.estimated_duration }}
+                                <div class="input-group-append">
+                                    <span class="input-group-text">hours</span>
+                                </div>
+                            </div>
+                            {% if form.estimated_duration.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.estimated_duration.errors.as_text }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Format: HH:MM:SS (e.g., 02:30:00 for 2.5 hours)</small>
+                        </div>
+                        
+                        <!-- Priority -->
+                        <div class="form-group">
+                            <label class="font-weight-bold d-block">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>Priority Level
+                            </label>
+                            <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                                <label class="btn btn-outline-danger">
+                                    <input type="radio" name="priority" value="high"> High
+                                </label>
+                                <label class="btn btn-outline-warning">
+                                    <input type="radio" name="priority" value="medium"> Medium
+                                </label>
+                                <label class="btn btn-outline-success">
+                                    <input type="radio" name="priority" value="low"> Low
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Notes -->
+                <div class="form-group">
+                    <label for="notes" class="font-weight-bold">
+                        <i class="fas fa-clipboard mr-1"></i>Work Description
+                    </label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3" 
+                              placeholder="Describe the maintenance work to be performed..."></textarea>
+                </div>
+                
+                <!-- Form Submission -->
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-danger" style="background-color: #ED1C24; border-color: #ED1C24;">
+                        <i class="fas fa-save mr-1"></i>Schedule Maintenance
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary ml-2">
+                        <i class="fas fa-undo mr-1"></i>Reset Form
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Conflict Check Section -->
+    {% if production_line %}
+    <div class="card shadow mb-4">
+        <div class="card-header py-3" style="border-left: 4px solid #ED1C24;">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-calendar-times mr-1"></i>Potential Schedule Conflicts
+            </h6>
+        </div>
+        <div class="card-body">
+            <div id="conflictResults">
+                <p class="text-muted">Conflicts will be checked after date selection</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Initialize datetime picker and conflict checking -->
+<script>
+$(document).ready(function() {
+    // Initialize datetime picker
+    $('input[type="datetime-local"]').each(function() {
+        if (!this.value) {
+            var now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            this.value = now.toISOString().slice(0, 16);
+        }
+    });
+    
+    // Conflict checking when date changes
+    $('input[name="scheduled_date"]').change(function() {
+        var selectedDate = new Date($(this).val());
+        var lineId = "{{ production_line.pk|default:'' }}";
+        
+        if (lineId) {
+            $('#conflictResults').html('<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Checking for conflicts...</p></div>');
+            
+            // Simulate AJAX call (replace with actual API call)
+            setTimeout(function() {
+                $('#conflictResults').html(`
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Potential conflict with planned production from 14:00-16:00
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Technician has 2 other assignments this day
+                    </div>
+                `);
+            }, 1000);
+        }
+    });
+    
+    // Form submission handler
+    $('#maintenanceForm').on('submit', function() {
+        $(this).find('button[type="submit"]').prop('disabled', true)
+               .html('<i class="fas fa-spinner fa-spin mr-1"></i> Scheduling...');
+    });
+});
+</script>
+{% endblock %}

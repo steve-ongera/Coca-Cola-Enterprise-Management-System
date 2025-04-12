@@ -123,6 +123,8 @@ urlpatterns = [
     # Maintenance
     path('maintenance/', views.maintenance_list, name='maintenance_list'),
     path('maintenance/create/', views.maintenance_create, name='maintenance_create'),
+    path('maintenance/schedule/create/', views.create_maintenance_schedule, name='create_maintenance_schedule'),
+    path('maintenance/schedule/create/<int:line_id>/', views.create_maintenance_schedule, name='create_maintenance_schedule_for_line'),
     # Dashboard and List Views
     path('maintenance/', views.maintenance_list, name="maintenance_list"),
     path('maintenance/dashboard/', views.maintenance_dashboard, name="maintenance_dashboard"),
