@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import *
 from django.db import IntegrityError
+from django.contrib.auth.decorators import user_passes_test
+from django.core.exceptions import PermissionDenied
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -17,6 +19,7 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
+            messages.success(request, f"Welcome back, {user.username}!")
             return redirect_to_dashboard(user)
         else:
             messages.error(request, 'Invalid credentials. Please try again.')
@@ -90,6 +93,7 @@ def register_view(request):
 
 def logout_view(request):
     logout(request)
+    messages.success(request, "You have successfully logged out.")
     return redirect('login')
 
 
@@ -148,7 +152,14 @@ from .models import (
 )
 import json
 
+from django.core.exceptions import PermissionDenied
+
 def admin_dashboard_view(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        raise PermissionDenied  # This triggers 403.html if set up
+
+    # ... (rest of your dashboard logic remains the same)
+
     # Employee Metrics
     total_employees = Employee.objects.count()
     active_employees = Employee.objects.filter(employment_status='active').count()
@@ -505,7 +516,10 @@ def employee_list(request):
     }
     return render(request, 'employees/employee_list.html', context)
 
-@login_required
+def is_admin(user):
+    return user.is_authenticated and user.is_staff  # or use user.is_superuser
+
+@user_passes_test(is_admin)
 @permission_required('employees.add_employee', raise_exception=True)
 def employee_create(request):
     if request.method == 'POST':
@@ -524,6 +538,11 @@ from django.shortcuts import render, get_object_or_404
 from datetime import date
 from .models import Employee, PositionHistory, Attendance, Leave, Payroll, PerformanceReview
 
+
+def is_admin(user):
+    return user.is_authenticated and user.is_staff  # or use user.is_superuser
+
+@user_passes_test(is_admin)
 def employee_detail(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     
@@ -556,8 +575,10 @@ def employee_detail(request, pk):
     
     return render(request, 'employees/employee_detail.html', context)
 
-@login_required
-@permission_required('employees.change_employee', raise_exception=True)
+def is_admin(user):
+    return user.is_authenticated and user.is_staff  # or use user.is_superuser
+
+@user_passes_test(is_admin)
 def employee_update(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     
@@ -580,7 +601,10 @@ def employee_update(request, pk):
     }
     return render(request, 'employees/employee_form.html', context)
 
-@login_required
+def is_admin(user):
+    return user.is_authenticated and user.is_staff  # or use user.is_superuser
+
+@user_passes_test(is_admin)
 def employee_delete(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     

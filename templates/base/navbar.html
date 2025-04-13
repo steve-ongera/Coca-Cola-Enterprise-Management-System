@@ -142,7 +142,7 @@
             <img src="{% static 'assets/img/profile.png'%}" alt="Profile" class="rounded-circle">
             <span class="d-none d-md-block dropdown-toggle ps-2">
               {% if user.is_authenticated %}
-                   {{ user.username }}
+                  {{ user.first_name }}
               {% else %}
                   Admin
               {% endif %}
@@ -152,8 +152,8 @@
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
               {% if user.is_authenticated %}
-                <h6>{{ user.username }}</h6>
-                <span>{{ user.first_name }} {{ user.last_name }}</span>
+                <h6>{{ user.first_name }} {{ user.last_name }}</h6>
+                <span> {{ user.username }}   </span>
             {% else %}
                 <h6>Guest</h6>
                 <span>Welcome</span>
