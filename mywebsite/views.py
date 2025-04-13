@@ -53,7 +53,7 @@ def register_view(request):
             employee = Employee.objects.get(
                 working_id=employee_id,
                 first_name__iexact=first_name,
-                last_number__iexact=last_name
+                last_name__iexact=last_name
             )
         except Employee.DoesNotExist:
             messages.error(request, 'Employee not found or details do not match our records.')
@@ -72,6 +72,7 @@ def register_view(request):
                 first_name=first_name,
                 last_name=last_name,
                 password=password,
+                email=employee.email, 
                 user_type=user_type
             )
             
