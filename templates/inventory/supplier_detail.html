@@ -16,14 +16,14 @@
         <div class="d-flex align-items-center">
             <h1 class="h2 mb-0">
                 <i class="bi bi-building"></i> {{ supplier.name }}
-                <span class="badge ms-2 {% if supplier.status == 'active' %}bg-coca-green{% else %}bg-secondary{% endif %}">
+                <span class="badge ms-2 {% if supplier.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
                     {{ supplier.get_status_display }}
                 </span>
             </h1>
         </div>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-                <a href="#" class="btn btn-sm btn-coca-outline">
+                <a href="{% url 'supplier_update' supplier.id %}" class="btn btn-sm btn-coca-outline">
                     <i class="bi bi-pencil-square"></i> Edit
                 </a>
                 <a href="{% url 'supplier_list' %}" class="btn btn-sm btn-coca-outline">
@@ -48,8 +48,8 @@
                         <h5 class="text-coca-dark"><i class="bi bi-card-heading"></i> Basic Information</h5>
                         <hr class="mt-1">
                         <dl class="row">
-                            <dt class="col-sm-4">Supplier ID</dt>
-                            <dd class="col-sm-8">{{ supplier.supplier_id|default:"-" }}</dd>
+                            <dt class="col-sm-4">Supplier Code</dt>
+                            <dd class="col-sm-8">{{ supplier.supplier_code|default:"-" }}</dd>
                             
                             <dt class="col-sm-4">Contact Person</dt>
                             <dd class="col-sm-8">{{ supplier.contact_person|default:"-" }}</dd>
@@ -142,10 +142,10 @@
                         <hr class="mt-1">
                         <dl class="row">
                             <dt class="col-sm-4">Contract Start</dt>
-                            <dd class="col-sm-8">{{ supplier.contract_start_date|date:"M d, Y"|default:"-" }}</dd>
+                            <dd class="col-sm-8">{{ supplier.contract_start|date:"M d, Y"|default:"-" }}</dd>
                             
                             <dt class="col-sm-4">Contract End</dt>
-                            <dd class="col-sm-8">{{ supplier.contract_end_date|date:"M d, Y"|default:"-" }}</dd>
+                            <dd class="col-sm-8">{{ supplier.contract_end|date:"M d, Y"|default:"-" }}</dd>
                             
                             <dt class="col-sm-4">Products/Service</dt>
                             <dd class="col-sm-8">{{ supplier.products_services|default:"-"|linebreaksbr }}</dd>

@@ -79,6 +79,10 @@ urlpatterns = [
     path('suppliers/', views.supplier_list, name='supplier_list'),
     path('suppliers/create/', views.supplier_create, name='supplier_create'),
     path('suppliers/<int:pk>/', views.supplier_detail, name='supplier_detail'),
+    path('suppliers/<int:pk>/edit/', views.supplier_update, name='supplier_update'),
+    path('suppliers/<int:pk>/delete/', views.supplier_delete, name='supplier_delete'),
+
+
     
     # Alerts
     path('low-stock-alerts/', views.low_stock_alerts, name='low_stock_alerts'),
@@ -133,7 +137,7 @@ urlpatterns = [
 
     # CRUD Operations
     path('maintenance/create/', views.maintenance_create, name="maintenance_create"),
-    # path('maintenance/<int:pk>/', views.maintenance_detail, name="maintenance_detail"),
+    path('maintenance/<int:pk>/', views.maintenance_detail, name="maintenance_detail"),
     # path('maintenance/<int:pk>/update/', views.maintenance_update, name="maintenance_update"),
     # path('maintenance/<int:pk>/delete/', views.maintenance_delete, name="maintenance_delete"),
 

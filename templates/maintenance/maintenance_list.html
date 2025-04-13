@@ -1,0 +1,416 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="cc-maintenance-container">
+    {# Header with Coca-Cola branding #}
+    <div class="cc-maintenance-header">
+        <div class="d-flex align-items-center">
+            <img src="{% static 'assets/img/coca-cola-logo.png' %}" height="40" class="me-3" alt="Coca-Cola">
+            <div>
+                <h1 class="cc-main-title">Maintenance Schedule</h1>
+                <p class="cc-subtitle">Production Line Maintenance Overview</p>
+            </div>
+        </div>
+        <div class="cc-stats-badge">
+            <span class="cc-upcoming-badge">{{ upcoming }} UPCOMING</span>
+        </div>
+    </div>
+
+    {# Filter and Action Bar #}
+    <div class="cc-action-bar">
+        <div class="cc-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" placeholder="Search maintenance...">
+        </div>
+        <div class="cc-filter-group">
+            <select class="cc-filter-select">
+                <option>All Status</option>
+                <option>Scheduled</option>
+                <option>In Progress</option>
+                <option>Completed</option>
+            </select>
+            <a href="{% url 'create_maintenance_schedule' %}" class="cc-primary-btn">
+                <i class="bi bi-plus-circle"></i> New Schedule
+            </a>
+            
+        </div>
+    </div>
+
+    {# Maintenance Table #}
+    <div class="cc-maintenance-table">
+        <div class="cc-table-header">
+            <div class="cc-table-row">
+                <div class="cc-table-col" style="width: 25%">Production Line</div>
+                <div class="cc-table-col" style="width: 15%">Maintenance Type</div>
+                <div class="cc-table-col" style="width: 15%">Scheduled Date</div>
+                <div class="cc-table-col" style="width: 10%">Priority</div>
+                <div class="cc-table-col" style="width: 15%">Technician</div>
+                <div class="cc-table-col" style="width: 10%">Status</div>
+                <div class="cc-table-col" style="width: 10%">Actions</div>
+            </div>
+        </div>
+        
+        <div class="cc-table-body">
+            {% for schedule in schedules %}
+            <div class="cc-table-row">
+                <div class="cc-table-col" style="width: 25%">
+                    <strong>{{ schedule.production_line.name }}</strong>
+                </div>
+                <div class="cc-table-col" style="width: 15%">
+                    {{ schedule.maintenance_type }}
+                </div>
+                <div class="cc-table-col" style="width: 15%">
+                    {{ schedule.scheduled_date|date:"M d, Y H:i" }}
+                </div>
+                <div class="cc-table-col" style="width: 10%">
+                    <span class="cc-priority-badge 
+                        {% if schedule.priority == 'high' %}high
+                        {% elif schedule.priority == 'medium' %}medium
+                        {% else %}low{% endif %}">
+                        {{ schedule.get_priority_display }}
+                    </span>
+                </div>
+                <div class="cc-table-col" style="width: 15%">
+                    <div class="d-flex align-items-center">
+                        <img src="{% static 'assets/img/technicians/' %}{{ schedule.assigned_technician.id }}.jpg" 
+                             class="cc-technician-avatar me-2" 
+                             alt="{{ schedule.assigned_technician.user.get_full_name }}"
+                             onerror="this.src='{% static 'assets/img/default-technician.png' %}'">
+                        {{ schedule.assigned_technician.user.get_full_name }}
+                    </div>
+                </div>
+                <div class="cc-table-col" style="width: 10%">
+                    <span class="cc-status-badge 
+                        {% if schedule.status == 'completed' %}completed
+                        {% elif schedule.status == 'in_progress' %}in-progress
+                        {% else %}scheduled{% endif %}">
+                        {{ schedule.get_status_display }}
+                    </span>
+                </div>
+                <div class="cc-table-col" style="width: 10%">
+                    <div class="cc-action-buttons d-flex gap-2">
+                        <a href="{% url 'maintenance_detail' schedule.pk %}" class="cc-action-btn view" title="View Details" data-bs-toggle="tooltip">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="#" class="cc-action-btn edit" title="Edit" data-bs-toggle="tooltip">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
+                </div>
+                
+            </div>
+            {% empty %}
+            <div class="cc-empty-table">
+                <i class="bi bi-calendar-x"></i>
+                <p>No maintenance schedules found</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# Pagination #}
+    <div class="cc-pagination">
+        <button class="cc-pagination-btn" disabled>
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="cc-pagination-btn active">1</button>
+        <button class="cc-pagination-btn">2</button>
+        <button class="cc-pagination-btn">3</button>
+        <button class="cc-pagination-btn">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<style>
+    /* Coca-Cola Theme Variables */
+    :root {
+        --cc-red: #ED1C16;
+        --cc-dark-red: #D3110B;
+        --cc-light-red: #FFEEED;
+        --cc-dark: #1A1A1A;
+        --cc-gray: #F5F5F5;
+        --cc-light-gray: #FAFAFA;
+        --cc-border: #E0E0E0;
+    }
+
+    /* Main Container */
+    .cc-maintenance-container {
+        font-family: 'Open Sans', sans-serif;
+        color: var(--cc-dark);
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    /* Header Styles */
+    .cc-maintenance-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        background-color: white;
+        border-bottom: 1px solid var(--cc-border);
+    }
+
+    .cc-main-title {
+        color: var(--cc-dark);
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .cc-subtitle {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 0;
+    }
+
+    .cc-stats-badge {
+        background-color: var(--cc-light-red);
+        border-radius: 20px;
+        padding: 5px 15px;
+    }
+
+    .cc-upcoming-badge {
+        color: var(--cc-red);
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    /* Action Bar */
+    .cc-action-bar {
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 25px;
+        background-color: var(--cc-gray);
+        border-bottom: 1px solid var(--cc-border);
+    }
+
+    .cc-search-box {
+        position: relative;
+        width: 300px;
+    }
+
+    .cc-search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+    }
+
+    .cc-search-box input {
+        width: 100%;
+        padding: 8px 15px 8px 35px;
+        border: 1px solid var(--cc-border);
+        border-radius: 20px;
+        font-size: 14px;
+    }
+
+    .cc-filter-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .cc-filter-select {
+        padding: 8px 15px;
+        border: 1px solid var(--cc-border);
+        border-radius: 20px;
+        font-size: 14px;
+    }
+
+    .cc-primary-btn {
+        background-color: var(--cc-red);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 8px 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: background-color 0.2s;
+    }
+
+    .cc-primary-btn:hover {
+        background-color: var(--cc-dark-red);
+    }
+
+    /* Table Styles */
+    .cc-maintenance-table {
+        width: 100%;
+    }
+
+    .cc-table-header {
+        background-color: var(--cc-gray);
+        border-bottom: 1px solid var(--cc-border);
+    }
+
+    .cc-table-row {
+        display: flex;
+        padding: 15px 25px;
+        align-items: center;
+    }
+
+    .cc-table-header .cc-table-row {
+        font-weight: 600;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .cc-table-body .cc-table-row {
+        border-bottom: 1px solid var(--cc-border);
+        transition: background-color 0.2s;
+    }
+
+    .cc-table-body .cc-table-row:hover {
+        background-color: var(--cc-light-gray);
+    }
+
+    .cc-table-col {
+        padding: 0 5px;
+    }
+
+    /* Badge Styles */
+    .cc-priority-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .cc-priority-badge.high {
+        background-color: #FFEBEE;
+        color: #D32F2F;
+    }
+
+    .cc-priority-badge.medium {
+        background-color: #FFF8E1;
+        color: #FFA000;
+    }
+
+    .cc-priority-badge.low {
+        background-color: #E8F5E9;
+        color: #388E3C;
+    }
+
+    .cc-status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .cc-status-badge.completed {
+        background-color: #E8F5E9;
+        color: #388E3C;
+    }
+
+    .cc-status-badge.in-progress {
+        background-color: #E3F2FD;
+        color: #1976D2;
+    }
+
+    .cc-status-badge.scheduled {
+        background-color: #F5F5F5;
+        color: #616161;
+    }
+
+    /* Technician Avatar */
+    .cc-technician-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    /* Action Buttons */
+    .cc-action-buttons {
+        display: flex;
+        gap: 5px;
+    }
+
+    .cc-action-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background-color: transparent;
+        color: #666;
+        transition: all 0.2s;
+    }
+
+    .cc-action-btn:hover {
+        background-color: var(--cc-light-gray);
+        color: var(--cc-red);
+    }
+
+    .cc-action-btn.view {
+        color: #2196F3;
+    }
+
+    .cc-action-btn.edit {
+        color: #FF9800;
+    }
+
+    /* Empty State */
+    .cc-empty-table {
+        padding: 40px;
+        text-align: center;
+        color: #999;
+    }
+
+    .cc-empty-table i {
+        font-size: 40px;
+        margin-bottom: 10px;
+    }
+
+    .cc-empty-table p {
+        margin: 0;
+    }
+
+    /* Pagination */
+    .cc-pagination {
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+        gap: 5px;
+    }
+
+    .cc-pagination-btn {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--cc-border);
+        background-color: white;
+        color: #666;
+    }
+
+    .cc-pagination-btn:hover {
+        border-color: var(--cc-red);
+        color: var(--cc-red);
+    }
+
+    .cc-pagination-btn.active {
+        background-color: var(--cc-red);
+        color: white;
+        border-color: var(--cc-red);
+    }
+
+    .cc-pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}

@@ -86,7 +86,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="badge {% if supplier.status == 'active' %}bg-coca-green{% else %}bg-secondary{% endif %}">
+                                <span class="badge {% if supplier.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
                                     {{ supplier.get_status_display }}
                                 </span>
                             </td>
@@ -95,7 +95,7 @@
                                     <a href="{% url 'supplier_detail' supplier.pk %}" class="btn btn-coca-outline" title="View">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="#" class="btn btn-coca-outline" title="Edit">
+                                    <a href="{% url 'supplier_update' supplier.pk %}" class="btn btn-coca-outline" title="Edit">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
                                     <a href="#" class="btn btn-coca-outline" title="Purchase Orders">

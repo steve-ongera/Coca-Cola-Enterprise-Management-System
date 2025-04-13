@@ -1417,6 +1417,25 @@ def supplier_detail(request, pk):
     return render(request, 'inventory/supplier_detail.html', context)
 
 
+def supplier_update(request, pk):
+    supplier = get_object_or_404(Supplier, pk=pk)
+
+    if request.method == 'POST':
+        form = SupplierForm(request.POST, instance=supplier)
+        if form.is_valid():
+            form.save()
+            return redirect('supplier_detail', pk=supplier.pk)
+    else:
+        form = SupplierForm(instance=supplier)
+
+    return render(request, 'inventory/supplier_form.html', {'form': form, 'supplier': supplier})
+
+from django.views.decorators.http import require_POST
+@require_POST
+def supplier_delete(request, pk):
+    supplier = get_object_or_404(Supplier, pk=pk)
+    supplier.delete()
+    return redirect('supplier_list')
 
 # views.py
 from django.db.models import Q
@@ -1919,24 +1938,6 @@ def production_line_detail(request, pk):
 
 
 
-# Maintenance
-def maintenance_list(request):
-    schedules = MaintenanceSchedule.objects.select_related('production_line', 'assigned_technician')
-    return render(request, 'production/maintenance_list.html', {
-        'schedules': schedules,
-        'upcoming': schedules.filter(status='scheduled').count(),
-    })
-
-def maintenance_create(request):
-    if request.method == 'POST':
-        form = MaintenanceScheduleForm(request.POST)
-        if form.is_valid():
-            maintenance = form.save()
-            messages.success(request, f'Maintenance scheduled for {maintenance.production_line.name}')
-            return redirect('maintenance_list')
-    else:
-        form = MaintenanceScheduleForm()
-    return render(request, 'production/maintenance_form.html', {'form': form})
 
 # Downtime
 def downtime_list(request):
@@ -2094,6 +2095,26 @@ from django.db.models import Count, Q
 from django.utils import timezone
 from .models import MaintenanceSchedule
 
+# Maintenance
+def maintenance_list(request):
+    schedules = MaintenanceSchedule.objects.select_related('production_line', 'assigned_technician')
+    return render(request, 'maintenance/maintenance_list.html', {
+        'schedules': schedules,
+        'upcoming': schedules.filter(status='scheduled').count(),
+    })
+
+def maintenance_create(request):
+    if request.method == 'POST':
+        form = MaintenanceScheduleForm(request.POST)
+        if form.is_valid():
+            maintenance = form.save()
+            messages.success(request, f'Maintenance scheduled for {maintenance.production_line.name}')
+            return redirect('maintenance_list')
+    else:
+        form = MaintenanceScheduleForm()
+    return render(request, 'production/maintenance_form.html', {'form': form})
+
+
 def maintenance_dashboard(request):
     # Get counts for different statuses
     status_counts = MaintenanceSchedule.objects.values('status').annotate(
@@ -2139,14 +2160,23 @@ from .forms import MaintenanceScheduleForm
 
 def create_maintenance_schedule(request, line_id=None):
     initial = {}
+    production_line = None
+    
     if line_id:
         production_line = get_object_or_404(ProductionLine, pk=line_id)
         initial['production_line'] = production_line
     
     if request.method == 'POST':
-        form = MaintenanceScheduleForm(request.POST, initial=initial)
+        form = MaintenanceScheduleForm(request.POST)  # Remove initial from POST form
         if form.is_valid():
-            maintenance = form.save()
+            maintenance = form.save(commit=False)
+            
+            # Ensure production_line is set if it came from line_id
+            if line_id and production_line:
+                maintenance.production_line = production_line
+            
+            maintenance.status = 'scheduled'
+            maintenance.save()
             
             # Log maintenance creation
             MaintenanceLog.objects.create(
@@ -2163,17 +2193,39 @@ def create_maintenance_schedule(request, line_id=None):
                 f"{maintenance.scheduled_date.strftime('%b %d, %Y %H:%M')}"
             )
             return redirect('maintenance_detail', pk=maintenance.pk)
+        else:
+            # Debug if form is not valid
+            print(f"Form errors: {form.errors}")
     else:
         form = MaintenanceScheduleForm(initial=initial)
     
     context = {
         'form': form,
         'title': 'Schedule New Maintenance',
-        'production_line': production_line if line_id else None,
+        'production_line': production_line,
     }
     return render(request, 'maintenance/schedule_form.html', context)
 
 
+def maintenance_detail(request, pk):
+    maintenance = get_object_or_404(MaintenanceSchedule, pk=pk)
+    
+    # Get maintenance logs for this maintenance
+    logs = MaintenanceLog.objects.filter(maintenance=maintenance).order_by('-timestamp')
+    
+    # Calculate downtime if maintenance is completed
+    downtime = None
+    if maintenance.status == 'completed' and maintenance.actual_start and maintenance.actual_end:
+        downtime = maintenance.actual_end - maintenance.actual_start
+    
+    context = {
+        'maintenance': maintenance,
+        'logs': logs,
+        'downtime': downtime,
+        'title': f'Maintenance Details: {maintenance.maintenance_type}',
+    }
+    
+    return render(request, 'maintenance/maintenance_detail.html', context)
 
 def start_maintenance(request, pk):
     maintenance = get_object_or_404(MaintenanceSchedule, pk=pk)
@@ -2279,17 +2331,29 @@ def maintenance_analytics(request):
 
 from datetime import datetime, timedelta
 
+from datetime import datetime, timedelta
+from django.shortcuts import render
+
 def maintenance_calendar(request):
-    # Default to current month
-    year = request.GET.get('year', datetime.now().year)
-    month = request.GET.get('month', datetime.now().month)
+    # Parse month parameter (format: MM/YYYY)
+    month_str = request.GET.get('month')
+    if month_str:
+        try:
+            month, year = map(int, month_str.split('/'))
+        except (ValueError, AttributeError):
+            # Fallback to current month if invalid format
+            today = datetime.now()
+            month, year = today.month, today.year
+    else:
+        today = datetime.now()
+        month, year = today.month, today.year
     
     # Calculate date range
-    start_date = datetime(int(year), int(month), 1)
-    if month == '12':
-        end_date = datetime(int(year)+1, 1, 1)
+    start_date = datetime(year, month, 1)
+    if month == 12:
+        end_date = datetime(year + 1, 1, 1)
     else:
-        end_date = datetime(int(year), int(month)+1, 1)
+        end_date = datetime(year, month + 1, 1)
     
     # Get maintenance for this period
     maintenance = MaintenanceSchedule.objects.filter(
@@ -2332,7 +2396,6 @@ def maintenance_calendar(request):
     
     # Add days from next month if needed
     if week:
-        # Fill remaining days of the week
         remaining_days = 7 - len(week)
         for i in range(1, remaining_days + 1):
             week.append({
@@ -2344,10 +2407,14 @@ def maintenance_calendar(request):
             current_day += timedelta(days=1)
         calendar_weeks.append(week)
     
+    # Format navigation dates
+    prev_month = (start_date - timedelta(days=1)).strftime('%m/%Y')
+    next_month = end_date.strftime('%m/%Y')
+    
     context = {
         'calendar_weeks': calendar_weeks,
         'month': start_date.strftime('%B %Y'),
-        'prev_month': (start_date - timedelta(days=1)).strftime('%m/%Y'),
-        'next_month': end_date.strftime('%m/%Y'),
+        'prev_month': prev_month,
+        'next_month': next_month,
     }
     return render(request, 'maintenance/calendar.html', context)

@@ -432,8 +432,27 @@ class ProductVariant(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.name} ({self.size})"
 
+import random
+import string
+from django.db import models
+
+def generate_supplier_code(length=6):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+# ------------------------------------------------------------------------------
+# Supplier Model
+# ------------------------------------------------------------------------------
+# This model represents external vendors who provide goods or services to
+# Mount Kenya Bottlers (Coca-Cola franchise in Nyeri, Kenya). It tracks all
+# relevant supplier information including contact details, tax identifiers,
+# products/services supplied, contractual periods, and additional notes.
+# It serves as the foundation for managing procurement, purchase orders,
+# and inventory replenishment workflows within the system.
+# ------------------------------------------------------------------------------
+
 
 class Supplier(models.Model):
+    supplier_code = models.CharField(max_length=20, null=True ,  blank=True)
     name = models.CharField(max_length=100)
     contact_person = models.CharField(max_length=100)
     email = models.EmailField()
@@ -446,9 +465,24 @@ class Supplier(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     performance_rating = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
     payment_terms = models.CharField(max_length=100, null=True, blank=True)
+
+    contract_start = models.DateField(blank=True, null=True)
+    contract_end = models.DateField(blank=True, null=True)
+
+    products_services = models.TextField(blank=True,null=True,)
+    notes = models.TextField(blank=True,null=True,default="N/A",)
     
+    def save(self, *args, **kwargs):
+        if not self.supplier_code:
+            # Ensure uniqueness
+            code = generate_supplier_code()
+            while Supplier.objects.filter(supplier_code=code).exists():
+                code = generate_supplier_code()
+            self.supplier_code = code
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.supplier_code})"
 
 
 class Ingredient(models.Model):
@@ -1101,6 +1135,16 @@ class MaintenanceSchedule(models.Model):
     maintenance_type = models.CharField(max_length=50)
     scheduled_date = models.DateTimeField()
     estimated_duration = models.DurationField()  # e.g., 2 hours
+    PRIORITY_CHOICES = [
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
+    ]
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    notes = models.TextField(blank=True, null=True, verbose_name="Work Description")
+    actual_start = models.DateTimeField(null=True, blank=True)
+    actual_end = models.DateTimeField(null=True, blank=True)
+    completion_notes = models.TextField(blank=True, null=True)
     assigned_technician = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='maintenance_assignments')
     STATUS_CHOICES = [
         ('scheduled', 'Scheduled'),

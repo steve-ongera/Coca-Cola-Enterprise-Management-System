@@ -532,6 +532,18 @@ class SupplierForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-select'}),
             'performance_rating': forms.NumberInput(attrs={'class': 'form-control'}),
             'payment_terms': forms.TextInput(attrs={'class': 'form-control'}),
+            'contract_start': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'contract_end': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'products_services': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Describe the products or services offered...'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Any important notes about this supplier...'
+            }),
         }
 
 from django import forms
@@ -750,12 +762,29 @@ class MaintenanceCompletionForm(forms.ModelForm):
 class MaintenanceScheduleForm(forms.ModelForm):
     class Meta:
         model = MaintenanceSchedule
-        fields = '__all__'
+        fields = [
+            'production_line', 
+            'maintenance_type', 
+            'scheduled_date', 
+            'estimated_duration', 
+            'assigned_technician', 
+            'priority',  # Add this
+            'notes',     # Add this
+            #'status'
+        ]
         widgets = {
             'production_line': forms.Select(attrs={'class': 'form-select'}),
-            'scheduled_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
+            'scheduled_date': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            #'status': forms.Select(attrs={'class': 'form-select'}),
             'assigned_technician': forms.Select(attrs={'class': 'form-select'}),
+            'maintenance_type': forms.TextInput(attrs={'class': 'form-control'}),
+            'estimated_duration': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'HH:MM:SS'}),
+            'priority': forms.RadioSelect(choices=[
+                ('high', 'High'),
+                ('medium', 'Medium'),
+                ('low', 'Low'),
+            ]),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
 class DowntimeIncidentForm(forms.ModelForm):

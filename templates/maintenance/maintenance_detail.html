@@ -1,0 +1,358 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block content %}
+<div class="coca-cola-theme">  {# Wrapper for theme-specific styles #}
+    {# Hero Header with Coca-Cola Red #}
+    <div class="cc-header" style="background: linear-gradient(135deg, #F40009 0%, #ED1C16 100%);">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center py-3 px-4">
+                <div class="d-flex align-items-center">
+                    <img src="{% static 'assets/img/coca-cola-logo.png' %}" height="40" class="me-3" alt="Coca-Cola">
+                    <div>
+                        <h2 class="mb-0 text-white fw-bold">{{ maintenance.production_line.name }}</h2>
+                        <p class="mb-0 text-white-50">{{ maintenance.maintenance_type|upper }}</p>
+                    </div>
+                </div>
+                <span class="cc-status-badge {% if maintenance.status == 'completed' %}bg-success
+                                          {% elif maintenance.status == 'in_progress' %}bg-primary
+                                          {% else %}bg-warning{% endif %}">
+                    {{ maintenance.get_status_display|upper }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {# Main Content Container #}
+    <div class="container-fluid px-0">
+        {# Priority Ribbon #}
+        <div class="cc-priority-ribbon {% if maintenance.priority == 'high' %}bg-danger
+                                      {% elif maintenance.priority == 'medium' %}bg-warning
+                                      {% else %}bg-info{% endif %}">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center py-2 px-4">
+                    <div class="text-white">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        <strong>{{ maintenance.scheduled_date|date:"D, M d Y H:i" }}</strong>
+                        <span class="mx-2">|</span>
+                        <i class="bi bi-clock-history me-2"></i>
+                        <strong>{{ maintenance.estimated_duration }}</strong>
+                    </div>
+                    <div class="text-end text-white">
+                        PRIORITY: <strong>{{ maintenance.get_priority_display|upper }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-0">
+            {# Left Column - Main Content #}
+            <div class="col-lg-8 p-4">
+                {# Technician Card with Profile #}
+                <div class="cc-card mb-4">
+                    <div class="cc-card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 position-relative">
+                                <img src="{% static 'assets/img/default-technician.png' %}" 
+                                     class="rounded-circle border border-3 border-white shadow" 
+                                     width="80" 
+                                     height="80" 
+                                     alt="Technician">
+                                <span class="cc-online-badge bg-success"></span>
+                            </div>
+                            <div class="flex-grow-1 ms-4">
+                                <h3 class="mb-1 cc-text-red">{{ maintenance.assigned_technician.user.get_full_name }}</h3>
+                                <p class="mb-2 text-muted">Assigned Technician</p>
+                                <div class="cc-timestamps">
+                                    {% if maintenance.actual_start %}
+                                    <span class="me-3">
+                                        <i class="bi bi-play-circle-fill text-primary me-1"></i> 
+                                        <strong>Start:</strong> {{ maintenance.actual_start|date:"M d, Y H:i" }}
+                                    </span>
+                                    {% endif %}
+                                    {% if maintenance.actual_end %}
+                                    <span>
+                                        <i class="bi bi-check-circle-fill text-success me-1"></i> 
+                                        <strong>End:</strong> {{ maintenance.actual_end|date:"M d, Y H:i" }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Work Description #}
+                {% if maintenance.notes %}
+                <div class="cc-card mb-4">
+                    <div class="cc-card-header">
+                        <i class="bi bi-clipboard2-pulse-fill me-2"></i> WORK DESCRIPTION
+                    </div>
+                    <div class="cc-card-body">
+                        <p>{{ maintenance.notes }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {# Completion Notes #}
+                {% if maintenance.completion_notes %}
+                <div class="cc-card mb-4">
+                    <div class="cc-card-header bg-success text-white">
+                        <i class="bi bi-check-circle-fill me-2"></i> COMPLETION REPORT
+                    </div>
+                    <div class="cc-card-body">
+                        <p>{{ maintenance.completion_notes }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            {# Right Column - Stats and Logs #}
+            <div class="col-lg-4 cc-sidebar p-4">
+                {# Downtime Counter #}
+                {% if downtime %}
+                <div class="cc-stat-card mb-4 text-center">
+                    <div class="cc-stat-value">{{ downtime }}</div>
+                    <div class="cc-stat-label">TOTAL DOWNTIME</div>
+                    <div class="cc-stat-icon">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                </div>
+                {% endif %}
+
+                {# Activity Log #}
+                <div class="cc-activity-log">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0 cc-text-red">
+                            <i class="bi bi-activity me-2"></i> ACTIVITY LOG
+                        </h4>
+                        <span class="badge bg-white text-danger rounded-pill px-3">
+                            {{ logs|length }} entries
+                        </span>
+                    </div>
+                    
+                    {% if logs %}
+                    <div class="cc-timeline">
+                        {% for log in logs %}
+                        <div class="cc-timeline-item {% if forloop.last %}last{% endif %}">
+                            <div class="cc-timeline-badge 
+                                {% if log.action == 'started' %}bg-primary
+                                {% elif log.action == 'completed' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                            </div>
+                            <div class="cc-timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <strong class="cc-text-dark">{{ log.get_action_display|upper }}</strong>
+                                    <small class="text-muted">{{ log.timestamp|date:"H:i" }}</small>
+                                </div>
+                                {% if log.notes %}
+                                <p class="small mb-1">{{ log.notes }}</p>
+                                {% endif %}
+                                {% if log.parts_used %}
+                                <span class="cc-badge">
+                                    <i class="bi bi-box-seam me-1"></i> {{ log.parts_used }}
+                                </span>
+                                {% endif %}
+                                <div class="cc-timeline-user">
+                                    <i class="bi bi-person-fill"></i> {{ log.user.get_full_name|default:log.user.username }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="cc-empty-state text-center py-4">
+                        <i class="bi bi-activity display-4 text-muted mb-3"></i>
+                        <h5 class="text-muted">No activity logged yet</h5>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Coca-Cola Theme Styles */
+    .coca-cola-theme {
+        --cc-red: #ED1C16;
+        --cc-dark-red: #F40009;
+        --cc-light: #F7F7F7;
+        --cc-dark: #1A1A1A;
+        font-family: 'Open Sans', sans-serif;
+    }
+    
+    .cc-header {
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .cc-status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .cc-priority-ribbon {
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .cc-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        overflow: hidden;
+        border: none;
+    }
+    
+    .cc-card-header {
+        padding: 12px 20px;
+        background: var(--cc-red);
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+    }
+    
+    .cc-card-body {
+        padding: 20px;
+    }
+    
+    .cc-sidebar {
+        background: var(--cc-light);
+        border-left: 1px solid #eee;
+    }
+    
+    .cc-stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .cc-stat-value {
+        font-size: 42px;
+        font-weight: 700;
+        color: var(--cc-red);
+        line-height: 1;
+    }
+    
+    .cc-stat-label {
+        color: var(--cc-dark);
+        font-weight: 500;
+        margin-bottom: 10px;
+    }
+    
+    .cc-stat-icon {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 40px;
+        opacity: 0.1;
+        color: var(--cc-red);
+    }
+    
+    .cc-text-red {
+        color: var(--cc-red);
+    }
+    
+    .cc-text-dark {
+        color: var(--cc-dark);
+    }
+    
+    .cc-online-badge {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+    
+    .cc-timestamps {
+        background: var(--cc-light);
+        padding: 8px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+    
+    /* Timeline Styles */
+    .cc-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .cc-timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+    
+    .cc-timeline-item.last {
+        padding-bottom: 5px;
+    }
+    
+    .cc-timeline-badge {
+        position: absolute;
+        left: -12px;
+        top: 0;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        z-index: 2;
+        border: 3px solid var(--cc-light);
+    }
+    
+    .cc-timeline-content {
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        margin-bottom: 10px;
+    }
+    
+    .cc-timeline-item:not(.last):after {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 24px;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+    
+    .cc-timeline-user {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+    }
+    
+    .cc-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        background: var(--cc-light);
+        border-radius: 4px;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+    
+    .cc-empty-state {
+        background: white;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+</style>
+{% endblock %}

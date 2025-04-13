@@ -219,26 +219,26 @@
                             <div class="row g-2">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="{{ form.contract_start_date.id_for_label }}" class="form-label">
+                                        <label for="{{ form.contract_start.id_for_label }}" class="form-label">
                                             Contract Start
                                         </label>
-                                        {{ form.contract_start_date }}
-                                        {% if form.contract_start_date.errors %}
+                                        {{ form.contract_start }}
+                                        {% if form.contract_start.errors %}
                                         <div class="invalid-feedback d-block">
-                                            {{ form.contract_start_date.errors|join:", " }}
+                                            {{ form.contract_start.errors|join:", " }}
                                         </div>
                                         {% endif %}
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="{{ form.contract_end_date.id_for_label }}" class="form-label">
+                                        <label for="{{ form.contract_end.id_for_label }}" class="form-label">
                                             Contract End
                                         </label>
-                                        {{ form.contract_end_date }}
-                                        {% if form.contract_end_date.errors %}
+                                        {{ form.contract_end }}
+                                        {% if form.contract_end.errors %}
                                         <div class="invalid-feedback d-block">
-                                            {{ form.contract_end_date.errors|join:", " }}
+                                            {{ form.contract_end.errors|join:", " }}
                                         </div>
                                         {% endif %}
                                     </div>

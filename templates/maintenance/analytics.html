@@ -1,0 +1,303 @@
+{% extends "base/base.html" %}
+
+{% block title %}Maintenance Analytics | Coca-Cola{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0" style="color: #ED1C24;">
+            <i class="fas fa-chart-line mr-2"></i>Maintenance Analytics
+        </h1>
+        <div>
+            <a href="{% url 'maintenance_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-1"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Monthly Trends Row -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3" style="border-left: 4px solid #ED1C24;">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-calendar-alt mr-1"></i>Monthly Maintenance Trends
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="monthlyTrendsChart"></canvas>
+                    </div>
+                    <div class="mt-4 small text-muted">
+                        <i class="fas fa-info-circle mr-1"></i> Shows total maintenance tasks vs completed tasks by month
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duration and Technician Stats Row -->
+    <div class="row">
+        <!-- Duration Statistics -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3" style="border-left: 4px solid #ED1C24;">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clock mr-1"></i>Duration Analysis
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Maintenance Type</th>
+                                    <th class="text-right">Avg Estimated</th>
+                                    <th class="text-right">Avg Actual</th>
+                                    <th class="text-right">Variance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in duration_stats %}
+                                <tr>
+                                    <td>{{ stat.maintenance_type }}</td>
+                                    <td class="text-right">{{ stat.avg_estimated|time:"H:i" }}</td>
+                                    <td class="text-right">{{ stat.avg_actual|time:"H:i" }}</td>
+                                    <td class="text-right {% if stat.avg_actual > stat.avg_estimated %}text-danger{% else %}text-success{% endif %}">
+                                        {% widthratio stat.avg_actual.total_seconds stat.avg_estimated.total_seconds 100 %}%
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technician Workload -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3" style="border-left: 4px solid #ED1C24;">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-users-cog mr-1"></i>Technician Workload
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="technicianWorkloadChart"></canvas>
+                    </div>
+                    <div class="mt-4">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Technician</th>
+                                        <th class="text-right">Assigned</th>
+                                        <th class="text-right">Completed</th>
+                                        <th class="text-right">Completion Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for tech in technician_workload|slice:":5" %}
+                                    <tr>
+                                        <td>{{ tech.get_full_name }}</td>
+                                        <td class="text-right">{{ tech.assigned }}</td>
+                                        <td class="text-right">{{ tech.completed }}</td>
+                                        <td class="text-right">
+                                            {% widthratio tech.completed tech.assigned 100 %}%
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Data Row -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center" style="border-left: 4px solid #ED1C24;">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-table mr-1"></i>Monthly Maintenance Data
+                    </h6>
+                    <a href="#" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-download mr-1"></i>Export Data
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Month</th>
+                                    <th class="text-right">Total Tasks</th>
+                                    <th class="text-right">Completed</th>
+                                    <th class="text-right">Completion Rate</th>
+                                    <th class="text-right">Avg Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for month in monthly_data %}
+                                <tr>
+                                    <td>{{ month.month|date:"F Y" }}</td>
+                                    <td class="text-right">{{ month.total }}</td>
+                                    <td class="text-right">{{ month.completed }}</td>
+                                    <td class="text-right">{% widthratio month.completed month.total 100 %}%</td>
+                                    <td class="text-right">--</td> <!-- Would need additional data -->
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Monthly Trends Chart
+document.addEventListener('DOMContentLoaded', function() {
+    // Prepare data for charts
+    var monthlyLabels = [];
+    var monthlyTotalData = [];
+    var monthlyCompletedData = [];
+    
+    {% for month in monthly_data %}
+    monthlyLabels.push("{{ month.month|date:'M Y' }}");
+    monthlyTotalData.push({{ month.total }});
+    monthlyCompletedData.push({{ month.completed }});
+    {% endfor %}
+    
+    var techLabels = [];
+    var techData = [];
+    
+    {% for tech in technician_workload|slice:":5" %}
+    techLabels.push("{{ tech.get_full_name }}");
+    techData.push({{ tech.assigned }});
+    {% endfor %}
+    
+    // Monthly Trends Chart
+    var ctx = document.getElementById('monthlyTrendsChart').getContext('2d');
+    var monthlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthlyLabels,
+            datasets: [
+                {
+                    label: 'Total Maintenance',
+                    data: monthlyTotalData,
+                    borderColor: '#ED1C24',
+                    backgroundColor: 'rgba(237, 28, 36, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Completed',
+                    data: monthlyCompletedData,
+                    borderColor: '#1cc88a',
+                    backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Technician Workload Chart
+    var ctx2 = document.getElementById('technicianWorkloadChart').getContext('2d');
+    var techChart = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: techLabels,
+            datasets: [{
+                data: techData,
+                backgroundColor: [
+                    '#ED1C24',
+                    '#1cc88a',
+                    '#36b9cc',
+                    '#f6c23e',
+                    '#858796'
+                ],
+                hoverBackgroundColor: [
+                    '#d10000',
+                    '#17a673',
+                    '#2c9faf',
+                    '#dda20a',
+                    '#6c757d'
+                ]
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.raw + ' tasks';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Initialize DataTable
+    $('#dataTable').DataTable({
+        order: [[0, 'desc']],
+        responsive: true
+    });
+});
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .chart-area {
+        position: relative;
+        height: 300px;
+    }
+    .chart-pie {
+        position: relative;
+        height: 250px;
+    }
+    .card-header {
+        border-bottom: 1px solid #e3e6f0;
+    }
+</style>
+{% endblock %}
