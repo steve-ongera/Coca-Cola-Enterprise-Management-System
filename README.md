@@ -2,6 +2,7 @@
 
 A comprehensive web-based management system designed to centralize and streamline all core business operations for Coca-Cola under one platform.
 
+
 ## Overview
 
 This enterprise solution integrates multiple operational modules to manage employees, production, sales, inventory, finances, logistics, marketing, and sustainability efforts. The application is built using Django on the backend with HTML, CSS, and JavaScript for a responsive frontend experience.
