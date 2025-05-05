@@ -88,72 +88,117 @@
                     <h5 class="card-title mb-0">Monthly Attendance Overview (Last 6 Months)</h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="attendanceChart" height="250"></canvas>
+                    <div id="chartContainer" style="height: 300px; width: 100%; background-color: #f9f9f9; position: relative;">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                    
+                    <!-- 
+                    <div class="mt-3 small text-muted">
+                        <p>Debug Data:</p>
+                        <ul>
+                            <li>Months: {{ chart_data.months }}</li>
+                            <li>Present: {{ chart_data.present }}</li>
+                            <li>Absent: {{ chart_data.absent }}</li>
+                            <li>Half Day: {{ chart_data.half_day }}</li>
+                        </ul>
+                    </div>Debug info - you can remove this in production -->
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Load Chart.js with specific version -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('attendanceChart').getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: JSON.parse('{{ chart_data.months|escapejs }}'),
-                datasets: [
-                    {
-                        label: 'Present',
-                        data: JSON.parse('{{ chart_data.present|escapejs }}'),
-                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                        borderColor: 'rgba(40, 167, 69, 1)',
-                        borderWidth: 1
+        console.log("DOM loaded, initializing chart...");
+        console.log("Chart data received:");
+        console.log("Months:", {{ chart_data.months|safe }});
+        console.log("Present:", {{ chart_data.present|safe }});
+        console.log("Absent:", {{ chart_data.absent|safe }});
+        console.log("Half Day:", {{ chart_data.half_day|safe }});
+        
+        // Short delay to ensure container is fully rendered
+        setTimeout(function() {
+            try {
+                const ctx = document.getElementById('attendanceChart').getContext('2d');
+                
+                // Check if we have chart data
+                if (!{{ chart_data.months|safe }} || {{ chart_data.months|safe }}.length === 0) {
+                    // No data - display message
+                    document.getElementById('chartContainer').innerHTML = 
+                        '<div class="alert alert-info">No attendance data available for the past 6 months</div>';
+                    return;
+                }
+                
+                const chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ chart_data.months|safe }},
+                        datasets: [
+                            {
+                                label: 'Present',
+                                data: {{ chart_data.present|safe }},
+                                backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                                borderColor: 'rgba(40, 167, 69, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Absent',
+                                data: {{ chart_data.absent|safe }},
+                                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                                borderColor: 'rgba(220, 53, 69, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Half Day',
+                                data: {{ chart_data.half_day|safe }},
+                                backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                                borderColor: 'rgba(255, 193, 7, 1)',
+                                borderWidth: 1
+                            }
+                        ]
                     },
-                    {
-                        label: 'Absent',
-                        data: JSON.parse('{{ chart_data.absent|escapejs }}'),
-                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
-                        borderColor: 'rgba(220, 53, 69, 1)',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Half Day',
-                        data: JSON.parse('{{ chart_data.half_day|escapejs }}'),
-                        backgroundColor: 'rgba(255, 193, 7, 0.7)',
-                        borderColor: 'rgba(255, 193, 7, 1)',
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        stacked: true,
-                    },
-                    y: {
-                        stacked: true,
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                stacked: true,
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Attendance by Month'
+                            }
                         }
                     }
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    title: {
-                        display: true,
-                        text: 'Attendance by Month'
-                    }
-                }
+                });
+                
+                // Force chart to resize after rendering
+                window.addEventListener('resize', function() {
+                    chart.resize();
+                });
+                
+                console.log("Chart initialized successfully");
+            } catch(error) {
+                console.error("Error initializing chart:", error);
+                document.getElementById('chartContainer').innerHTML = 
+                    '<div class="alert alert-danger">Error loading chart: ' + error.message + '</div>';
             }
-        });
+        }, 100);  // 100ms delay to ensure DOM is fully ready
     });
 </script>
 {% endblock %}

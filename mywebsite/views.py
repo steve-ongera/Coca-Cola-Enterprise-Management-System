@@ -651,40 +651,80 @@ def attendance_detail(request, pk):
     today = date.today()
     six_months_ago = today - timedelta(days=180)
     
-    monthly_data = Attendance.objects.filter(
-        employee=attendance.employee,
-        date__gte=six_months_ago,
-        date__lte=today
-    ).values('date__month', 'status').annotate(count=Count('status'))
-    
-    # Process data for Chart.js
-    months = []
-    present_data = []
-    absent_data = []
-    half_day_data = []
-    
-    for month in range(1, 13):
-        month_name = date(1900, month, 1).strftime('%b')
-        months.append(month_name)
-        
-        present = next((item['count'] for item in monthly_data 
-                       if item['date__month'] == month and item['status'] == 'present'), 0)
-        absent = next((item['count'] for item in monthly_data 
-                      if item['date__month'] == month and item['status'] == 'absent'), 0)
-        half_day = next((item['count'] for item in monthly_data 
-                        if item['date__month'] == month and item['status'] == 'half_day'), 0)
-        
-        present_data.append(present)
-        absent_data.append(absent)
-        half_day_data.append(half_day)
-    
+    # Initialize default chart data
     chart_data = {
-        'months': json.dumps(months),
-        'present': json.dumps(present_data),
-        'absent': json.dumps(absent_data),
-        'half_day': json.dumps(half_day_data),
+        'months': json.dumps([]),
+        'present': json.dumps([]),
+        'absent': json.dumps([]),
+        'half_day': json.dumps([]),
     }
-    
+
+    try:
+        # Get attendance data for the past six months
+        attendance_records = Attendance.objects.filter(
+            employee=attendance.employee,
+            date__gte=six_months_ago,
+            date__lte=today
+        )
+        
+        # Create a dictionary to store monthly counts by status
+        data_dict = {}
+        
+        # Process each attendance record manually instead of using complex aggregations
+        for record in attendance_records:
+            month = record.date.month
+            status = record.status
+            
+            if month not in data_dict:
+                data_dict[month] = {'present': 0, 'absent': 0, 'half_day': 0}
+            
+            # Only count recognized status values
+            if status in ('present', 'absent', 'half_day'):
+                data_dict[month][status] += 1
+        
+        # Generate labels and data for last 6 months
+        months = []
+        present_data = []
+        absent_data = []
+        half_day_data = []
+
+        # Get the current month number
+        current_month = today.month
+        current_year = today.year
+        
+        # Loop through the past 6 months
+        for i in range(5, -1, -1):
+            # Calculate month and year
+            month_idx = current_month - i
+            year = current_year
+            
+            if month_idx <= 0:
+                month_idx += 12
+                year -= 1
+                
+            # Get the month name
+            month_name = date(year, month_idx, 1).strftime('%b')
+            months.append(month_name)
+            
+            # Get data for this month or use zeros if no data exists
+            month_data = data_dict.get(month_idx, {'present': 0, 'absent': 0, 'half_day': 0})
+            
+            present_data.append(month_data['present'])
+            absent_data.append(month_data['absent'])
+            half_day_data.append(month_data['half_day'])
+
+        chart_data = {
+            'months': json.dumps(months),
+            'present': json.dumps(present_data),
+            'absent': json.dumps(absent_data),
+            'half_day': json.dumps(half_day_data),
+        }
+
+    except Exception as e:
+        import traceback
+        print(f"Error generating chart data: {str(e)}")
+        print(traceback.format_exc())  # Print full traceback
+
     return render(request, 'attendance/attendance_detail.html', {
         'attendance': attendance,
         'chart_data': chart_data
