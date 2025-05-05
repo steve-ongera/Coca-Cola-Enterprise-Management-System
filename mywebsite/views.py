@@ -885,6 +885,10 @@ def leave_delete(request, pk):
         'leave': leave
     })
 
+# views.py
+from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def leave_list(request):
     leaves = Leave.objects.all().order_by('-start_date')
@@ -907,13 +911,25 @@ def leave_list(request):
     if date_to:
         leaves = leaves.filter(end_date__lte=date_to)
     
+    # Pagination
+    paginator = Paginator(leaves, 10)  # Show 10 leaves per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     employees = Employee.objects.all()
     
     return render(request, 'leave/leave_list.html', {
-        'leaves': leaves,
+        'page_obj': page_obj,
         'employees': employees,
         'status_choices': Leave.STATUS_CHOICES,
-        'leave_type_choices': Leave.LEAVE_TYPE_CHOICES
+        'leave_type_choices': Leave.LEAVE_TYPE_CHOICES,
+        'current_filters': {
+            'employee': employee_id,
+            'status': status,
+            'leave_type': leave_type,
+            'date_from': date_from,
+            'date_to': date_to,
+        }
     })
 
 @login_required
