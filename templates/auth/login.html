@@ -16,7 +16,7 @@
 
   <!-- Google Fonts -->
   <link href="https://fonts.gstatic.com" rel="preconnect">
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
   <!-- Vendor CSS Files -->
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css'%}" rel="stylesheet">
@@ -32,24 +32,65 @@
   <link href="{% static 'assets/css/style.css'%}" rel="stylesheet">
   <link href="{% static 'assets/css/extra.css'%}" rel="stylesheet">
 
-  <link href="{% static 'assets/css/messages.css'%}" rel="stylesheet">
-  <script src="{% static 'assets/js/messages.js'%}"></script>
-  
   <style>
     :root {
       --primary-color: #ED1C16; /* Coca-Cola red */
       --secondary-color: #FFFFFF; /* White */
       --accent-color: #F9A01B; /* Coca-Cola yellow */
+      --font-roboto: 'Roboto', sans-serif;
+    }
+    
+    body {
+      font-family: var(--font-roboto);
+      background-color: #f8f9fa;
+    }
+    
+    .company-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .company-name {
+      font-family: var(--font-roboto);
+      font-weight: 700;
+      font-size: 2.2rem;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .company-slogan {
+      font-family: var(--font-roboto);
+      font-weight: 300;
+      font-size: 1rem;
+      color: #6c757d;
+      margin-bottom: 1rem;
+    }
+    
+    .logo-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .company-logo {
+      max-width: 100px;
+      height: auto;
     }
     
     .card {
       border: 2px solid var(--primary-color);
       border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     
     .btn-primary {
       background-color: var(--primary-color);
       border-color: var(--primary-color);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      padding: 10px 20px;
     }
     
     .btn-primary:hover {
@@ -57,60 +98,60 @@
       border-color: #D3110A;
     }
     
-    .logo span {
-      color: var(--primary-color);
-      font-weight: 700;
-      font-size: 1.5rem;
-      margin-left: 10px;
-    }
-    
     .card-title {
       color: var(--primary-color);
+      font-weight: 500;
     }
     
     a {
       color: var(--primary-color);
+      text-decoration: none;
     }
     
     a:hover {
       color: #D3110A;
+      text-decoration: underline;
     }
     
     .credits {
       color: var(--primary-color);
+      font-size: 0.9rem;
+      margin-top: 2rem;
+      text-align: center;
     }
     
-    select {
-      width: 100%;
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid #ced4da;
+    .login-form-container {
+      max-width: 400px;
+      margin: 0 auto;
     }
     
-    /* Added styles for the modified layout */
-    .form-row {
-      margin-bottom: 15px;
+    /* Form styles */
+    .form-label {
+      font-weight: 500;
     }
-    .alert {
-        padding: 15px;
-        margin-bottom: 20px;
-        border: 1px solid transparent;
-        border-radius: 4px;
+    
+    .form-control {
+      padding: 10px 15px;
+      border-radius: 6px;
     }
-    .alert-success {
-        color: #3c763d;
-        background-color: #dff0d8;
-        border-color: #d6e9c6;
+    
+    .invalid-feedback {
+      font-size: 0.85rem;
     }
-    .alert-error {
-        color: #a94442;
-        background-color: #f2dede;
-        border-color: #ebccd1;
+    
+    /* Password toggle */
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #6c757d;
     }
   </style>
 </head>
 
-<body style="background-color: #f8f9fa;">
+<body>
 
   <div class="message-container" id="system-messages">
     {% for message in messages %}
@@ -127,19 +168,22 @@
         <div class="container">
           <div class="row justify-content-center">
             <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
+              
+              <!-- Company Header -->
+              <div class="company-header">
+                <h1 class="company-name">ALMASI BOTTLERS LTD</h1>
+                <p class="company-slogan">Refresh the World. Make a Difference.</p>
+                <div class="logo-container">
+                  <img src="{% static 'assets/img/coca-cola-logo.png' %}" alt="Coca-Cola Logo" class="company-logo">
+                </div>
+              </div>
 
-              <div class="d-flex justify-content-center py-4">
-                <a href="{% url 'login'%}" class="logo d-flex align-items-center w-auto">
-                  <img src="{% static 'assets/img/coca-cola-logo.png' %}" alt="" style="max-width: 80px; max-height: 80px;">
-                  <span class="d-none d-lg-block">COCA-COLA</span>
-                </a>
-              </div><!-- End Logo -->
-
-              <div class="card mb-3">
+              <!-- Login Card -->
+              <div class="card mb-3 login-form-container">
                 <div class="card-body">
                   <div class="pt-4 pb-2">
-                    <h5 class="card-title text-center pb-0 fs-4">Login to Your Account</h5>
-                    <p class="text-center small">Enter your employee ID & password to login</p>
+                    <h5 class="card-title text-center pb-0 fs-4">Employee Portal Login</h5>
+                    <p class="text-center small text-muted">Enter your credentials to access your account</p>
                   </div>
 
                   <form method="POST" class="row g-3 needs-validation" novalidate>
@@ -156,28 +200,34 @@
                       <label for="password" class="form-label">Password</label>
                       <div class="input-group has-validation position-relative">
                         <input type="password" id="password" name="password" class="form-control" required>
-                        <i id="togglePassword" class="bi bi-eye-slash position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+                        <i id="togglePassword" class="bi bi-eye-slash password-toggle"></i>
                         <div class="invalid-feedback">Please enter your password.</div>
                       </div>
                     </div>
 
                     <div class="col-12">
-                      <div class="form-check">
-                        <a href="#" class="small">Forgot your password?</a>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="rememberMe">
+                          <label class="form-check-label small" for="rememberMe">Remember me</label>
+                        </div>
+                        <a href="#" class="small">Forgot password?</a>
                       </div>
                     </div>
+                    
                     <div class="col-12">
                       <button class="btn btn-primary w-100" type="submit">Login</button>
                     </div>
+                    
                     <div class="col-12">
-                      <p class="small mb-0">Don't have account? <a href="{% url 'register' %}">Create an account</a></p>
+                      <p class="small mb-0 text-center">Don't have an account? <a href="{% url 'register' %}">Request access</a></p>
                     </div>
                   </form>
                 </div>
               </div>
 
               <div class="credits">
-                © 2023 The Coca-Cola Company. All rights reserved.
+                © {% now "Y" %} The Coca-Cola Company. All rights reserved.
               </div>
             </div>
           </div>
@@ -186,21 +236,9 @@
     </div>
   </main>
 
-  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
   <!-- Vendor JS Files -->
-  <script src="{% static 'assets/vendor/apexcharts/apexcharts.min.js'%}"></script>
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js'%}"></script>
-  <script src="{% static 'assets/vendor/chart.js/chart.umd.js'%}"></script>
-  <script src="{% static 'assets/vendor/echarts/echarts.min.js'%}"></script>
-  <script src="{% static 'assets/vendor/quill/quill.js'%}"></script>
-  <script src="{% static 'assets/vendor/simple-datatables/simple-datatables.js'%}"></script>
-  <script src="{% static 'assets/vendor/tinymce/tinymce.min.js'%}"></script>
-  <script src="{% static 'assets/vendor/php-email-form/validate.js'%}"></script>
 
-  <!-- Template Main JS File -->
-  <script src="{% static 'assets/js/main.js'%}"></script>
-  
   <!-- Password Toggle Script -->
   <script>
     document.getElementById('togglePassword').addEventListener('click', function() {
