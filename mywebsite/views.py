@@ -492,10 +492,13 @@ from .models import Employee, Department
 from .forms import EmployeeForm
 @login_required
 @permission_required('employees.view_employee', raise_exception=True)
+
+
 def employee_list(request):
-    # Get filter parameters from request
+    # Get filter and search parameters from request
     department_id = request.GET.get('department')
     status = request.GET.get('status')
+    search_query = request.GET.get('search', '')
     
     employees = Employee.objects.select_related('department', 'user').all()
     
@@ -505,14 +508,29 @@ def employee_list(request):
     if status:
         employees = employees.filter(employment_status=status)
     
+    # Apply search if provided
+    if search_query:
+        employees = employees.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(working_id__icontains=search_query) |
+            Q(position__icontains=search_query)
+        )
+    
+    # Pagination
+    paginator = Paginator(employees, 10)  # Show 10 employees per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     departments = Department.objects.all()
     
     context = {
-        'employees': employees,
+        'page_obj': page_obj,
         'departments': departments,
         'status_choices': Employee.EMPLOYMENT_STATUS_CHOICES,
         'current_department': int(department_id) if department_id else None,
         'current_status': status if status else None,
+        'search_query': search_query,
     }
     return render(request, 'employees/employee_list.html', context)
 

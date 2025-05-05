@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-  <title>Employee Portal | Login</title>
+  <title>ALMASI BOTTLERS LTD| Login</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
 
@@ -21,16 +21,6 @@
   <!-- Vendor CSS Files -->
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css'%}" rel="stylesheet">
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css'%}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css'%}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/quill/quill.snow.css'%}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/quill/quill.bubble.css'%}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/remixicon/remixicon.css'%}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/simple-datatables/style.css'%}" rel="stylesheet">
-  <link href="{% static 'assets/css/messages.css'%}" rel="stylesheet">
-
-  <!-- Template Main CSS File -->
-  <link href="{% static 'assets/css/style.css'%}" rel="stylesheet">
-  <link href="{% static 'assets/css/extra.css'%}" rel="stylesheet">
 
   <style>
     :root {
@@ -43,54 +33,66 @@
     body {
       font-family: var(--font-roboto);
       background-color: #f8f9fa;
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .login-wrapper {
+      padding: 2rem 0;
     }
     
     .company-header {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
     }
     
     .company-name {
       font-family: var(--font-roboto);
       font-weight: 700;
-      font-size: 2.2rem;
+      font-size: 2rem;
       color: var(--primary-color);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.25rem;
       text-transform: uppercase;
-      letter-spacing: 1px;
     }
     
     .company-slogan {
       font-family: var(--font-roboto);
       font-weight: 300;
-      font-size: 1rem;
+      font-size: 0.9rem;
       color: #6c757d;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
     
     .logo-container {
       display: flex;
       justify-content: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.5rem;
     }
     
     .company-logo {
-      max-width: 100px;
+      max-width: 80px;
       height: auto;
     }
     
     .card {
       border: 2px solid var(--primary-color);
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-form-container {
+      width: 100%;
+      max-width: 450px;
+      margin: 0 auto;
     }
     
     .btn-primary {
       background-color: var(--primary-color);
       border-color: var(--primary-color);
       font-weight: 500;
-      letter-spacing: 0.5px;
-      padding: 10px 20px;
+      padding: 8px 20px;
     }
     
     .btn-primary:hover {
@@ -101,52 +103,24 @@
     .card-title {
       color: var(--primary-color);
       font-weight: 500;
+      font-size: 1.25rem;
     }
     
-    a {
-      color: var(--primary-color);
-      text-decoration: none;
-    }
-    
-    a:hover {
-      color: #D3110A;
-      text-decoration: underline;
-    }
-    
-    .credits {
-      color: var(--primary-color);
-      font-size: 0.9rem;
-      margin-top: 2rem;
+    .footer {
+      margin-top: 1.5rem;
       text-align: center;
-    }
-    
-    .login-form-container {
-      max-width: 400px;
-      margin: 0 auto;
-    }
-    
-    /* Form styles */
-    .form-label {
-      font-weight: 500;
-    }
-    
-    .form-control {
-      padding: 10px 15px;
-      border-radius: 6px;
-    }
-    
-    .invalid-feedback {
-      font-size: 0.85rem;
-    }
-    
-    /* Password toggle */
-    .password-toggle {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
+      font-size: 0.8rem;
       color: #6c757d;
+    }
+    
+    .developer-credit {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+    }
+    
+    .developer-credit a {
+      color: var(--primary-color);
+      font-weight: 500;
     }
   </style>
 </head>
@@ -162,79 +136,63 @@
     {% endfor %}
   </div>
 
-  <main>
-    <div class="container">
-      <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
-        <div class="container">
-          <div class="row justify-content-center">
-            <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
-              
-              <!-- Company Header -->
-              <div class="company-header">
-                <h1 class="company-name">ALMASI BOTTLERS LTD</h1>
-                <p class="company-slogan">Refresh the World. Make a Difference.</p>
-                <div class="logo-container">
-                  <img src="{% static 'assets/img/coca-cola-logo.png' %}" alt="Coca-Cola Logo" class="company-logo">
-                </div>
-              </div>
-
-              <!-- Login Card -->
-              <div class="card mb-3 login-form-container">
-                <div class="card-body">
-                  <div class="pt-4 pb-2">
-                    <h5 class="card-title text-center pb-0 fs-4">Employee Portal Login</h5>
-                    <p class="text-center small text-muted">Enter your credentials to access your account</p>
-                  </div>
-
-                  <form method="POST" class="row g-3 needs-validation" novalidate>
-                    {% csrf_token %}
-                    <div class="col-12">
-                      <label for="username" class="form-label">Employee ID</label>
-                      <div class="input-group has-validation">
-                        <input type="text" id="username" name="username" class="form-control" required>
-                        <div class="invalid-feedback">Please enter your employee ID.</div>
-                      </div>
-                    </div>
-
-                    <div class="col-12">
-                      <label for="password" class="form-label">Password</label>
-                      <div class="input-group has-validation position-relative">
-                        <input type="password" id="password" name="password" class="form-control" required>
-                        <i id="togglePassword" class="bi bi-eye-slash password-toggle"></i>
-                        <div class="invalid-feedback">Please enter your password.</div>
-                      </div>
-                    </div>
-
-                    <div class="col-12">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div class="form-check">
-                          <input class="form-check-input" type="checkbox" id="rememberMe">
-                          <label class="form-check-label small" for="rememberMe">Remember me</label>
-                        </div>
-                        <a href="#" class="small">Forgot password?</a>
-                      </div>
-                    </div>
-                    
-                    <div class="col-12">
-                      <button class="btn btn-primary w-100" type="submit">Login</button>
-                    </div>
-                    
-                    <div class="col-12">
-                      <p class="small mb-0 text-center">Don't have an account? <a href="{% url 'register' %}">Request access</a></p>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <div class="credits">
-                © {% now "Y" %} The Coca-Cola Company. All rights reserved.
-              </div>
-            </div>
+  <div class="container login-wrapper">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-lg-5">
+        <!-- Company Header -->
+        <div class="company-header">
+          <h1 class="company-name">ALMASI BOTTLERS LTD</h1>
+          <p class="company-slogan">Refresh the World. Make a Difference.</p>
+          <div class="logo-container">
+            <img src="{% static 'assets/img/coca-cola-logo.png' %}" alt="Coca-Cola Logo" class="company-logo">
           </div>
         </div>
-      </section>
+
+        <!-- Login Card -->
+        <div class="card login-form-container">
+          <div class="card-body p-4">
+            <h5 class="card-title text-center mb-3">Employee Portal Login</h5>
+            <p class="text-center small text-muted mb-4">Enter your credentials to access your account</p>
+
+            <form method="POST" novalidate>
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="username" class="form-label">Employee ID</label>
+                <input type="text" id="username" name="username" class="form-control" required>
+                <div class="invalid-feedback">Please enter your employee ID.</div>
+              </div>
+
+              <div class="mb-3 position-relative">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+                <i id="togglePassword" class="bi bi-eye-slash position-absolute" style="right: 10px; top: 38px; cursor: pointer;"></i>
+                <div class="invalid-feedback">Please enter your password.</div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="rememberMe">
+                  <label class="form-check-label small" for="rememberMe">Remember me</label>
+                </div>
+                <a href="#" class="small">Forgot password?</a>
+              </div>
+              
+              <button class="btn btn-primary w-100 mb-3" type="submit">Login</button>
+              
+              <p class="small text-center mb-0">Don't have an account? <a href="{% url 'register' %}">Request access</a></p>
+            </form>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div>© {% now "Y" %} The Coca-Cola Company. All rights reserved.</div>
+          <div class="developer-credit">
+            Developed by <a href="https://kemcom.co.ke" target="_blank">Kemcom Softwares Ltd</a>
+          </div>
+        </div>
+      </div>
     </div>
-  </main>
+  </div>
 
   <!-- Vendor JS Files -->
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js'%}"></script>

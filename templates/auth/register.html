@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-  <title>Coca-Cola | Register</title>
+  <title>ALMASI BOTTLERS LTD | Register</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
 
@@ -16,33 +16,83 @@
 
   <!-- Google Fonts -->
   <link href="https://fonts.gstatic.com" rel="preconnect">
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
   <!-- Vendor CSS Files -->
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
 
-  <!-- Template Main CSS File -->
-  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/css/messages.css'%}" rel="stylesheet">
-  <script src="{% static 'assets/js/messages.js'%}"></script>
-  
   <style>
     :root {
       --primary-color: #ED1C16; /* Coca-Cola red */
       --secondary-color: #FFFFFF; /* White */
       --accent-color: #F9A01B; /* Coca-Cola yellow */
+      --font-roboto: 'Roboto', sans-serif;
+    }
+    
+    body {
+      font-family: var(--font-roboto);
+      background-color: #f8f9fa;
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .register-wrapper {
+      padding: 1.5rem 0;
+    }
+    
+    .company-header {
+      text-align: center;
+      margin-bottom: 0.75rem;
+    }
+    
+    .company-name {
+      font-family: var(--font-roboto);
+      font-weight: 700;
+      font-size: 1.8rem;
+      color: var(--primary-color);
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+    }
+    
+    .company-slogan {
+      font-family: var(--font-roboto);
+      font-weight: 300;
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-bottom: 0.5rem;
+    }
+    
+    .logo-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    .company-logo {
+      max-width: 70px;
+      height: auto;
     }
     
     .card {
       border: 2px solid var(--primary-color);
-      border-radius: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .register-form-container {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
     }
     
     .btn-primary {
       background-color: var(--primary-color);
       border-color: var(--primary-color);
+      font-weight: 500;
+      padding: 8px 20px;
     }
     
     .btn-primary:hover {
@@ -50,194 +100,192 @@
       border-color: #D3110A;
     }
     
-    .logo span {
-      color: var(--primary-color);
-      font-weight: 700;
-      font-size: 1.5rem;
-      margin-left: 10px;
-    }
-    
     .card-title {
       color: var(--primary-color);
+      font-weight: 500;
+      font-size: 1.25rem;
     }
     
-    a {
+    .footer {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #6c757d;
+    }
+    
+    .developer-credit {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+    }
+    
+    .developer-credit a {
       color: var(--primary-color);
+      font-weight: 500;
     }
     
-    a:hover {
-      color: #D3110A;
+    /* Form specific styles */
+    .form-label {
+      font-weight: 500;
+      font-size: 0.9rem;
     }
     
-    .credits {
-      color: var(--primary-color);
+    .form-control, .form-select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
     }
     
-    select {
-      width: 100%;
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid #ced4da;
+    .input-group-text {
+      background-color: #f8f9fa;
     }
     
-    /* Added styles for the modified layout */
+    .invalid-feedback {
+      font-size: 0.8rem;
+    }
+    
+    /* Password toggle */
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #6c757d;
+      z-index: 5;
+    }
+    
+    /* Compact form rows */
     .form-row {
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
   </style>
 </head>
 
-<body style="background-color: #f8f9fa;">
-
-  <main>
-    <div class="container">
-
-      <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
-        <div class="container">
-          <div class="row justify-content-center">
-            <div class="col-lg-6 col-md-8 d-flex flex-column align-items-center justify-content-center">
-
-              <div class="d-flex justify-content-center py-4">
-                <a href="{% url 'register'%}" class="logo d-flex align-items-center w-auto">
-                  <img src="{% static 'assets/img/coca-cola-logo.png' %}" alt="" style="max-width: 80px; max-height: 80px;">
-                  <span class="d-none d-lg-block">COCA-COLA</span>
-                </a>
-              </div><!-- End Logo -->
-
-              <div class="card mb-3">
-
-                <div class="card-body">
-
-                  <div class="message-container" id="system-messages">
-                    {% for message in messages %}
-                    <div class="alert-message alert-{{ message.tags }}">
-                        {{ message }}
-                        <span class="close-message">&times;</span>
-                    </div>
-                    {% endfor %}
-                  </div>
-
-                  {% if form.non_field_errors %}
-                  <div class="alert alert-danger">
-                    {% for error in form.non_field_errors %}
-                    <p>{{ error }}</p>
-                    {% endfor %}
-                  </div>
-                  {% endif %}
-
-                  <div class="pt-4 pb-2">
-                    <h5 class="card-title text-center pb-0 fs-4">Create Your Account</h5>
-                    <p class="text-center small">Join the Coca-Cola family</p>
-                  </div>
-
-                  <form method="POST" class="row g-3 needs-validation" novalidate>
-                    {% csrf_token %}
-                    
-                    <!-- First row with two fields in two columns -->
-                    <div class="row form-row">
-                      <div class="col-md-6">
-                        <label for="employee_id" class="form-label">Employee ID</label>
-                        <div class="input-group has-validation">
-                          <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                          <input type="text" id="employee_id" name="employee_id" class="form-control" required>
-                        </div>
-                      </div>
-                      
-                      <div class="col-md-6">
-                        <label for="user_type" class="form-label">Role</label>
-                        <div class="position-relative">
-                          <select id="user_type" name="user_type" class="form-select" required>
-                            <option value="" selected disabled>Select your role</option>
-                            <option value="employee">Employee</option>
-                            <option value="manager">Manager</option>
-                            <option value="admin">Administrator</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Second row with two fields in two columns -->
-                    <div class="row form-row">
-                      <div class="col-md-6">
-                        <label for="first_name" class="form-label">First Name</label>
-                        <div class="input-group has-validation">
-                          <span class="input-group-text"><i class="bi bi-person"></i></span>
-                          <input type="text" id="first_name" name="first_name" class="form-control" required>
-                          <div class="invalid-feedback">Please enter your first name.</div>
-                        </div>
-                      </div>
-
-                      <div class="col-md-6">
-                        <label for="last_name" class="form-label">Last Name</label>
-                        <div class="input-group has-validation">
-                          <span class="input-group-text"><i class="bi bi-person"></i></span>
-                          <input type="text" id="last_name" name="last_name" class="form-control" required>
-                          <div class="invalid-feedback">Please enter your last name.</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="row form-row">
-                        <div class="col-md-6">
-                            <label for="password" class="form-label">Password</label>
-                            <div class="input-group position-relative">
-                              <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                              <input type="password" id="password" name="password" class="form-control" required>
-                              <i id="togglePassword" class="bi bi-eye-slash position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 5;"></i>
-                            </div>
-                            <div class="invalid-feedback">Please enter your password!</div>
-                          </div>
-      
-                          <div class="col-md-6">
-                            <label for="confirm_password" class="form-label">Confirm Password</label>
-                            <div class="input-group position-relative">
-                              <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                              <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
-                              <i id="togglePassword2" class="bi bi-eye-slash position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 5;"></i>
-                            </div>
-                            <div class="invalid-feedback">Please confirm your password!</div>
-                          </div>
-                    </div>
-
-                    
-                    
-                    <div class="col-12">
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="acceptTerms" required>
-                        <label class="form-check-label" for="acceptTerms">I agree to the <a href="#" style="color: var(--primary-color);">terms and conditions</a></label>
-                        <div class="invalid-feedback">You must agree before submitting.</div>
-                      </div>
-                    </div>
-
-                    <div class="col-12">
-                      <button class="btn btn-primary w-100" type="submit">Register</button>
-                    </div>
-                    <div class="col-12">
-                      <p class="small mb-0">Already have an account? <a href="{% url 'login'%}">Login here</a></p>
-                    </div>
-                  </form>
-
-                </div>
-              </div>
-
-              <div class="credits">
-                © 2023 The Coca-Cola Company. All rights reserved.
-              </div>
-
-            </div>
+<body>
+  <div class="container register-wrapper">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <!-- Company Header -->
+        <div class="company-header">
+          <h1 class="company-name">ALMASI BOTTLERS LTD</h1>
+          <p class="company-slogan">Refresh the World. Make a Difference.</p>
+          <div class="logo-container">
+            <img src="{% static 'assets/img/coca-cola-logo.png' %}" alt="Coca-Cola Logo" class="company-logo">
           </div>
         </div>
 
-      </section>
+        <!-- Register Card -->
+        <div class="card register-form-container">
+          <div class="card-body p-3 p-md-4">
+            <!-- Messages -->
+            <div class="message-container" id="system-messages">
+              {% for message in messages %}
+              <div class="alert-message alert-{{ message.tags }}">
+                  {{ message }}
+                  <span class="close-message">&times;</span>
+              </div>
+              {% endfor %}
+            </div>
 
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <h5 class="card-title text-center mb-2">Create Your Account</h5>
+            <p class="text-center small text-muted mb-3">Join the Almasi Bottlers family</p>
+
+            <form method="POST" novalidate>
+              {% csrf_token %}
+              
+              <div class="row form-row">
+                <div class="col-md-6 mb-2">
+                  <label for="employee_id" class="form-label">Employee ID</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                    <input type="text" id="employee_id" name="employee_id" class="form-control" required>
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-2">
+                  <label for="user_type" class="form-label">Role</label>
+                  <select id="user_type" name="user_type" class="form-select" required>
+                    <option value="" selected disabled>Select your role</option>
+                    <option value="employee">Employee</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Administrator</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="row form-row">
+                <div class="col-md-6 mb-2">
+                  <label for="first_name" class="form-label">First Name</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" id="first_name" name="first_name" class="form-control" required>
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-2">
+                  <label for="last_name" class="form-label">Last Name</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" id="last_name" name="last_name" class="form-control" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row form-row">
+                <div class="col-md-6 mb-2">
+                  <label for="password" class="form-label">Password</label>
+                  <div class="input-group position-relative">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                    <i id="togglePassword" class="bi bi-eye-slash password-toggle"></i>
+                  </div>
+                </div>
+  
+                <div class="col-md-6 mb-2">
+                  <label for="confirm_password" class="form-label">Confirm Password</label>
+                  <div class="input-group position-relative">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                    <i id="togglePassword2" class="bi bi-eye-slash password-toggle"></i>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="acceptTerms" required>
+                  <label class="form-check-label small" for="acceptTerms">I agree to the <a href="#" style="color: var(--primary-color);">terms and conditions</a></label>
+                </div>
+              </div>
+              
+              <button class="btn btn-primary w-100 mb-2" type="submit">Register</button>
+              
+              <p class="small text-center mb-0">Already have an account? <a href="{% url 'login'%}">Login here</a></p>
+            </form>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div>© {% now "Y" %} The Coca-Cola Company. All rights reserved.</div>
+          <div class="developer-credit">
+            Developed by <a href="https://kemcom.co.ke" target="_blank">Kemcom Softwares Ltd</a>
+          </div>
+        </div>
+      </div>
     </div>
-  </main><!-- End #main -->
-
-  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+  </div>
 
   <!-- Vendor JS Files -->
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'assets/js/main.js' %}"></script>
+
   <script>
     // Toggle password visibility
     document.getElementById('togglePassword').addEventListener('click', function() {
@@ -255,56 +303,13 @@
       this.classList.toggle('bi-eye');
       this.classList.toggle('bi-eye-slash');
     });
+
+    // Close message functionality
+    document.querySelectorAll('.close-message').forEach(button => {
+      button.addEventListener('click', function() {
+        this.parentElement.style.display = 'none';
+      });
+    });
   </script>
-
 </body>
-
 </html>
-
-
-{% comment %}
-<div class="register-container">
-    <h2>Register</h2>
-    {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-    
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="employee_id">Employee ID</label>
-            <input type="text" id="employee_id" name="employee_id" required>
-        </div>
-        <div class="form-group">
-            <label c>First Name</label>
-            <input type="text" id="first_name" name="first_name" required>
-        </div>
-        <div class="form-group">
-            <label for="last_name">Last Name</label>
-            <input type="text" id="last_name" name="last_name" required>
-        </div>
-        <div class="form-group">
-            <label for="password">Password (use your desired password)</label>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <div class="form-group">
-            <label for="confirm_password">Confirm Password</label>
-            <input type="password" id="confirm_password" name="confirm_password" required>
-        </div>
-        <div class="form-group">
-            <label for="user_type">Role</label>
-            <select id="user_type" name="user_type" required>
-                <option value="employee">Employee</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Register</button>
-    </form>
-    
-    <p class="login-link">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
-</div>
-
-{% endcomment %}
