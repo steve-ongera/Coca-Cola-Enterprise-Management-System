@@ -724,7 +724,9 @@ def attendance_delete(request, pk):
         'attendance': attendance
     })
 
-# List View
+# Attendance List View
+from django.core.paginator import Paginator
+
 def attendance_list(request):
     attendances = Attendance.objects.all().order_by('-date', 'employee__user__last_name')
     
@@ -743,10 +745,15 @@ def attendance_list(request):
     if status:
         attendances = attendances.filter(status=status)
     
+    # Pagination
+    paginator = Paginator(attendances, 10)  # Show 10 records per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     employees = Employee.objects.all()
     
     return render(request, 'attendance/attendance_list.html', {
-        'attendances': attendances,
+        'page_obj': page_obj,
         'employees': employees,
         'status_choices': Attendance.STATUS_CHOICES
     })
