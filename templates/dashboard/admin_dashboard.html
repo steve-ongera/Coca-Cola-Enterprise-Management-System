@@ -291,7 +291,7 @@
                     <tr>
                       <td><a href="#" class="text-primary">PO-{{ purchase.order_number }}</a></td>
                       <td>{{ purchase.supplier.name }}</td>
-                      <td>${{ purchase.total_amount }}</td>
+                      <td>ksh{{ purchase.total_amount }}</td>
                       <td><span class="badge bg-{% if purchase.status == 'received' %}success{% elif purchase.status == 'cancelled' %}danger{% else %}warning{% endif %}">
                         {{ purchase.get_status_display }}
                       </span></td>
@@ -435,7 +435,7 @@
               data: {
                   labels: salesDates,
                   datasets: [{
-                      label: 'Daily Sales ($)',
+                      label: 'Daily Sales (ksh)',
                       data: salesAmounts,
                       backgroundColor: 'rgba(244, 0, 9, 0.2)', // Coca-Cola Red with opacity
                       borderColor: '#F40009', // Coca-Cola Red
@@ -452,7 +452,7 @@
                           beginAtZero: false,
                           title: {
                               display: true,
-                              text: 'Sales Amount ($)'
+                              text: 'Sales Amount (ksh)'
                           }
                       },
                       x: {
@@ -466,7 +466,7 @@
                       tooltip: {
                           callbacks: {
                               label: function(context) {
-                                  return `Sales: $${context.raw.toFixed(2)}`;
+                                  return `Sales: ksh${context.raw.toFixed(2)}`;
                               }
                           }
                       }
