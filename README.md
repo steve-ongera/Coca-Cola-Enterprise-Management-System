@@ -10,7 +10,6 @@ This enterprise solution integrates multiple operational modules to manage emplo
 ## Features
 
 
-
 ### Employee Management
 - Staff registration and profile management
 - Job title and department assignment
