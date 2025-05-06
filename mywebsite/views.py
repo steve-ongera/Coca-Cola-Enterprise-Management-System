@@ -564,12 +564,33 @@ def is_admin(user):
 def employee_detail(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     
-    # Get related data
-    position_history = PositionHistory.objects.filter(employee=employee).order_by('-start_date')
-    attendance_records = Attendance.objects.filter(employee=employee).order_by('-date')[:30]
-    leave_requests = Leave.objects.filter(employee=employee).order_by('-start_date')[:10]
-    payroll_records = Payroll.objects.filter(employee=employee).order_by('-period_start')[:12]
-    performance_reviews = PerformanceReview.objects.filter(employee=employee).order_by('-review_period')
+    # Get related data with pagination (5 items per page)
+    position_history = PositionHistory.objects.filter(employee=employee).order_by('-start_date')[:20]
+    attendance_records = Attendance.objects.filter(employee=employee).order_by('-date')[:20]
+    leave_requests = Leave.objects.filter(employee=employee).order_by('-start_date')[:20]
+    payroll_records = Payroll.objects.filter(employee=employee).order_by('-period_start')[:20]
+    performance_reviews = PerformanceReview.objects.filter(employee=employee).order_by('-review_period')[:20]
+    
+    # Create paginators
+    position_paginator = Paginator(position_history, 5)
+    attendance_paginator = Paginator(attendance_records, 5)
+    leave_paginator = Paginator(leave_requests, 5)
+    payroll_paginator = Paginator(payroll_records, 5)
+    performance_paginator = Paginator(performance_reviews, 5)
+    
+    # Get page numbers from request
+    position_page = request.GET.get('position_page', 1)
+    attendance_page = request.GET.get('attendance_page', 1)
+    leave_page = request.GET.get('leave_page', 1)
+    payroll_page = request.GET.get('payroll_page', 1)
+    performance_page = request.GET.get('performance_page', 1)
+    
+    # Get page objects
+    position_history_page = position_paginator.get_page(position_page)
+    attendance_records_page = attendance_paginator.get_page(attendance_page)
+    leave_requests_page = leave_paginator.get_page(leave_page)
+    payroll_records_page = payroll_paginator.get_page(payroll_page)
+    performance_reviews_page = performance_paginator.get_page(performance_page)
     
     # Calculate tenure
     tenure_years = None
@@ -582,11 +603,11 @@ def employee_detail(request, pk):
     
     context = {
         'employee': employee,
-        'position_history': position_history,
-        'attendance_records': attendance_records,
-        'leave_requests': leave_requests,
-        'payroll_records': payroll_records,
-        'performance_reviews': performance_reviews,
+        'position_history': position_history_page,
+        'attendance_records': attendance_records_page,
+        'leave_requests': leave_requests_page,
+        'payroll_records': payroll_records_page,
+        'performance_reviews': performance_reviews_page,
         'tenure_years': tenure_years,
         'tenure_months': tenure_months,
     }

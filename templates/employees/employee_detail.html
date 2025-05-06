@@ -301,7 +301,7 @@
                         <div class="tab-pane fade show active" id="position" role="tabpanel">
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover">
-                                    <thead>
+                                    <thead class="bg-danger text-white">
                                         <tr>
                                             <th>Position</th>
                                             <th>Department</th>
@@ -327,13 +327,42 @@
                                     </tbody>
                                 </table>
                             </div>
+                            {% if position_history.paginator.num_pages > 1 %}
+                            <nav aria-label="Position history pagination">
+                                <ul class="pagination pagination-sm justify-content-center">
+                                    {% if position_history.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link text-danger" href="?position_page={{ position_history.previous_page_number }}#position" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for num in position_history.paginator.page_range %}
+                                        {% if position_history.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link bg-danger border-danger">{{ num }}</span>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link text-danger" href="?position_page={{ num }}#position">{{ num }}</a>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if position_history.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link text-danger" href="?position_page={{ position_history.next_page_number }}#position">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
                         </div>
                         
                         <!-- Attendance Tab -->
                         <div class="tab-pane fade" id="attendance" role="tabpanel">
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover">
-                                    <thead>
+                                    <thead class="bg-danger text-white">
                                         <tr>
                                             <th>Date</th>
                                             <th>Check In</th>
@@ -360,7 +389,6 @@
                                                     -
                                                 {% endif %}
                                             </td>
-                                            
                                         </tr>
                                         {% empty %}
                                         <tr>
@@ -370,13 +398,42 @@
                                     </tbody>
                                 </table>
                             </div>
+                            {% if attendance_records.paginator.num_pages > 1 %}
+                            <nav aria-label="Attendance records pagination">
+                                <ul class="pagination pagination-sm justify-content-center">
+                                    {% if attendance_records.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link text-danger" href="?attendance_page={{ attendance_records.previous_page_number }}#attendance" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for num in attendance_records.paginator.page_range %}
+                                        {% if attendance_records.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link bg-danger border-danger">{{ num }}</span>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link text-danger" href="?attendance_page={{ num }}#attendance">{{ num }}</a>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if attendance_records.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link text-danger" href="?attendance_page={{ attendance_records.next_page_number }}#attendance">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
                         </div>
                         
                         <!-- Leave Records Tab -->
                         <div class="tab-pane fade" id="leave" role="tabpanel">
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover">
-                                    <thead>
+                                    <thead class="bg-danger text-white">
                                         <tr>
                                             <th>Type</th>
                                             <th>Start Date</th>
@@ -408,13 +465,42 @@
                                     </tbody>
                                 </table>
                             </div>
+                            {% if leave_requests.paginator.num_pages > 1 %}
+                            <nav aria-label="Leave requests pagination">
+                                <ul class="pagination pagination-sm justify-content-center">
+                                    {% if leave_requests.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link text-danger" href="?leave_page={{ leave_requests.previous_page_number }}#leave" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for num in leave_requests.paginator.page_range %}
+                                        {% if leave_requests.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link bg-danger border-danger">{{ num }}</span>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link text-danger" href="?leave_page={{ num }}#leave">{{ num }}</a>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if leave_requests.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link text-danger" href="?leave_page={{ leave_requests.next_page_number }}#leave">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
                         </div>
                         
                         <!-- Payroll Tab -->
                         <div class="tab-pane fade" id="payroll" role="tabpanel">
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover">
-                                    <thead>
+                                    <thead class="bg-danger text-white">
                                         <tr>
                                             <th>Period</th>
                                             <th>Basic Salary</th>
@@ -448,6 +534,35 @@
                                     </tbody>
                                 </table>
                             </div>
+                            {% if payroll_records.paginator.num_pages > 1 %}
+                            <nav aria-label="Payroll records pagination">
+                                <ul class="pagination pagination-sm justify-content-center">
+                                    {% if payroll_records.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link text-danger" href="?payroll_page={{ payroll_records.previous_page_number }}#payroll" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for num in payroll_records.paginator.page_range %}
+                                        {% if payroll_records.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link bg-danger border-danger">{{ num }}</span>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link text-danger" href="?payroll_page={{ num }}#payroll">{{ num }}</a>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if payroll_records.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link text-danger" href="?payroll_page={{ payroll_records.next_page_number }}#payroll">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
                         </div>
                         
                         <!-- Performance Tab -->
@@ -487,10 +602,57 @@
                                 No performance reviews found
                             </div>
                             {% endfor %}
+                            
+                            {% if performance_reviews.paginator.num_pages > 1 %}
+                            <nav aria-label="Performance reviews pagination">
+                                <ul class="pagination pagination-sm justify-content-center">
+                                    {% if performance_reviews.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link text-danger" href="?performance_page={{ performance_reviews.previous_page_number }}#performance" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for num in performance_reviews.paginator.page_range %}
+                                        {% if performance_reviews.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link bg-danger border-danger">{{ num }}</span>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link text-danger" href="?performance_page={{ num }}#performance">{{ num }}</a>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if performance_reviews.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link text-danger" href="?performance_page={{ performance_reviews.next_page_number }}#performance">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
+
+            <style>
+                .nav-tabs .nav-link {
+                    color: #6c757d;
+                }
+                .nav-tabs .nav-link.active {
+                    color: #F40009;
+                    font-weight: bold;
+                    border-bottom: 2px solid #F40009;
+                }
+                .nav-tabs .nav-link:hover:not(.active) {
+                    color: #F40009;
+                }
+                .badge.bg-danger {
+                    background-color: #F40009 !important;
+                }
+            </style>
         </div>
     </div>
 </div>
