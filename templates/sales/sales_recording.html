@@ -281,6 +281,7 @@
 
 
 
+// Add/update this script section at the bottom of your HTML template
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Product data from the server
@@ -332,15 +333,26 @@
         const existingCustomerToggle = document.getElementById('existingCustomerToggle');
         const existingCustomerSection = document.getElementById('existingCustomerSection');
         const newCustomerSection = document.getElementById('newCustomerSection');
+        const customerFieldInputs = newCustomerSection.querySelectorAll('input, select, textarea');
         
         if (existingCustomerToggle && existingCustomerSection && newCustomerSection) {
             existingCustomerToggle.addEventListener('change', function() {
                 if (this.checked) {
                     existingCustomerSection.style.display = 'block';
                     newCustomerSection.style.display = 'none';
+                    
+                    // Disable all inputs in the customer form when using existing customer
+                    customerFieldInputs.forEach(input => {
+                        input.disabled = true;
+                    });
                 } else {
                     existingCustomerSection.style.display = 'none';
                     newCustomerSection.style.display = 'block';
+                    
+                    // Re-enable all inputs in the customer form
+                    customerFieldInputs.forEach(input => {
+                        input.disabled = false;
+                    });
                 }
             });
         }
@@ -356,6 +368,7 @@
                         // Auto-fill billing and shipping address if customer is selected
                         const billingAddressInput = document.querySelector('[name$="billing_address"]');
                         const shippingAddressInput = document.querySelector('[name$="shipping_address"]');
+                        const paymentTermsInput = document.querySelector('[name="invoice-payment_terms"]');
                         
                         if (billingAddressInput) {
                             billingAddressInput.value = customer.address || '';
@@ -363,6 +376,10 @@
                         
                         if (shippingAddressInput) {
                             shippingAddressInput.value = customer.address || '';
+                        }
+                        
+                        if (paymentTermsInput && customer.payment_terms) {
+                            paymentTermsInput.value = customer.payment_terms;
                         }
                     }
                 }

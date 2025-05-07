@@ -3012,6 +3012,9 @@ class SalesRecordingView(View):
     
     @transaction.atomic
     def post(self, request):
+        # Debug print to see what's in the POST data
+        print("POST data:", request.POST)
+        
         # Initialize forms with POST data
         customer_form = CustomerForm(request.POST, prefix='customer')
         sales_order_form = SalesOrderForm(request.POST, prefix='order')
@@ -3024,35 +3027,58 @@ class SalesRecordingView(View):
         
         # Handle customer selection or creation
         customer = None
-        if 'customer_select' in request.POST and request.POST['customer_select']:
+        using_existing_customer = 'customer_select' in request.POST and request.POST['customer_select']
+        
+        # Debug
+        print(f"Using existing customer: {using_existing_customer}")
+        if using_existing_customer:
+            print(f"Selected customer ID: {request.POST['customer_select']}")
+        
+        if using_existing_customer:
             # Use existing customer
             try:
                 customer = Customer.objects.get(id=request.POST['customer_select'])
                 is_customer_valid = True  # Skip customer form validation
+                print(f"Found customer: {customer.name}")
             except Customer.DoesNotExist:
                 messages.error(request, "Selected customer not found")
                 is_customer_valid = False
+                print("Customer not found")
         else:
             # Create new customer
             if is_customer_valid:
-                customer = customer_form.save()
+                customer = customer_form.save(commit=False)
+                # Make sure required fields are filled
+                if not (customer.name and customer.address):
+                    messages.error(request, "Customer name and address are required")
+                    is_customer_valid = False
+                else:
+                    customer.save()
+                    print(f"Created new customer: {customer.name}")
+            else:
+                print("Customer form invalid:", customer_form.errors)
         
         # Update sales order form with customer if it exists
+        sales_order = None
         if customer and is_order_valid:
             sales_order = sales_order_form.save(commit=False)
             sales_order.customer = customer
             sales_order.status = 'new'
             sales_order.payment_status = 'pending'
+            print(f"Order created for customer: {customer.name}")
         
         # Process item formset with the sales order instance
         if customer and is_order_valid:
             sales_order_item_formset = SalesOrderItemFormSet(
-                request.POST, prefix='items', instance=sales_order
+                request.POST, prefix='items'
             )
             is_items_valid = sales_order_item_formset.is_valid()
+            if not is_items_valid:
+                print("Items formset invalid:", sales_order_item_formset.errors)
         else:
             sales_order_item_formset = SalesOrderItemFormSet(request.POST, prefix='items')
             is_items_valid = False
+            print("Not processing items because customer or order is invalid")
         
         # Calculate total from items
         total_amount = 0
@@ -3065,22 +3091,29 @@ class SalesRecordingView(View):
                     
                     item_total = quantity * unit_price * (1 - discount/100)
                     total_amount += item_total
+                    print(f"Item total: {item_total}, Running total: {total_amount}")
         
         # If all forms are valid, save everything
+        print(f"Validation status - Customer: {is_customer_valid}, Order: {is_order_valid}, Items: {is_items_valid}, Invoice: {is_invoice_valid}")
+        
         if is_customer_valid and is_order_valid and is_items_valid and is_invoice_valid:
             # Complete sales order with total
             sales_order.total_amount = total_amount
             sales_order.save()
+            print(f"Sales order saved with ID: {sales_order.id}")
             
             # Save items with subtotals
             items = sales_order_item_formset.save(commit=False)
             for item in items:
+                item.sales_order = sales_order  # Important: link to sales order
                 item.subtotal = item.quantity * item.unit_price * (1 - item.discount/100)
                 item.save()
+                print(f"Item saved: {item.product_variant.name}, qty: {item.quantity}")
             
             # Handle deleted items
             for obj in sales_order_item_formset.deleted_objects:
                 obj.delete()
+                print(f"Deleted item: {obj.product_variant.name}")
             
             # Create invoice with the sales order
             invoice = invoice_form.save(commit=False)
@@ -3088,6 +3121,7 @@ class SalesRecordingView(View):
             invoice.status = 'unpaid'
             invoice.total_amount = total_amount
             invoice.save()
+            print(f"Invoice saved with number: {invoice.invoice_number}")
             
             messages.success(request, "Sale recorded successfully!")
             return redirect('sales_order_detail', pk=sales_order.pk)
@@ -3118,13 +3152,15 @@ class SalesRecordingView(View):
         }
         
         if not is_customer_valid:
-            messages.error(request, "Please correct customer information")
+            if using_existing_customer:
+                messages.error(request, "Selected customer not found or invalid")
+            else:
+                messages.error(request, "Please correct customer information")
         if not is_order_valid:
             messages.error(request, "Please correct order information")
         if not is_items_valid:
-            messages.error(request, "Please check item details")
+            messages.error(request, "Please check item details (all products must have quantities)")
         if not is_invoice_valid:
             messages.error(request, "Please correct invoice information")
             
         return render(request, self.template_name, context)
-
