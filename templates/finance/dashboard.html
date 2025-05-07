@@ -161,164 +161,158 @@
         </div>
     </div>
 </div>
+
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 
 <script>
-// Account Balances Pie Chart
-var ctx = document.getElementById("accountBalancesChart");
-var accountBalancesChart = new Chart(ctx, {
-    type: 'pie',
-    data: {
-        labels: {{ charts.account_balances.labels|safe }},
-        datasets: [{
-            data: {{ charts.account_balances.data|safe }},
-            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
-            hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617'],
-            hoverBorderColor: "rgba(234, 236, 244, 1)",
-        }],
-    },
-    options: {
+// Simple function to create charts with minimal configuration
+function createChart(elementId, type, labels, data, options = {}) {
+    var ctx = document.getElementById(elementId);
+    if (!ctx) return;
+    
+    // Default options based on chart type
+    var defaultOptions = {
         maintainAspectRatio: false,
         plugins: {
-            tooltip: {
-                backgroundColor: "rgb(255,255,255)",
-                bodyColor: "#858796",
-                borderColor: '#dddfeb',
-                borderWidth: 1,
-                padding: {
-                    x: 15,
-                    y: 15
-                },
-                displayColors: false,
-                caretPadding: 10,
-            },
             legend: {
                 display: true,
                 position: 'bottom'
             }
         }
+    };
+    
+    // Merge options
+    var chartOptions = Object.assign({}, defaultOptions, options);
+    
+    // Create dataset based on type
+    var datasets = [];
+    if (Array.isArray(data[0])) {
+        // Multiple datasets
+        for (var i = 0; i < data.length; i++) {
+            datasets.push({
+                label: options.datasetLabels ? options.datasetLabels[i] : `Dataset ${i+1}`,
+                data: data[i],
+                backgroundColor: options.colors ? options.colors[i] : getDefaultColor(i),
+                borderColor: options.borderColors ? options.borderColors[i] : getDefaultColor(i)
+            });
+        }
+    } else {
+        // Single dataset
+        datasets.push({
+            label: options.datasetLabel || 'Value',
+            data: data,
+            backgroundColor: options.colors || getDefaultColors(data.length),
+            borderColor: options.borderColors
+        });
     }
-});
-
-// Payment Methods Bar Chart
-var ctx = document.getElementById("paymentMethodsChart");
-var paymentMethodsChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: {{ charts.payment_methods.labels|safe }},
-        datasets: [{
-            label: "Amount",
-            backgroundColor: "#4e73df",
-            hoverBackgroundColor: "#2e59d9",
-            borderColor: "#4e73df",
-            data: {{ charts.payment_methods.data|safe }},
-        }],
-    },
-    options: {
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return 'KSh ' + value.toLocaleString();
-                    }
-                }
-            }
+    
+    return new Chart(ctx, {
+        type: type,
+        data: {
+            labels: labels,
+            datasets: datasets
         },
-        plugins: {
-            legend: {
-                display: false
-            }
-        }
-    }
-});
+        options: chartOptions
+    });
+}
 
-// Sales by Customer Type Doughnut Chart
-var ctx = document.getElementById("salesByCustomerTypeChart");
-var salesByCustomerTypeChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-        labels: {{ charts.sales_by_customer_type.labels|safe }},
-        datasets: [{
-            data: {{ charts.sales_by_customer_type.data|safe }},
-            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
-            hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
-            hoverBorderColor: "rgba(234, 236, 244, 1)",
-        }],
-    },
-    options: {
-        maintainAspectRatio: false,
-        plugins: {
-            tooltip: {
-                backgroundColor: "rgb(255,255,255)",
-                bodyColor: "#858796",
-                borderColor: '#dddfeb',
-                borderWidth: 1,
-                padding: {
-                    x: 15,
-                    y: 15
-                },
-                displayColors: false,
-                caretPadding: 10,
-                callbacks: {
-                    label: function(context) {
-                        var value = context.raw;
-                        return 'KSh ' + value.toLocaleString();
-                    }
+// Helper function for default colors
+function getDefaultColor(index) {
+    var colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+    return colors[index % colors.length];
+}
+
+function getDefaultColors(count) {
+    var colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+    var result = [];
+    for (var i = 0; i < count; i++) {
+        result.push(colors[i % colors.length]);
+    }
+    return result;
+}
+
+// Initialize all charts
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Account Balances Pie Chart
+    createChart(
+        'accountBalancesChart', 
+        'pie',
+        {{ charts.account_balances.labels|safe }},
+        {{ charts.account_balances.data|safe }}
+    );
+    
+    // 2. Payment Methods Bar Chart
+    createChart(
+        'paymentMethodsChart', 
+        'bar',
+        {{ charts.payment_methods.labels|safe }},
+        {{ charts.payment_methods.data|safe }},
+        {
+            datasetLabel: 'Amount',
+            plugins: {
+                legend: {
+                    display: false
                 }
             },
-            legend: {
-                display: true,
-                position: 'bottom'
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'KSh ' + value.toLocaleString();
+                        }
+                    }
+                }
             }
         }
-    }
-});
-
-// Budget Performance Bar Chart
-var ctx = document.getElementById("budgetPerformanceChart");
-var budgetPerformanceChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: {{ charts.budget_performance.labels|safe }},
-        datasets: [
-            {
-                label: "Budget",
-                backgroundColor: "#1cc88a",
-                hoverBackgroundColor: "#17a673",
-                borderColor: "#1cc88a",
-                data: {{ charts.budget_performance.budget|safe }},
-            },
-            {
-                label: "Actual",
-                backgroundColor: "#4e73df",
-                hoverBackgroundColor: "#2e59d9",
-                borderColor: "#4e73df",
-                data: {{ charts.budget_performance.actual|safe }},
+    );
+    
+    // 3. Sales by Customer Type Doughnut Chart
+    createChart(
+        'salesByCustomerTypeChart', 
+        'doughnut',
+        {{ charts.sales_by_customer_type.labels|safe }},
+        {{ charts.sales_by_customer_type.data|safe }},
+        {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var value = context.raw;
+                            return 'KSh ' + value.toLocaleString();
+                        }
+                    }
+                }
             }
+        }
+    );
+    
+    // 4. Budget Performance Bar Chart
+    createChart(
+        'budgetPerformanceChart', 
+        'bar',
+        {{ charts.budget_performance.labels|safe }},
+        [
+            {{ charts.budget_performance.budget|safe }},
+            {{ charts.budget_performance.actual|safe }}
         ],
-    },
-    options: {
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return 'KSh ' + value.toLocaleString();
+        {
+            datasetLabels: ['Budget', 'Actual'],
+            colors: ['#1cc88a', '#4e73df'],
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'KSh ' + value.toLocaleString();
+                        }
                     }
                 }
             }
-        },
-        plugins: {
-            legend: {
-                display: true,
-                position: 'bottom'
-            }
         }
-    }
+    );
 });
 </script>
+
 {% endblock %}

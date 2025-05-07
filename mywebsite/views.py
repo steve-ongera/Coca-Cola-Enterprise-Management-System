@@ -2575,11 +2575,21 @@ def maintenance_calendar(request):
     return render(request, 'maintenance/calendar.html', context)
 
 
+import json
+from decimal import Decimal
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
+
 #finance departent views 
 from django.shortcuts import render
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta
+from decimal import Decimal
 from .models import Account, Transaction, Payment, Invoice, SalesOrder, Budget, TaxRecord
 
 def finance_dashboard(request):
@@ -2650,6 +2660,20 @@ def finance_dashboard(request):
         total_amount=Sum('amount')
     )
     
+    # Convert Decimal objects to float for JavaScript compatibility
+    account_balance_labels = [dict(Account.ACCOUNT_TYPE_CHOICES).get(t) for t in balance_summary.keys()]
+    account_balance_data = [float(value) for value in balance_summary.values()]
+    
+    payment_method_labels = [p['payment_method'] for p in payment_methods]
+    payment_method_data = [float(p['total_amount']) for p in payment_methods]
+    
+    sales_customer_labels = [s['customer__customer_type'] for s in sales_by_customer_type]
+    sales_customer_data = [float(s['total_sales']) for s in sales_by_customer_type]
+    
+    budget_labels = [b.account.name for b in budget_performance]
+    budget_data = [float(b.amount) for b in budget_performance]
+    actual_data = [float(b.actual_spend or 0) for b in budget_performance]
+    
     context = {
         # Summary Cards
         'summary_cards': [
@@ -2679,34 +2703,34 @@ def finance_dashboard(request):
             },
         ],
         
-        # Charts Data
+        # Charts Data (pre-converted to float)
         'charts': {
             # Account Balances Pie Chart
             'account_balances': {
-                'labels': [dict(Account.ACCOUNT_TYPE_CHOICES).get(t) for t in balance_summary.keys()],
-                'data': list(balance_summary.values()),
+                'labels': account_balance_labels,
+                'data': account_balance_data,
                 'type': 'pie'
             },
             
             # Payment Methods Breakdown
             'payment_methods': {
-                'labels': [p['payment_method'] for p in payment_methods],
-                'data': [p['total_amount'] for p in payment_methods],
+                'labels': payment_method_labels,
+                'data': payment_method_data,
                 'type': 'bar'
             },
             
             # Sales by Customer Type
             'sales_by_customer_type': {
-                'labels': [s['customer__customer_type'] for s in sales_by_customer_type],
-                'data': [s['total_sales'] for s in sales_by_customer_type],
+                'labels': sales_customer_labels,
+                'data': sales_customer_data,
                 'type': 'doughnut'
             },
             
             # Monthly Budget Performance
             'budget_performance': {
-                'labels': [b.account.name for b in budget_performance],
-                'budget': [b.amount for b in budget_performance],
-                'actual': [b.actual_spend or 0 for b in budget_performance],
+                'labels': budget_labels,
+                'budget': budget_data,
+                'actual': actual_data,
                 'type': 'bar'
             }
         },
