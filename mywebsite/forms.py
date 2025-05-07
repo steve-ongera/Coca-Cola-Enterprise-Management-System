@@ -847,3 +847,89 @@ TransactionEntryFormSet = inlineformset_factory(
     extra=2,  # Start with 2 entries by default (can be adjusted)
     can_delete=True
 )
+
+
+
+
+# forms.py
+from django import forms
+from django.forms import inlineformset_factory
+from .models import Customer, SalesOrder, SalesOrderItem, Invoice, ProductVariant, Employee
+
+class CustomerForm(forms.ModelForm):
+    class Meta:
+        model = Customer
+        fields = ['name', 'customer_type', 'contact_person', 'email', 'phone', 'address', 'payment_terms', 'credit_limit']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control border-danger'}),
+            'customer_type': forms.Select(attrs={'class': 'form-select border-danger'}),
+            'contact_person': forms.TextInput(attrs={'class': 'form-control border-danger'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control border-danger'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control border-danger'}),
+            'address': forms.Textarea(attrs={'class': 'form-control border-danger', 'rows': 3}),
+            'payment_terms': forms.TextInput(attrs={'class': 'form-control border-danger'}),
+            'credit_limit': forms.NumberInput(attrs={'class': 'form-control border-danger'}),
+        }
+
+class SalesOrderForm(forms.ModelForm):
+    sales_representative = forms.ModelChoiceField(
+        queryset=Employee.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select border-danger'})
+    )
+    
+    class Meta:
+        model = SalesOrder
+        fields = ['order_number', 'customer', 'order_date', 'sales_representative', 
+                  'shipping_address', 'billing_address', 'delivery_date']
+        widgets = {
+            'order_number': forms.TextInput(attrs={'class': 'form-control border-danger'}),
+            'customer': forms.Select(attrs={'class': 'form-select border-danger'}),
+            'order_date': forms.DateInput(attrs={'class': 'form-control border-danger', 'type': 'date'}),
+            'shipping_address': forms.Textarea(attrs={'class': 'form-control border-danger', 'rows': 3}),
+            'billing_address': forms.Textarea(attrs={'class': 'form-control border-danger', 'rows': 3}),
+            'delivery_date': forms.DateInput(attrs={'class': 'form-control border-danger', 'type': 'date'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'customer' in self.data:
+            try:
+                customer_id = int(self.data.get('customer'))
+                customer = Customer.objects.get(id=customer_id)
+                self.fields['billing_address'].initial = customer.address
+                self.fields['shipping_address'].initial = customer.address
+            except (ValueError, Customer.DoesNotExist):
+                pass
+
+class SalesOrderItemForm(forms.ModelForm):
+    product_variant = forms.ModelChoiceField(
+        queryset=ProductVariant.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select border-danger product-variant'})
+    )
+    
+    class Meta:
+        model = SalesOrderItem
+        fields = ['product_variant', 'quantity', 'unit_price', 'discount']
+        widgets = {
+            'quantity': forms.NumberInput(attrs={'class': 'form-control border-danger quantity', 'min': '1', 'step': '1'}),
+            'unit_price': forms.NumberInput(attrs={'class': 'form-control border-danger unit-price', 'step': '0.01'}),
+            'discount': forms.NumberInput(attrs={'class': 'form-control border-danger discount', 'step': '0.01', 'max': '100'}),
+        }
+
+class InvoiceForm(forms.ModelForm):
+    class Meta:
+        model = Invoice
+        fields = ['invoice_number', 'invoice_date', 'due_date', 'payment_terms']
+        widgets = {
+            'invoice_number': forms.TextInput(attrs={'class': 'form-control border-danger'}),
+            'invoice_date': forms.DateInput(attrs={'class': 'form-control border-danger', 'type': 'date'}),
+            'due_date': forms.DateInput(attrs={'class': 'form-control border-danger', 'type': 'date'}),
+            'payment_terms': forms.TextInput(attrs={'class': 'form-control border-danger'}),
+        }
+
+# Create formset for SalesOrderItem
+SalesOrderItemFormSet = inlineformset_factory(
+    SalesOrder, SalesOrderItem, form=SalesOrderItemForm,
+    extra=1, can_delete=True, 
+    fields=['product_variant', 'quantity', 'unit_price', 'discount']
+)

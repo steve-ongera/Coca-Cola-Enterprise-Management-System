@@ -67,7 +67,8 @@
                 <span>Sales</span>
                 <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-            <ul id="sales-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+            <ul id="sales-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav"> 
+                <li><a href="{% url 'sales_recording'%}"><i class="bi bi-cart-check"></i> New Sale</a></li>
                 <li><a href="#"><i class="bi bi-cart-check"></i> Orders</a></li>
                 <li><a href="{% url 'customer_list'%}"><i class="bi bi-building"></i> Customers</a></li>
                 <li><a href="#"><i class="bi bi-receipt"></i> Invoices</a></li>

@@ -2921,3 +2921,210 @@ class TransactionDeleteView(DeleteView):
             account.save()
         
         return super().delete(request, *args, **kwargs)
+    
+
+
+
+# views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views import View
+from django.contrib import messages
+from django.utils import timezone
+from django.db import transaction
+from datetime import timedelta
+from .models import Customer, SalesOrder, SalesOrderItem, Invoice, ProductVariant
+from .forms import CustomerForm, SalesOrderForm, SalesOrderItemFormSet, InvoiceForm
+
+class SalesRecordingView(View):
+    template_name = 'sales/sales_recording.html'
+    
+    def get(self, request):
+        # Initialize forms
+        customer_form = CustomerForm(prefix='customer')
+        sales_order_form = SalesOrderForm(prefix='order')
+        sales_order_item_formset = SalesOrderItemFormSet(prefix='items')
+        invoice_form = InvoiceForm(prefix='invoice')
+        
+        # Generate a new order number based on current date (example: SO-20250507-001)
+        today = timezone.now().date()
+        order_number = f"SO-{today.strftime('%Y%m%d')}-001"
+        
+        # Check if there's an existing order for today and increment
+        existing_orders = SalesOrder.objects.filter(
+            order_number__startswith=f"SO-{today.strftime('%Y%m%d')}"
+        ).order_by('order_number')
+        
+        if existing_orders.exists():
+            last_order = existing_orders.last()
+            last_number = int(last_order.order_number.split('-')[-1])
+            order_number = f"SO-{today.strftime('%Y%m%d')}-{str(last_number + 1).zfill(3)}"
+        
+        # Generate invoice number
+        invoice_number = f"INV-{today.strftime('%Y%m%d')}-001"
+        existing_invoices = Invoice.objects.filter(
+            invoice_number__startswith=f"INV-{today.strftime('%Y%m%d')}"
+        ).order_by('invoice_number')
+        
+        if existing_invoices.exists():
+            last_invoice = existing_invoices.last()
+            last_number = int(last_invoice.invoice_number.split('-')[-1])
+            invoice_number = f"INV-{today.strftime('%Y%m%d')}-{str(last_number + 1).zfill(3)}"
+        
+        # Set initial values for forms
+        sales_order_form.initial = {
+            'order_number': order_number,
+            'order_date': today,
+        }
+        
+        invoice_form.initial = {
+            'invoice_number': invoice_number,
+            'invoice_date': today,
+            'due_date': today + timedelta(days=30),  # Default: 30 days payment term
+            'payment_terms': 'Net 30 days',
+        }
+        
+        # Get all product variants for AJAX
+        product_variants = ProductVariant.objects.all()
+        products_data = [{
+            'id': variant.id,
+            'name': variant.name,
+            'price': float(variant.selling_price)
+        } for variant in product_variants]
+        
+        # Get all customers for AJAX
+        customers = Customer.objects.all()
+        customers_data = [{
+            'id': customer.id,
+            'name': customer.name,
+            'address': customer.address,
+            'payment_terms': customer.payment_terms or 'Net 30 days'
+        } for customer in customers]
+
+        context = {
+            'customer_form': customer_form,
+            'sales_order_form': sales_order_form,
+            'sales_order_item_formset': sales_order_item_formset,
+            'invoice_form': invoice_form,
+            'products_data': products_data,
+            'customers_data': customers_data,
+        }
+        return render(request, self.template_name, context)
+    
+    @transaction.atomic
+    def post(self, request):
+        # Initialize forms with POST data
+        customer_form = CustomerForm(request.POST, prefix='customer')
+        sales_order_form = SalesOrderForm(request.POST, prefix='order')
+        invoice_form = InvoiceForm(request.POST, prefix='invoice')
+        
+        # Validate forms individually
+        is_customer_valid = customer_form.is_valid()
+        is_order_valid = sales_order_form.is_valid()
+        is_invoice_valid = invoice_form.is_valid()
+        
+        # Handle customer selection or creation
+        customer = None
+        if 'customer_select' in request.POST and request.POST['customer_select']:
+            # Use existing customer
+            try:
+                customer = Customer.objects.get(id=request.POST['customer_select'])
+                is_customer_valid = True  # Skip customer form validation
+            except Customer.DoesNotExist:
+                messages.error(request, "Selected customer not found")
+                is_customer_valid = False
+        else:
+            # Create new customer
+            if is_customer_valid:
+                customer = customer_form.save()
+        
+        # Update sales order form with customer if it exists
+        if customer and is_order_valid:
+            sales_order = sales_order_form.save(commit=False)
+            sales_order.customer = customer
+            sales_order.status = 'new'
+            sales_order.payment_status = 'pending'
+        
+        # Process item formset with the sales order instance
+        if customer and is_order_valid:
+            sales_order_item_formset = SalesOrderItemFormSet(
+                request.POST, prefix='items', instance=sales_order
+            )
+            is_items_valid = sales_order_item_formset.is_valid()
+        else:
+            sales_order_item_formset = SalesOrderItemFormSet(request.POST, prefix='items')
+            is_items_valid = False
+        
+        # Calculate total from items
+        total_amount = 0
+        if is_items_valid:
+            for form in sales_order_item_formset.forms:
+                if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                    quantity = form.cleaned_data.get('quantity', 0)
+                    unit_price = form.cleaned_data.get('unit_price', 0)
+                    discount = form.cleaned_data.get('discount', 0)
+                    
+                    item_total = quantity * unit_price * (1 - discount/100)
+                    total_amount += item_total
+        
+        # If all forms are valid, save everything
+        if is_customer_valid and is_order_valid and is_items_valid and is_invoice_valid:
+            # Complete sales order with total
+            sales_order.total_amount = total_amount
+            sales_order.save()
+            
+            # Save items with subtotals
+            items = sales_order_item_formset.save(commit=False)
+            for item in items:
+                item.subtotal = item.quantity * item.unit_price * (1 - item.discount/100)
+                item.save()
+            
+            # Handle deleted items
+            for obj in sales_order_item_formset.deleted_objects:
+                obj.delete()
+            
+            # Create invoice with the sales order
+            invoice = invoice_form.save(commit=False)
+            invoice.sales_order = sales_order
+            invoice.status = 'unpaid'
+            invoice.total_amount = total_amount
+            invoice.save()
+            
+            messages.success(request, "Sale recorded successfully!")
+            return redirect('sales_order_detail', pk=sales_order.pk)
+        
+        # If any form is invalid, show errors
+        product_variants = ProductVariant.objects.all()
+        products_data = [{
+            'id': variant.id,
+            'name': variant.name,
+            'price': float(variant.selling_price)
+        } for variant in product_variants]
+        
+        customers = Customer.objects.all()
+        customers_data = [{
+            'id': customer.id,
+            'name': customer.name,
+            'address': customer.address,
+            'payment_terms': customer.payment_terms or 'Net 30 days'
+        } for customer in customers]
+        
+        context = {
+            'customer_form': customer_form,
+            'sales_order_form': sales_order_form,
+            'sales_order_item_formset': sales_order_item_formset,
+            'invoice_form': invoice_form,
+            'products_data': products_data,
+            'customers_data': customers_data,
+        }
+        
+        if not is_customer_valid:
+            messages.error(request, "Please correct customer information")
+        if not is_order_valid:
+            messages.error(request, "Please correct order information")
+        if not is_items_valid:
+            messages.error(request, "Please check item details")
+        if not is_invoice_valid:
+            messages.error(request, "Please correct invoice information")
+            
+        return render(request, self.template_name, context)
+

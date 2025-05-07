@@ -428,6 +428,7 @@ class ProductVariant(models.Model):
         ('discontinued', 'Discontinued'),
     ]
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='active')
+    selling_price = models.PositiveIntegerField()
     
     def __str__(self):
         return f"{self.product.name} - {self.name} ({self.size})"

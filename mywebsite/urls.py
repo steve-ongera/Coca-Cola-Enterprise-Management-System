@@ -165,6 +165,9 @@ urlpatterns = [
     path('transactions/<int:pk>/update/', views.TransactionUpdateView.as_view(), name='transaction_update'),
     path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction_delete'),
 
+    #sales
+    path('sales/new/', views.SalesRecordingView.as_view(), name='sales_recording'),
+
 
     
 ]
