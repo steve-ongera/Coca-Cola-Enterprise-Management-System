@@ -167,6 +167,7 @@ urlpatterns = [
 
     #sales
     path('sales/new/', views.SalesRecordingView.as_view(), name='sales_recording'),
+    path('sales/<int:pk>/', views.sales_order_detail , name='sales_order_detail'),
 
 
     

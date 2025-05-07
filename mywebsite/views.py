@@ -2974,6 +2974,7 @@ class SalesRecordingView(View):
         sales_order_form.initial = {
             'order_number': order_number,
             'order_date': today,
+            'delivery_date': today + timedelta(days=7),  # Add default delivery date
         }
         
         invoice_form.initial = {
@@ -3020,11 +3021,6 @@ class SalesRecordingView(View):
         sales_order_form = SalesOrderForm(request.POST, prefix='order')
         invoice_form = InvoiceForm(request.POST, prefix='invoice')
         
-        # Validate forms individually
-        is_customer_valid = customer_form.is_valid()
-        is_order_valid = sales_order_form.is_valid()
-        is_invoice_valid = invoice_form.is_valid()
-        
         # Handle customer selection or creation
         customer = None
         using_existing_customer = 'customer_select' in request.POST and request.POST['customer_select']
@@ -3046,6 +3042,7 @@ class SalesRecordingView(View):
                 print("Customer not found")
         else:
             # Create new customer
+            is_customer_valid = customer_form.is_valid()
             if is_customer_valid:
                 customer = customer_form.save(commit=False)
                 # Make sure required fields are filled
@@ -3058,27 +3055,36 @@ class SalesRecordingView(View):
             else:
                 print("Customer form invalid:", customer_form.errors)
         
-        # Update sales order form with customer if it exists
-        sales_order = None
-        if customer and is_order_valid:
-            sales_order = sales_order_form.save(commit=False)
-            sales_order.customer = customer
-            sales_order.status = 'new'
-            sales_order.payment_status = 'pending'
-            print(f"Order created for customer: {customer.name}")
+        # Validate order form and debug any errors
+        is_order_valid = sales_order_form.is_valid()
+        if not is_order_valid:
+            print("Order form invalid:", sales_order_form.errors)
         
-        # Process item formset with the sales order instance
-        if customer and is_order_valid:
-            sales_order_item_formset = SalesOrderItemFormSet(
-                request.POST, prefix='items'
-            )
-            is_items_valid = sales_order_item_formset.is_valid()
-            if not is_items_valid:
-                print("Items formset invalid:", sales_order_item_formset.errors)
-        else:
-            sales_order_item_formset = SalesOrderItemFormSet(request.POST, prefix='items')
+        # Validate invoice form and debug any errors
+        is_invoice_valid = invoice_form.is_valid()
+        if not is_invoice_valid:
+            print("Invoice form invalid:", invoice_form.errors)
+            
+        # Initialize items formset
+        sales_order_item_formset = SalesOrderItemFormSet(request.POST, prefix='items')
+        is_items_valid = sales_order_item_formset.is_valid()
+        if not is_items_valid:
+            print("Items formset invalid:", sales_order_item_formset.errors)
+            
+        # Validate that at least one item is present and has a quantity
+        has_valid_items = False
+        for form in sales_order_item_formset.forms:
+            if form.is_valid() and form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                product_variant = form.cleaned_data.get('product_variant')
+                quantity = form.cleaned_data.get('quantity', 0)
+                if product_variant and quantity > 0:
+                    has_valid_items = True
+                    break
+        
+        if not has_valid_items:
             is_items_valid = False
-            print("Not processing items because customer or order is invalid")
+            messages.error(request, "At least one item with a valid product and quantity is required")
+            print("No valid items found in formset")
         
         # Calculate total from items
         total_amount = 0
@@ -3097,7 +3103,11 @@ class SalesRecordingView(View):
         print(f"Validation status - Customer: {is_customer_valid}, Order: {is_order_valid}, Items: {is_items_valid}, Invoice: {is_invoice_valid}")
         
         if is_customer_valid and is_order_valid and is_items_valid and is_invoice_valid:
-            # Complete sales order with total
+            # Save the order first
+            sales_order = sales_order_form.save(commit=False)
+            sales_order.customer = customer
+            sales_order.status = 'new'
+            sales_order.payment_status = 'pending'
             sales_order.total_amount = total_amount
             sales_order.save()
             print(f"Sales order saved with ID: {sales_order.id}")
@@ -3126,7 +3136,7 @@ class SalesRecordingView(View):
             messages.success(request, "Sale recorded successfully!")
             return redirect('sales_order_detail', pk=sales_order.pk)
         
-        # If any form is invalid, show errors
+        # If any form is invalid, show errors and repopulate the form
         product_variants = ProductVariant.objects.all()
         products_data = [{
             'id': variant.id,
@@ -3164,3 +3174,18 @@ class SalesRecordingView(View):
             messages.error(request, "Please correct invoice information")
             
         return render(request, self.template_name, context)
+    
+
+
+def sales_order_detail(request, pk):
+    order = get_object_or_404(SalesOrder, pk=pk)
+    items = order.items.all()  # Changed from salesorderitem_set to items
+    invoice = getattr(order, 'invoice', None)
+    
+    context = {
+        'order': order,
+        'items': items,
+        'invoice': invoice,
+        'title': f'Sales Order #{order.order_number}'
+    }
+    return render(request, 'sales/salesorder_detail.html', context)
