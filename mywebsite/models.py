@@ -558,6 +558,7 @@ class InventoryItem(models.Model):
         return f"{self.product_variant.name} at {self.warehouse.name}"
 
 
+#sales
 class PurchaseOrder(models.Model):
     order_number = models.CharField(max_length=20, unique=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_orders')
