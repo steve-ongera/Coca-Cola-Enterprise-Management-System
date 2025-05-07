@@ -161,9 +161,8 @@
         </div>
     </div>
 </div>
-
 <!-- Chart.js -->
-<script src="{% static 'assets/vendor/chart.js/Chart.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 
 <script>
 // Account Balances Pie Chart
@@ -181,20 +180,24 @@ var accountBalancesChart = new Chart(ctx, {
     },
     options: {
         maintainAspectRatio: false,
-        tooltips: {
-            backgroundColor: "rgb(255,255,255)",
-            bodyFontColor: "#858796",
-            borderColor: '#dddfeb',
-            borderWidth: 1,
-            xPadding: 15,
-            yPadding: 15,
-            displayColors: false,
-            caretPadding: 10,
-        },
-        legend: {
-            display: true,
-            position: 'bottom'
-        },
+        plugins: {
+            tooltip: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                padding: {
+                    x: 15,
+                    y: 15
+                },
+                displayColors: false,
+                caretPadding: 10,
+            },
+            legend: {
+                display: true,
+                position: 'bottom'
+            }
+        }
     }
 });
 
@@ -215,18 +218,20 @@ var paymentMethodsChart = new Chart(ctx, {
     options: {
         maintainAspectRatio: false,
         scales: {
-            yAxes: [{
+            y: {
+                beginAtZero: true,
                 ticks: {
-                    beginAtZero: true,
                     callback: function(value) {
                         return 'KSh ' + value.toLocaleString();
                     }
                 }
-            }]
+            }
         },
-        legend: {
-            display: false
-        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
     }
 });
 
@@ -245,26 +250,30 @@ var salesByCustomerTypeChart = new Chart(ctx, {
     },
     options: {
         maintainAspectRatio: false,
-        tooltips: {
-            backgroundColor: "rgb(255,255,255)",
-            bodyFontColor: "#858796",
-            borderColor: '#dddfeb',
-            borderWidth: 1,
-            xPadding: 15,
-            yPadding: 15,
-            displayColors: false,
-            caretPadding: 10,
-            callbacks: {
-                label: function(tooltipItem, data) {
-                    var value = data.datasets[0].data[tooltipItem.index];
-                    return 'KSh ' + value.toLocaleString();
+        plugins: {
+            tooltip: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                padding: {
+                    x: 15,
+                    y: 15
+                },
+                displayColors: false,
+                caretPadding: 10,
+                callbacks: {
+                    label: function(context) {
+                        var value = context.raw;
+                        return 'KSh ' + value.toLocaleString();
+                    }
                 }
+            },
+            legend: {
+                display: true,
+                position: 'bottom'
             }
-        },
-        legend: {
-            display: true,
-            position: 'bottom'
-        },
+        }
     }
 });
 
@@ -294,19 +303,21 @@ var budgetPerformanceChart = new Chart(ctx, {
     options: {
         maintainAspectRatio: false,
         scales: {
-            yAxes: [{
+            y: {
+                beginAtZero: true,
                 ticks: {
-                    beginAtZero: true,
                     callback: function(value) {
                         return 'KSh ' + value.toLocaleString();
                     }
                 }
-            }]
+            }
         },
-        legend: {
-            display: true,
-            position: 'bottom'
-        },
+        plugins: {
+            legend: {
+                display: true,
+                position: 'bottom'
+            }
+        }
     }
 });
 </script>
