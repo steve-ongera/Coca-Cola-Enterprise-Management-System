@@ -3189,3 +3189,182 @@ def sales_order_detail(request, pk):
         'title': f'Sales Order #{order.order_number}'
     }
     return render(request, 'sales/salesorder_detail.html', context)
+
+
+
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from .models import SalesOrder
+from django.db.models import Q
+
+def sales_order_list(request):
+    # Get search parameters from request
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', '')
+    customer_filter = request.GET.get('customer', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    # Start with all orders
+    orders = SalesOrder.objects.select_related('customer', 'sales_representative').all()
+    
+    # Apply filters
+    if search_query:
+        orders = orders.filter(
+            Q(order_number__icontains=search_query) |
+            Q(customer__name__icontains=search_query) |
+            Q(sales_representative__user__first_name__icontains=search_query) |
+            Q(sales_representative__user__last_name__icontains=search_query)
+        )
+    
+    if status_filter:
+        orders = orders.filter(status=status_filter)
+        
+    if customer_filter:
+        orders = orders.filter(customer_id=customer_filter)
+        
+    if date_from:
+        orders = orders.filter(order_date__gte=date_from)
+        
+    if date_to:
+        orders = orders.filter(order_date__lte=date_to)
+    
+    # Order by most recent first
+    orders = orders.order_by('-order_date')
+    
+    # Pagination
+    paginator = Paginator(orders, 25)  # Show 25 orders per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'customer_filter': customer_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'status_choices': SalesOrder.STATUS_CHOICES,
+        'customers': Customer.objects.filter(status='active').order_by('name'),
+    }
+    
+    return render(request, 'sales/sales_order_list.html', context)
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import SalesOrder, Customer, ProductVariant
+from .forms import SalesOrderForm, SalesOrderItemFormSet
+
+def sales_order_update(request, pk):
+    order = get_object_or_404(SalesOrder.objects.prefetch_related('items'), pk=pk)
+    
+    if request.method == 'POST':
+        order_form = SalesOrderForm(request.POST, instance=order, prefix='order')
+        item_formset = SalesOrderItemFormSet(request.POST, instance=order, prefix='items')
+        
+        if order_form.is_valid() and item_formset.is_valid():
+            try:
+                order = order_form.save()
+                items = item_formset.save()
+                
+                # Delete any items marked for deletion
+                for item in item_formset.deleted_objects:
+                    item.delete()
+                
+                # Recalculate order total
+                order.total_amount = sum(item.subtotal for item in order.items.all())
+                order.save()
+                
+                messages.success(request, f'Sales order {order.order_number} has been updated successfully!')
+                return redirect('sales_order_detail', pk=order.pk)
+            
+            except Exception as e:
+                messages.error(request, f'Error updating order: {str(e)}')
+    else:
+        order_form = SalesOrderForm(instance=order, prefix='order')
+        item_formset = SalesOrderItemFormSet(instance=order, prefix='items')
+    
+    context = {
+        'order_form': order_form,
+        'item_formset': item_formset,
+        'order': order,
+        'title': f'Update Order #{order.order_number}',
+        'customers': Customer.objects.filter(status='active').order_by('name'),
+        'products': ProductVariant.objects.filter(status='active').select_related('product'),
+    }
+    
+    return render(request, 'sales/sales_order_form.html', context)
+
+
+
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+from django.contrib import messages
+from django.views.generic import DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .models import SalesOrder
+
+class SalesOrderDeleteView(LoginRequiredMixin, DeleteView):
+    model = SalesOrder
+    template_name = 'sales/sales_order_confirm_delete.html'
+    context_object_name = 'order'
+    
+    def get_success_url(self):
+        messages.success(self.request, f"Sales order {self.object.order_number} has been deleted successfully.")
+        return reverse('sales_order_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f"Delete Order #{self.object.order_number}"
+        return context
+    
+
+
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from django.urls import reverse
+from .models import SalesOrder, Invoice
+from .forms import InvoiceForm
+from django.views.generic import CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class InvoiceCreateView(LoginRequiredMixin, CreateView):
+    model = Invoice
+    form_class = InvoiceForm
+    template_name = 'sales/invoice_create.html'
+
+    def get_initial(self):
+        order = get_object_or_404(SalesOrder, pk=self.kwargs['pk'])
+        return {
+            'sales_order': order,
+            'invoice_number': f"INV-{order.order_number}",
+            'invoice_date': order.order_date,
+            'due_date': order.order_date + timedelta(days=30),
+            'payment_terms': order.customer.payment_terms or 'Net 30 days',
+            'total_amount': order.total_amount
+        }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        order = get_object_or_404(SalesOrder, pk=self.kwargs['pk'])
+        context['order'] = order
+        context['title'] = f"Create Invoice for Order #{order.order_number}"
+        return context
+
+    def form_valid(self, form):
+        order = get_object_or_404(SalesOrder, pk=self.kwargs['pk'])
+        form.instance.sales_order = order
+        form.instance.created_by = self.request.user
+        response = super().form_valid(form)
+        
+        # Update order payment status if needed
+        if form.cleaned_data['status'] == 'paid':
+            order.payment_status = 'paid'
+            order.save()
+        
+        messages.success(self.request, f"Invoice {form.instance.invoice_number} created successfully!")
+        return response
+
+    def get_success_url(self):
+        return reverse('sales_order_detail', kwargs={'pk': self.kwargs['pk']})

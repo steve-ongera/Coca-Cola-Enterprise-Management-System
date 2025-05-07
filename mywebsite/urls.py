@@ -168,6 +168,10 @@ urlpatterns = [
     #sales
     path('sales/new/', views.SalesRecordingView.as_view(), name='sales_recording'),
     path('sales/<int:pk>/', views.sales_order_detail , name='sales_order_detail'),
+    path('orders/', views.sales_order_list, name='sales_order_list'),
+    path('orders/<int:pk>/edit/', views.sales_order_update, name='sales_order_update'),
+    path('orders/<int:pk>/delete/', views.SalesOrderDeleteView.as_view(), name='sales_order_delete'),
+    path('orders/<int:pk>/invoice/create/', views.InvoiceCreateView.as_view(), name='invoice_create'),
 
 
     
