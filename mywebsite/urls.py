@@ -159,6 +159,11 @@ urlpatterns = [
 
     #finance module
     path('finance_dashboard/' , views.finance_dashboard , name="finance_dashboard"),
+     path('transactions/', views.TransactionListView.as_view(), name='transaction_list'),
+    path('transactions/create/', views.TransactionCreateView.as_view(), name='transaction_create'),
+    path('transactions/<int:pk>/', views.TransactionDetailView.as_view(), name='transaction_detail'),
+    path('transactions/<int:pk>/update/', views.TransactionUpdateView.as_view(), name='transaction_update'),
+    path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction_delete'),
 
 
     

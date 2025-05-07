@@ -2,23 +2,116 @@
 {% load static %}
 
 {% block content %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+    
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f5f5f5;
+    }
+    
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: none;
+    }
+    
+    .card-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #e0e0e0;
+        font-weight: 500;
+        color: #333333;
+    }
+    
+    .summary-card {
+        border-left: 4px solid;
+        transition: transform 0.3s ease;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .badge {
+        font-weight: 500;
+        padding: 5px 10px;
+        border-radius: 12px;
+    }
+    
+    .table th {
+        font-weight: 500;
+        color: #555555;
+    }
+    
+    /* Coca-Cola color scheme */
+    .bg-coca-cola-red {
+        background-color: #F40009;
+    }
+    
+    .text-coca-cola-red {
+        color: #F40009;
+    }
+    
+    .border-coca-cola-red {
+        border-color: #F40009 !important;
+    }
+    
+    .bg-coca-cola-light {
+        background-color: #f9e5e6;
+    }
+    
+    .btn-coca-cola {
+        background-color: #F40009;
+        color: white;
+        border: none;
+    }
+    
+    .btn-coca-cola:hover {
+        background-color: #d10007;
+        color: white;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+</style>
+
 <div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Financial Dashboard</h1>
+        <div class="d-flex">
+            <img src="{% static 'assets/img/coca-cola-logo.png' %}" height="40" class="mr-3" alt="Almasi Bottlers Logo">
+           
+        </div>
+    </div>
+
     <!-- Summary Cards Row -->
     <div class="row mb-4">
         {% for card in summary_cards %}
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-{{ card.color }} shadow h-100 py-2">
+            <div class="card summary-card border-left-{% cycle 'primary' 'success' 'info' 'warning' %} h-100">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-{{ card.color }} text-uppercase mb-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #666;">
                                 {{ card.title }}</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">KSh {{ card.value|floatformat:2 }}</div>
+                            <div class="h4 mb-0 font-weight-bold" style="color: #333;">KSh {{ card.value|floatformat:2 }}
+                            </div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas {{ card.icon }} fa-2x text-gray-300"></i>
+                            <div class="icon-circle bg-coca-cola-light">
+                                <i class="fas {{ card.icon }} text-coca-cola-red"></i>
+                            </div>
                         </div>
                     </div>
+                    {% if card.footer_text %}
+                    <div class="mt-2 text-xs text-muted">
+                        <i class="fas fa-arrow-{% if card.footer_icon == 'up' %}up text-success{% else %}down text-danger{% endif %} mr-1"></i>
+                        {{ card.footer_text }}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -31,10 +124,19 @@
         <div class="col-xl-6 col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Account Balances by Type</h6>
+                    <h6 class="m-0 font-weight-bold">Account Balances by Type</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink1" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow">
+                            <a class="dropdown-item" href="#">View Details</a>
+                            <a class="dropdown-item" href="#">Export Data</a>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="chart-pie pt-4 pb-2">
+                    <div class="chart-container">
                         <canvas id="accountBalancesChart"></canvas>
                     </div>
                 </div>
@@ -45,10 +147,19 @@
         <div class="col-xl-6 col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Payment Methods (Last 30 Days)</h6>
+                    <h6 class="m-0 font-weight-bold">Payment Methods (Last 30 Days)</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink2" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow">
+                            <a class="dropdown-item" href="#">View Details</a>
+                            <a class="dropdown-item" href="#">Export Data</a>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="chart-bar pt-4 pb-2">
+                    <div class="chart-container">
                         <canvas id="paymentMethodsChart"></canvas>
                     </div>
                 </div>
@@ -62,10 +173,19 @@
         <div class="col-xl-6 col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Sales by Customer Type (YTD)</h6>
+                    <h6 class="m-0 font-weight-bold">Sales by Customer Type (YTD)</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink3" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow">
+                            <a class="dropdown-item" href="#">View Details</a>
+                            <a class="dropdown-item" href="#">Export Data</a>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="chart-pie pt-4 pb-2">
+                    <div class="chart-container">
                         <canvas id="salesByCustomerTypeChart"></canvas>
                     </div>
                 </div>
@@ -76,10 +196,19 @@
         <div class="col-xl-6 col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Budget vs Actual - {{ current_period }}</h6>
+                    <h6 class="m-0 font-weight-bold">Budget vs Actual - {{ current_period }}</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink4" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow">
+                            <a class="dropdown-item" href="#">View Details</a>
+                            <a class="dropdown-item" href="#">Export Data</a>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="chart-bar pt-4 pb-2">
+                    <div class="chart-container">
                         <canvas id="budgetPerformanceChart"></canvas>
                     </div>
                 </div>
@@ -89,34 +218,35 @@
 
     <!-- Recent Transactions Table -->
     <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold">Recent Transactions</h6>
+            <a href="#" class="btn btn-sm btn-coca-cola">View All</a>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
+                <table class="table table-hover" width="100%" cellspacing="0">
+                    <thead class="bg-coca-cola-light">
                         <tr>
                             <th>Date</th>
                             <th>Reference</th>
                             <th>Description</th>
-                            <th>Amount</th>
+                            <th class="text-right">Amount</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for transaction in recent_transactions %}
                         <tr>
-                            <td>{{ transaction.transaction_date }}</td>
+                            <td>{{ transaction.transaction_date|date:"d M Y" }}</td>
                             <td>{{ transaction.reference_number }}</td>
                             <td>{{ transaction.description|truncatechars:50 }}</td>
-                            <td>
-                                {% with entries=transaction.entries.all %}
-                                    KSh {{ entries.0.amount|floatformat:2 }}
-                                {% endwith %}
+                            <td class="text-right font-weight-bold">
+                                KSh {{ transaction.entries.first.amount }}
                             </td>
                             <td>
-                                <span class="badge badge-{% if transaction.status == 'posted' %}success{% else %}warning{% endif %}">
+                                <span class="badge 
+                                    {% if transaction.status == 'posted' %}badge-success
+                                    {% else %}badge-warning{% endif %}">
                                     {{ transaction.get_status_display }}
                                 </span>
                             </td>
@@ -130,17 +260,18 @@
 
     <!-- Tax Summary Table -->
     <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Tax Summary - {{ fiscal_year }}</h6>
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold">Tax Summary - {{ fiscal_year }}</h6>
+            <a href="#" class="btn btn-sm btn-coca-cola">Tax Reports</a>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
+                <table class="table table-hover" width="100%" cellspacing="0">
+                    <thead class="bg-coca-cola-light">
                         <tr>
                             <th>Tax Type</th>
                             <th>Status</th>
-                            <th>Amount</th>
+                            <th class="text-right">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -148,11 +279,16 @@
                         <tr>
                             <td>{{ tax.tax_type }}</td>
                             <td>
-                                <span class="badge badge-{% if tax.status == 'paid' %}success{% elif tax.status == 'filed' %}info{% else %}warning{% endif %}">
+                                <span class="badge 
+                                    {% if tax.status == 'paid' %}badge-success
+                                    {% elif tax.status == 'filed' %}badge-info
+                                    {% else %}badge-warning{% endif %}">
                                     {{ tax.get_status_display }}
                                 </span>
                             </td>
-                            <td>KSh {{ tax.total_amount|floatformat:2 }}</td>
+                            <td class="text-right font-weight-bold">
+                                KSh {{ tax.total_amount }}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -166,44 +302,107 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 
 <script>
-// Simple function to create charts with minimal configuration
+// Coca-Cola inspired color palette
+const cocaColaColors = {
+    red: '#F40009',
+    darkRed: '#D10007',
+    lightRed: '#FF5A5F',
+    silver: '#9EA2A2',
+    black: '#000000',
+    white: '#FFFFFF'
+};
+
+// Extended palette for charts
+const chartColors = [
+    cocaColaColors.red,
+    '#1A5276',  // Dark blue
+    '#28B463',  // Green
+    '#F39C12',  // Orange
+    '#884EA0',  // Purple
+    '#E74C3C',  // Red
+    '#3498DB',  // Blue
+    '#2ECC71',  // Light green
+];
+
+// Function to create charts with Coca-Cola theme
 function createChart(elementId, type, labels, data, options = {}) {
-    var ctx = document.getElementById(elementId);
+    const ctx = document.getElementById(elementId);
     if (!ctx) return;
     
-    // Default options based on chart type
-    var defaultOptions = {
+    // Default options
+    const defaultOptions = {
         maintainAspectRatio: false,
+        responsive: true,
         plugins: {
             legend: {
-                display: true,
-                position: 'bottom'
+                position: 'bottom',
+                labels: {
+                    font: {
+                        family: 'Roboto',
+                        size: 12
+                    },
+                    padding: 20,
+                    usePointStyle: true,
+                    pointStyle: 'circle'
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleFont: {
+                    family: 'Roboto',
+                    size: 14,
+                    weight: 'bold'
+                },
+                bodyFont: {
+                    family: 'Roboto',
+                    size: 12
+                },
+                padding: 12,
+                displayColors: true,
+                usePointStyle: true,
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += 'KSh ' + context.raw.toLocaleString();
+                        return label;
+                    }
+                }
             }
         }
     };
     
     // Merge options
-    var chartOptions = Object.assign({}, defaultOptions, options);
+    const chartOptions = Object.assign({}, defaultOptions, options);
     
     // Create dataset based on type
-    var datasets = [];
+    const datasets = [];
     if (Array.isArray(data[0])) {
         // Multiple datasets
-        for (var i = 0; i < data.length; i++) {
+        for (let i = 0; i < data.length; i++) {
             datasets.push({
                 label: options.datasetLabels ? options.datasetLabels[i] : `Dataset ${i+1}`,
                 data: data[i],
-                backgroundColor: options.colors ? options.colors[i] : getDefaultColor(i),
-                borderColor: options.borderColors ? options.borderColors[i] : getDefaultColor(i)
+                backgroundColor: options.colors ? options.colors[i] : chartColors[i % chartColors.length],
+                borderColor: options.borderColors ? options.borderColors[i] : '#FFFFFF',
+                borderWidth: 1
             });
         }
     } else {
         // Single dataset
+        const backgroundColors = options.colors || 
+            (type === 'pie' || type === 'doughnut' ? 
+                labels.map((_, i) => chartColors[i % chartColors.length]) : 
+                chartColors[0]);
+                
         datasets.push({
             label: options.datasetLabel || 'Value',
             data: data,
-            backgroundColor: options.colors || getDefaultColors(data.length),
-            borderColor: options.borderColors
+            backgroundColor: backgroundColors,
+            borderColor: options.borderColors || '#FFFFFF',
+            borderWidth: 1
         });
     }
     
@@ -217,29 +416,28 @@ function createChart(elementId, type, labels, data, options = {}) {
     });
 }
 
-// Helper function for default colors
-function getDefaultColor(index) {
-    var colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
-    return colors[index % colors.length];
-}
-
-function getDefaultColors(count) {
-    var colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
-    var result = [];
-    for (var i = 0; i < count; i++) {
-        result.push(colors[i % colors.length]);
-    }
-    return result;
-}
-
-// Initialize all charts
+// Initialize all charts when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // 1. Account Balances Pie Chart
     createChart(
         'accountBalancesChart', 
         'pie',
         {{ charts.account_balances.labels|safe }},
-        {{ charts.account_balances.data|safe }}
+        {{ charts.account_balances.data|safe }},
+        {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${context.label}: KSh ${value.toLocaleString()} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
     );
     
     // 2. Payment Methods Bar Chart
@@ -249,7 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {
         {{ charts.payment_methods.labels|safe }},
         {{ charts.payment_methods.data|safe }},
         {
-            datasetLabel: 'Amount',
+            datasetLabel: 'Amount (KSh)',
             plugins: {
                 legend: {
                     display: false
@@ -258,9 +456,26 @@ document.addEventListener('DOMContentLoaded', function() {
             scales: {
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        drawBorder: false
+                    },
                     ticks: {
                         callback: function(value) {
                             return 'KSh ' + value.toLocaleString();
+                        },
+                        font: {
+                            family: 'Roboto'
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Roboto'
                         }
                     }
                 }
@@ -275,14 +490,10 @@ document.addEventListener('DOMContentLoaded', function() {
         {{ charts.sales_by_customer_type.labels|safe }},
         {{ charts.sales_by_customer_type.data|safe }},
         {
+            cutout: '70%',
             plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            var value = context.raw;
-                            return 'KSh ' + value.toLocaleString();
-                        }
-                    }
+                legend: {
+                    position: 'right'
                 }
             }
         }
@@ -299,13 +510,30 @@ document.addEventListener('DOMContentLoaded', function() {
         ],
         {
             datasetLabels: ['Budget', 'Actual'],
-            colors: ['#1cc88a', '#4e73df'],
+            colors: [cocaColaColors.silver, cocaColaColors.red],
             scales: {
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        drawBorder: false
+                    },
                     ticks: {
                         callback: function(value) {
                             return 'KSh ' + value.toLocaleString();
+                        },
+                        font: {
+                            family: 'Roboto'
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Roboto'
                         }
                     }
                 }

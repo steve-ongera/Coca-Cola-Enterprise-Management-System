@@ -1,0 +1,170 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center" style="background-color: #E61D2B !important;">
+      <h5 style="color:white;" class="mb-0 fw-bold">
+        <i class="bi bi-journal-bookmark me-2"></i>Transaction Records
+      </h5>
+      <a href="{% url 'transaction_create' %}" class="btn btn-light btn-sm rounded-pill px-3">
+        <i class="bi bi-plus-lg me-1"></i> Add Transaction
+      </a>
+    </div>
+    
+    <div class="card-body p-4">
+      <!-- Search and Filter Row -->
+      <div class="row mb-4 g-3">
+        <div class="col-md-6">
+          <form method="get" class="row g-2">
+            <div class="col-md-4">
+              <select name="status" class="form-select form-select-sm border-danger">
+                <option value="">All Statuses</option>
+                {% for status in status_choices %}
+                <option value="{{ status.0 }}" {% if current_status == status.0 %}selected{% endif %}>
+                  {{ status.1 }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <input type="date" name="date_from" class="form-control form-control-sm border-danger" 
+                     value="{{ date_from }}" placeholder="From date">
+            </div>
+            <div class="col-md-4">
+              <input type="date" name="date_to" class="form-control form-control-sm border-danger" 
+                     value="{{ date_to }}" placeholder="To date">
+            </div>
+          </form>
+        </div>
+        
+        <div class="col-md-6">
+          <form method="get" class="input-group">
+            <input type="text" name="search" class="form-control form-control-sm border-danger" 
+                   placeholder="Search transactions..." value="{{ search_query }}">
+            <button class="btn btn-danger btn-sm" type="submit" style="background-color: #E61D2B;">
+              <i class="bi bi-search"></i>
+            </button>
+            {% if search_query or current_status or date_from or date_to %}
+            <a href="{% url 'transaction_list' %}" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+      
+      <!-- Transaction Table -->
+      <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle">
+          <thead>
+            <tr class="table-light border-bottom">
+              <th class="fw-bold">Date</th>
+              <th class="fw-bold">Reference</th>
+              <th class="fw-bold">Description</th>
+              <th class="fw-bold">Amount</th>
+              <th class="fw-bold">Status</th>
+              <th class="fw-bold">Created By</th>
+              <th class="text-center fw-bold">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for transaction in page_obj %}
+            <tr class="border-bottom">
+              <td>{{ transaction.transaction_date|date:"M d, Y" }}</td>
+              <td><span class="fw-medium">{{ transaction.reference_number }}</span></td>
+              <td>{{ transaction.description|truncatechars:30 }}</td>
+              <td class="fw-medium">
+                {% with entries=transaction.entries.all %}
+                  KSh {{ entries.0.amount|floatformat:2 }}
+                {% endwith %}
+              </td>
+              <td>
+                <span class="badge rounded-pill {% if transaction.status == 'posted' %}bg-success{% elif transaction.status == 'voided' %}bg-danger{% else %}bg-warning{% endif %}">
+                  {{ transaction.get_status_display }}
+                </span>
+              </td>
+              <td>{{ transaction.created_by.get_full_name|default:transaction.created_by.username }}</td>
+              <td>
+                <div class="btn-group btn-group-sm d-flex justify-content-center">
+                  <a href="{% url 'transaction_detail' transaction.pk %}" class="btn btn-outline-danger" title="View" style="border-color: #E61D2B;">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{% url 'transaction_update' transaction.pk %}" class="btn btn-outline-danger" title="Edit" style="border-color: #E61D2B;">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <a href="{% url 'transaction_delete' transaction.pk %}" class="btn btn-outline-danger" title="Delete" style="border-color: #E61D2B;">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <i class="bi bi-journal-x display-5 text-danger" style="color: #E61D2B !important;"></i>
+                <p class="mt-3 text-muted">No transactions found matching your criteria</p>
+                <a href="{% url 'transaction_list' %}" class="btn btn-sm btn-outline-danger rounded-pill px-4 mt-2" style="border-color: #E61D2B; color: #E61D2B;">
+                  Reset filters
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      {% if page_obj.paginator.num_pages > 1 %}
+      <nav aria-label="Transaction pagination">
+        <ul class="pagination pagination-sm justify-content-center mt-4">
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link text-danger border-danger" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" style="color: #E61D2B !important; border-color: #E61D2B !important;">
+              <i class="bi bi-chevron-double-left"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link text-danger border-danger" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" style="color: #E61D2B !important; border-color: #E61D2B !important;">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          {% endif %}
+          
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <li class="page-item active">
+                <span class="page-link bg-danger border-danger" style="background-color: #E61D2B !important; border-color: #E61D2B !important;">{{ num }}</span>
+              </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link text-danger border-danger" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" style="color: #E61D2B !important; border-color: #E61D2B !important;">
+                  {{ num }}
+                </a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link text-danger border-danger" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" style="color: #E61D2B !important; border-color: #E61D2B !important;">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link text-danger border-danger" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" style="color: #E61D2B !important; border-color: #E61D2B !important;">
+              <i class="bi bi-chevron-double-right"></i>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+    
+    <div class="card-footer bg-light text-end small py-3">
+      <span class="text-muted">Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} transactions</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -2746,3 +2746,178 @@ def finance_dashboard(request):
     }
     
     return render(request, 'finance/dashboard.html', context)
+
+
+
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.db.models import Q
+from .models import Transaction, TransactionEntry
+from .forms import TransactionForm, TransactionEntryFormSet
+
+class TransactionListView(ListView):
+    model = Transaction
+    template_name = 'transactions/transaction_list.html'
+    context_object_name = 'transactions'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('created_by', 'approved_by')
+        
+        # Search functionality
+        search_query = self.request.GET.get('search')
+        if search_query:
+            queryset = queryset.filter(
+                Q(reference_number__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+        
+        # Status filter
+        status_filter = self.request.GET.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        # Date range filter
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        if date_from:
+            queryset = queryset.filter(transaction_date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(transaction_date__lte=date_to)
+            
+        return queryset.order_by('-transaction_date')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['status_choices'] = Transaction.STATUS_CHOICES
+        context['current_status'] = self.request.GET.get('status', '')
+        context['search_query'] = self.request.GET.get('search', '')
+        context['date_from'] = self.request.GET.get('date_from', '')
+        context['date_to'] = self.request.GET.get('date_to', '')
+        return context
+
+
+class TransactionDetailView(DetailView):
+    model = Transaction
+    template_name = 'transactions/transaction_detail.html'
+    context_object_name = 'transaction'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['entries'] = self.object.entries.all().select_related('account')
+        return context
+
+
+class TransactionCreateView(CreateView):
+    model = Transaction
+    form_class = TransactionForm
+    template_name = 'transactions/transaction_form.html'
+    success_url = reverse_lazy('transaction_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['entry_formset'] = TransactionEntryFormSet(self.request.POST)
+        else:
+            context['entry_formset'] = TransactionEntryFormSet()
+        return context
+    
+    def form_valid(self, form):
+        context = self.get_context_data()
+        entry_formset = context['entry_formset']
+        
+        if entry_formset.is_valid():
+            self.object = form.save(commit=False)
+            self.object.created_by = self.request.user
+            self.object.save()
+            
+            entries = entry_formset.save(commit=False)
+            for entry in entries:
+                entry.transaction = self.object
+                entry.save()
+                
+                # Update account balance
+                account = entry.account
+                if entry.entry_type == 'debit':
+                    account.balance += entry.amount
+                else:
+                    account.balance -= entry.amount
+                account.save()
+            
+            return super().form_valid(form)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+
+class TransactionUpdateView(UpdateView):
+    model = Transaction
+    form_class = TransactionForm
+    template_name = 'transactions/transaction_form.html'
+    
+    def get_success_url(self):
+        return reverse_lazy('transaction_detail', kwargs={'pk': self.object.pk})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['entry_formset'] = TransactionEntryFormSet(self.request.POST, instance=self.object)
+        else:
+            context['entry_formset'] = TransactionEntryFormSet(instance=self.object)
+        return context
+    
+    def form_valid(self, form):
+        context = self.get_context_data()
+        entry_formset = context['entry_formset']
+        
+        if entry_formset.is_valid():
+            # First, reverse all existing entries' impact on account balances
+            for entry in self.object.entries.all():
+                account = entry.account
+                if entry.entry_type == 'debit':
+                    account.balance -= entry.amount
+                else:
+                    account.balance += entry.amount
+                account.save()
+            
+            # Save the transaction and new entries
+            self.object = form.save()
+            entries = entry_formset.save(commit=False)
+            
+            for entry in entries:
+                entry.transaction = self.object
+                entry.save()
+                
+                # Update account balance with new values
+                account = entry.account
+                if entry.entry_type == 'debit':
+                    account.balance += entry.amount
+                else:
+                    account.balance -= entry.amount
+                account.save()
+            
+            # Delete any entries marked for deletion
+            for entry in entry_formset.deleted_objects:
+                entry.delete()
+                
+            return super().form_valid(form)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+
+class TransactionDeleteView(DeleteView):
+    model = Transaction
+    template_name = 'transactions/transaction_confirm_delete.html'
+    success_url = reverse_lazy('transaction_list')
+    
+    def delete(self, request, *args, **kwargs):
+        # First, reverse all entries' impact on account balances
+        transaction = self.get_object()
+        for entry in transaction.entries.all():
+            account = entry.account
+            if entry.entry_type == 'debit':
+                account.balance -= entry.amount
+            else:
+                account.balance += entry.amount
+            account.save()
+        
+        return super().delete(request, *args, **kwargs)

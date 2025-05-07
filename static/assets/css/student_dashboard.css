@@ -1,4 +1,20 @@
-/* student_dashboard.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+    
+
+/*--------------------------------------------------------------
+# General
+--------------------------------------------------------------*/
+:root {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background: #fff6f6; /* Soft white with red tint */
+  color: #333333;
+}
+
 
 :root {
     --primary-color: #ED1C16;  /* Coca-Cola Red */
@@ -16,7 +32,9 @@
 
 /* Global Styles */
 body {
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Roboto', sans-serif;
+    background: #fff6f6; /* Soft white with red tint */
+    color: #333333;
     margin: 0;
     padding: 0;
     background-color: var(--bg-light);

@@ -799,3 +799,51 @@ class DowntimeIncidentForm(forms.ModelForm):
             'reason': forms.Textarea(attrs={'rows': 3}),
             'resolution': forms.Textarea(attrs={'rows': 3}),
         }
+
+
+from django import forms
+from .models import Transaction
+from django.contrib.auth.models import User
+
+class TransactionForm(forms.ModelForm):
+    class Meta:
+        model = Transaction
+        fields = [
+            'transaction_date',
+            'description',
+            'reference_number',
+            'status',
+            'created_by',
+            'approved_by',
+        ]
+        widgets = {
+            'transaction_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'created_by': forms.Select(attrs={'class': 'form-select'}),
+            'approved_by': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+
+from django import forms
+from django.forms import inlineformset_factory
+from .models import Transaction, TransactionEntry, Account
+
+class TransactionEntryForm(forms.ModelForm):
+    class Meta:
+        model = TransactionEntry
+        fields = ['account', 'amount', 'entry_type']
+        widgets = {
+            'account': forms.Select(attrs={'class': 'form-select'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control'}),
+            'entry_type': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+# Create the formset
+TransactionEntryFormSet = inlineformset_factory(
+    parent_model=Transaction,
+    model=TransactionEntry,
+    form=TransactionEntryForm,
+    extra=2,  # Start with 2 entries by default (can be adjusted)
+    can_delete=True
+)

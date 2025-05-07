@@ -1,0 +1,129 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card border-0 shadow" style="border-top: 4px solid #F40009;">
+    <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(to right, #F40009, #D30006);">
+      <h5 class="mb-0">
+        <img src="https://www.coca-colacompany.com/content/dam/journey/us/en/logos/TCCC_PrimaryWordmark_Horizontal_White.svg" alt="Coca-Cola" style="height: 24px; margin-right: 10px; vertical-align: middle;">
+        <span style="vertical-align: middle;">Transaction Details</span>
+      </h5>
+      <div>
+        <a href="{% url 'transaction_update' transaction.pk %}" class="btn btn-light btn-sm me-1" style="color: #F40009;">
+          <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+        <a href="{% url 'transaction_list' %}" class="btn btn-outline-light btn-sm">
+          <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+      </div>
+    </div>
+    
+    <div class="card-body" style="background-color: #f9f9f9;">
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card mb-3 border-0 shadow-sm">
+            <div class="card-header" style="background-color: white; border-bottom: 2px solid #F40009;">
+              <h6 class="mb-0" style="color: #F40009;">Transaction Information</h6>
+            </div>
+            <div class="card-body">
+              <dl class="row mb-0">
+                <dt class="col-sm-4" style="color: #333;">Reference Number:</dt>
+                <dd class="col-sm-8">{{ transaction.reference_number }}</dd>
+                
+                <dt class="col-sm-4" style="color: #333;">Date:</dt>
+                <dd class="col-sm-8">{{ transaction.transaction_date|date:"M d, Y" }}</dd>
+                
+                <dt class="col-sm-4" style="color: #333;">Status:</dt>
+                <dd class="col-sm-8">
+                  <span class="badge" style="background-color: {% if transaction.status == 'posted' %}#2E8B57{% elif transaction.status == 'voided' %}#F40009{% else %}#FFC72C{% endif %}; color: white;">
+                    {{ transaction.get_status_display }}
+                  </span>
+                </dd>
+                
+                <dt class="col-sm-4" style="color: #333;">Created By:</dt>
+                <dd class="col-sm-8">{{ transaction.created_by.get_full_name|default:transaction.created_by.username }}</dd>
+                
+                <dt class="col-sm-4" style="color: #333;">Created At:</dt>
+                <dd class="col-sm-8">{{ transaction.created_at|date:"M d, Y H:i" }}</dd>
+                
+                {% if transaction.approved_by %}
+                <dt class="col-sm-4" style="color: #333;">Approved By:</dt>
+                <dd class="col-sm-8">{{ transaction.approved_by.get_full_name|default:transaction.approved_by.username }}</dd>
+                {% endif %}
+              </dl>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header" style="background-color: white; border-bottom: 2px solid #F40009;">
+              <h6 class="mb-0" style="color: #F40009;">Description</h6>
+            </div>
+            <div class="card-body">
+              <p style="color: #333;">{{ transaction.description|linebreaksbr }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background-color: white; border-bottom: 2px solid #F40009;">
+          <h6 class="mb-0" style="color: #F40009;">Journal Entries</h6>
+          <span class="badge" style="background-color: #F40009; color: white;">Total: {{ entries|length }}</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+              <thead style="background-color: #F40009; color: white;">
+                <tr>
+                  <th>Account</th>
+                  <th>Account Type</th>
+                  <th>Debit</th>
+                  <th>Credit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for entry in entries %}
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td>{{ entry.account.name }} ({{ entry.account.account_number }})</td>
+                  <td>{{ entry.account.get_account_type_display }}</td>
+                  <td style="color: #F40009; font-weight: 500;">{% if entry.entry_type == 'debit' %}{{ entry.amount|floatformat:2 }}{% endif %}</td>
+                  <td style="color: #2E8B57; font-weight: 500;">{% if entry.entry_type == 'credit' %}{{ entry.amount|floatformat:2 }}{% endif %}</td>
+                </tr>
+                {% endfor %}
+                <tr style="background-color: #f5f5f5; font-weight: bold;">
+                  <td colspan="2" class="text-end">Total:</td>
+                  <td style="color: #F40009;">{{ transaction.total_debit|floatformat:2 }}</td>
+                  <td style="color: #2E8B57;">{{ transaction.total_credit|floatformat:2 }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-footer text-muted" style="background-color: white; border-top: 1px solid #ddd; font-size: 12px;">
+      <div class="d-flex justify-content-between align-items-center">
+        <span>Coca-Cola Financial System</span>
+        <span>{{ transaction.created_at|date:"Y" }} The Coca-Cola Company. All Rights Reserved.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  body {
+    background-color: #f9f9f9;
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  .card {
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .table-hover tbody tr:hover {
+    background-color: rgba(244, 0, 9, 0.05);
+  }
+</style>
+{% endblock %}
