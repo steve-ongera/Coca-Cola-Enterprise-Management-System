@@ -563,6 +563,32 @@ def is_admin(user):
 @user_passes_test(is_admin)
 def employee_detail(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
+
+    #stats
+    # Calculate date range for past 6 months
+    six_months_ago = datetime.now() - timedelta(days=180)
+    
+    # Get attendance data for past 6 months
+    attendance_records = Attendance.objects.filter(
+        employee=employee,
+        date__gte=six_months_ago
+    ).order_by('-date')
+    
+    # Calculate attendance percentage
+    total_work_days = attendance_records.count()
+    present_days = attendance_records.filter(status='present').count()
+    attendance_percentage = 0
+    if total_work_days > 0:
+        attendance_percentage = round((present_days / total_work_days) * 100)
+    
+    # Get leave data for past 6 months
+    leave_stats = Leave.objects.filter(
+        employee=employee,
+        start_date__gte=six_months_ago
+    ).aggregate(
+        total_leaves=Count('id'),
+        approved_leaves=Count('id', filter=Q(status='approved'))
+    )
     
     # Get related data with pagination (5 items per page)
     position_history = PositionHistory.objects.filter(employee=employee).order_by('-start_date')[:20]
@@ -610,6 +636,8 @@ def employee_detail(request, pk):
         'performance_reviews': performance_reviews_page,
         'tenure_years': tenure_years,
         'tenure_months': tenure_months,
+        'attendance_percentage': attendance_percentage,
+        'leave_stats': leave_stats,
     }
     
     return render(request, 'employees/employee_detail.html', context)
@@ -2545,3 +2573,152 @@ def maintenance_calendar(request):
         'next_month': next_month,
     }
     return render(request, 'maintenance/calendar.html', context)
+
+
+#finance departent views 
+from django.shortcuts import render
+from django.db.models import Sum, Count, Q
+from django.utils import timezone
+from datetime import timedelta
+from .models import Account, Transaction, Payment, Invoice, SalesOrder, Budget, TaxRecord
+
+def finance_dashboard(request):
+    # Date ranges
+    today = timezone.now().date()
+    start_of_month = today.replace(day=1)
+    start_of_year = today.replace(month=1, day=1)
+    thirty_days_ago = today - timedelta(days=30)
+    
+    ## 1. Financial Position Summary
+    # Account balances by type
+    account_balances = Account.objects.filter(is_active=True).values(
+        'account_type'
+    ).annotate(
+        total_balance=Sum('balance')
+    ).order_by('account_type')
+    
+    # Convert to dictionary for easier access
+    balance_summary = {item['account_type']: item['total_balance'] for item in account_balances}
+    
+    ## 2. Cash Flow Overview
+    # Recent transactions
+    recent_transactions = Transaction.objects.filter(
+        status='posted',
+        transaction_date__gte=thirty_days_ago
+    ).order_by('-transaction_date')[:10]
+    
+    # Payment methods breakdown
+    payment_methods = Payment.objects.filter(
+        payment_date__gte=thirty_days_ago
+    ).values('payment_method').annotate(
+        total_amount=Sum('amount'),
+        count=Count('id')
+    )
+    
+    ## 3. Revenue Tracking
+    # Invoice status summary
+    invoice_summary = Invoice.objects.aggregate(
+        total_invoiced=Sum('total_amount'),
+        unpaid=Sum('total_amount', filter=Q(status='unpaid')),
+        partial=Sum('total_amount', filter=Q(status='partial')),
+        paid=Sum('total_amount', filter=Q(status='paid'))
+    )
+    
+    # Sales by customer type
+    sales_by_customer_type = SalesOrder.objects.filter(
+        order_date__gte=start_of_year
+    ).values('customer__customer_type').annotate(
+        total_sales=Sum('total_amount')
+    )
+    
+    ## 4. Budget vs Actual
+    # Current period budget performance
+    budget_performance = Budget.objects.filter(
+        fiscal_year=str(today.year),
+        period='monthly'
+    ).select_related('account', 'department').annotate(
+        actual_spend=Sum('account__transaction_entries__amount',
+                        filter=Q(account__transaction_entries__entry_type='debit') &
+                               Q(account__transaction_entries__transaction__transaction_date__gte=start_of_month))
+    )[:5]
+    
+    ## 5. Tax Compliance
+    # Tax obligations
+    tax_summary = TaxRecord.objects.filter(
+        period_end__gte=start_of_year
+    ).values('tax_type', 'status').annotate(
+        total_amount=Sum('amount')
+    )
+    
+    context = {
+        # Summary Cards
+        'summary_cards': [
+            {
+                'title': 'Total Assets',
+                'value': balance_summary.get('asset', 0),
+                'icon': 'fa-piggy-bank',
+                'color': 'success'
+            },
+            {
+                'title': 'Total Liabilities',
+                'value': balance_summary.get('liability', 0),
+                'icon': 'fa-hand-holding-usd',
+                'color': 'danger'
+            },
+            {
+                'title': 'Monthly Revenue',
+                'value': invoice_summary.get('paid', 0),
+                'icon': 'fa-chart-line',
+                'color': 'info'
+            },
+            {
+                'title': 'Pending Invoices',
+                'value': invoice_summary.get('unpaid', 0),
+                'icon': 'fa-file-invoice-dollar',
+                'color': 'warning'
+            },
+        ],
+        
+        # Charts Data
+        'charts': {
+            # Account Balances Pie Chart
+            'account_balances': {
+                'labels': [dict(Account.ACCOUNT_TYPE_CHOICES).get(t) for t in balance_summary.keys()],
+                'data': list(balance_summary.values()),
+                'type': 'pie'
+            },
+            
+            # Payment Methods Breakdown
+            'payment_methods': {
+                'labels': [p['payment_method'] for p in payment_methods],
+                'data': [p['total_amount'] for p in payment_methods],
+                'type': 'bar'
+            },
+            
+            # Sales by Customer Type
+            'sales_by_customer_type': {
+                'labels': [s['customer__customer_type'] for s in sales_by_customer_type],
+                'data': [s['total_sales'] for s in sales_by_customer_type],
+                'type': 'doughnut'
+            },
+            
+            # Monthly Budget Performance
+            'budget_performance': {
+                'labels': [b.account.name for b in budget_performance],
+                'budget': [b.amount for b in budget_performance],
+                'actual': [b.actual_spend or 0 for b in budget_performance],
+                'type': 'bar'
+            }
+        },
+        
+        # Tables
+        'recent_transactions': recent_transactions,
+        'budget_performance': budget_performance,
+        'tax_summary': tax_summary,
+        
+        # Additional context
+        'current_period': f"{start_of_month.strftime('%B %Y')}",
+        'fiscal_year': today.year
+    }
+    
+    return render(request, 'finance/dashboard.html', context)

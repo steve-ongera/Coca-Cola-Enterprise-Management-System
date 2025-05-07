@@ -1,0 +1,313 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Summary Cards Row -->
+    <div class="row mb-4">
+        {% for card in summary_cards %}
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-{{ card.color }} shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-{{ card.color }} text-uppercase mb-1">
+                                {{ card.title }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">KSh {{ card.value|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas {{ card.icon }} fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- Account Balances -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Account Balances by Type</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="accountBalancesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Payment Methods (Last 30 Days)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar pt-4 pb-2">
+                        <canvas id="paymentMethodsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Charts Row -->
+    <div class="row">
+        <!-- Sales by Customer Type -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Sales by Customer Type (YTD)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="salesByCustomerTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Performance -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Budget vs Actual - {{ current_period }}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar pt-4 pb-2">
+                        <canvas id="budgetPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Reference</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in recent_transactions %}
+                        <tr>
+                            <td>{{ transaction.transaction_date }}</td>
+                            <td>{{ transaction.reference_number }}</td>
+                            <td>{{ transaction.description|truncatechars:50 }}</td>
+                            <td>
+                                {% with entries=transaction.entries.all %}
+                                    KSh {{ entries.0.amount|floatformat:2 }}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <span class="badge badge-{% if transaction.status == 'posted' %}success{% else %}warning{% endif %}">
+                                    {{ transaction.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tax Summary Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Tax Summary - {{ fiscal_year }}</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Tax Type</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tax in tax_summary %}
+                        <tr>
+                            <td>{{ tax.tax_type }}</td>
+                            <td>
+                                <span class="badge badge-{% if tax.status == 'paid' %}success{% elif tax.status == 'filed' %}info{% else %}warning{% endif %}">
+                                    {{ tax.get_status_display }}
+                                </span>
+                            </td>
+                            <td>KSh {{ tax.total_amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="{% static 'assets/vendor/chart.js/Chart.min.js' %}"></script>
+
+<script>
+// Account Balances Pie Chart
+var ctx = document.getElementById("accountBalancesChart");
+var accountBalancesChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+        labels: {{ charts.account_balances.labels|safe }},
+        datasets: [{
+            data: {{ charts.account_balances.data|safe }},
+            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+            hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617'],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            caretPadding: 10,
+        },
+        legend: {
+            display: true,
+            position: 'bottom'
+        },
+    }
+});
+
+// Payment Methods Bar Chart
+var ctx = document.getElementById("paymentMethodsChart");
+var paymentMethodsChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ charts.payment_methods.labels|safe }},
+        datasets: [{
+            label: "Amount",
+            backgroundColor: "#4e73df",
+            hoverBackgroundColor: "#2e59d9",
+            borderColor: "#4e73df",
+            data: {{ charts.payment_methods.data|safe }},
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true,
+                    callback: function(value) {
+                        return 'KSh ' + value.toLocaleString();
+                    }
+                }
+            }]
+        },
+        legend: {
+            display: false
+        },
+    }
+});
+
+// Sales by Customer Type Doughnut Chart
+var ctx = document.getElementById("salesByCustomerTypeChart");
+var salesByCustomerTypeChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ charts.sales_by_customer_type.labels|safe }},
+        datasets: [{
+            data: {{ charts.sales_by_customer_type.data|safe }},
+            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+            hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, data) {
+                    var value = data.datasets[0].data[tooltipItem.index];
+                    return 'KSh ' + value.toLocaleString();
+                }
+            }
+        },
+        legend: {
+            display: true,
+            position: 'bottom'
+        },
+    }
+});
+
+// Budget Performance Bar Chart
+var ctx = document.getElementById("budgetPerformanceChart");
+var budgetPerformanceChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ charts.budget_performance.labels|safe }},
+        datasets: [
+            {
+                label: "Budget",
+                backgroundColor: "#1cc88a",
+                hoverBackgroundColor: "#17a673",
+                borderColor: "#1cc88a",
+                data: {{ charts.budget_performance.budget|safe }},
+            },
+            {
+                label: "Actual",
+                backgroundColor: "#4e73df",
+                hoverBackgroundColor: "#2e59d9",
+                borderColor: "#4e73df",
+                data: {{ charts.budget_performance.actual|safe }},
+            }
+        ],
+    },
+    options: {
+        maintainAspectRatio: false,
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true,
+                    callback: function(value) {
+                        return 'KSh ' + value.toLocaleString();
+                    }
+                }
+            }]
+        },
+        legend: {
+            display: true,
+            position: 'bottom'
+        },
+    }
+});
+</script>
+{% endblock %}

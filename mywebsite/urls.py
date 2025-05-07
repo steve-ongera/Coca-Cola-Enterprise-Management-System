@@ -157,6 +157,9 @@ urlpatterns = [
     path('downtime/', views.downtime_list, name='downtime_list'),
     path('downtime/create/', views.downtime_create, name='downtime_create'),
 
+    #finance module
+    path('finance_dashboard/' , views.finance_dashboard , name="finance_dashboard"),
+
 
     
 ]

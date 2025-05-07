@@ -6,7 +6,7 @@
   <div class="card shadow-lg">
     <div class="card-header bg-danger text-white">
       <div class="d-flex justify-content-between">
-        <h3>{{ product.name }} <small>({{ product.product_code }})</small></h3>
+        <h3 style="color:white;" >{{ product.name }} <small>({{ product.product_code }})</small></h3>
         <span class="badge bg-{% if product.status == 'active' %}success{% else %}secondary{% endif %}">
           {{ product.get_status_display }}
         </span>

@@ -568,49 +568,8 @@
     transition: all 0.3s ease;
   }
   
-  /* Custom alert messages */
-  .alert-message {
-    position: relative;
-    padding: 1rem 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid transparent;
-    border-radius: 0.25rem;
-  }
   
-  .alert-success {
-    color: #155724;
-    background-color: #d4edda;
-    border-color: #c3e6cb;
-  }
-  
-  .alert-error {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-  }
-  
-  .close-message {
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 0.75rem 1.25rem;
-    color: inherit;
-    cursor: pointer;
-  }
 </style>
 
-<script>
-// Close message functionality
-document.querySelectorAll('.close-message').forEach(button => {
-  button.addEventListener('click', function() {
-    this.parentElement.style.display = 'none';
-  });
-});
 
-// Initialize tooltips
-var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-  return new bootstrap.Tooltip(tooltipTriggerEl)
-});
-</script>
 {% endblock %}

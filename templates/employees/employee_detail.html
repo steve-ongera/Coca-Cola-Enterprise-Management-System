@@ -121,13 +121,17 @@
                         <div class="col-6">
                             <div class="p-3 border rounded text-center">
                                 <h6 class="mb-1 text-muted">Attendance</h6>
-                                <h4 class="mb-0 text-success">94%</h4>
+                                <h4 class="mb-0 {% if attendance_percentage >= 70 %}text-success{% elif attendance_percentage >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ attendance_percentage }}%
+                                </h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="p-3 border rounded text-center">
                                 <h6 class="mb-1 text-muted">Leaves</h6>
-                                <h4 class="mb-0 text-primary">12/25</h4>
+                                <h4 class="mb-0 {% if leave_stats.approved_leaves|default:0 == leave_stats.total_leaves|default:0 %}text-success{% elif leave_stats.approved_leaves|default:0 > 0 %}text-primary{% else %}text-secondary{% endif %}">
+                                    {{ leave_stats.approved_leaves|default:"0" }}/{{ leave_stats.total_leaves|default:"0" }}
+                                </h4>
                             </div>
                         </div>
                         <div class="col-6">

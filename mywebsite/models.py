@@ -645,7 +645,7 @@ class SalesOrder(models.Model):
         ('new', 'New'),
         ('processing', 'Processing'),
         ('shipped', 'Shipped'),
-        ('delivered', 'Delivered'),
+        ('delivered', 'Delivered'), 
         ('cancelled', 'Cancelled'),
     ]
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='new')
