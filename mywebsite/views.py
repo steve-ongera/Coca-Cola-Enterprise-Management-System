@@ -3368,3 +3368,71 @@ class InvoiceCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse('sales_order_detail', kwargs={'pk': self.kwargs['pk']})
+    
+
+
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from django.db.models import Q
+from .models import Invoice, Customer
+from django.utils import timezone
+
+def invoice_list(request):
+    # Get filter parameters from request
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', '')
+    customer_filter = request.GET.get('customer', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    overdue = request.GET.get('overdue', '')
+    
+    # Start with all invoices
+    invoices = Invoice.objects.select_related(
+        'sales_order', 
+        'sales_order__customer',
+        'sales_order__sales_representative__user'
+    ).order_by('-invoice_date')
+    
+    # Apply filters
+    if search_query:
+        invoices = invoices.filter(
+            Q(invoice_number__icontains=search_query) |
+            Q(sales_order__order_number__icontains=search_query) |
+            Q(sales_order__customer__name__icontains=search_query)
+        )
+    
+    if status_filter:
+        invoices = invoices.filter(status=status_filter)
+        
+    if customer_filter:
+        invoices = invoices.filter(sales_order__customer_id=customer_filter)
+        
+    if date_from:
+        invoices = invoices.filter(invoice_date__gte=date_from)
+        
+    if date_to:
+        invoices = invoices.filter(invoice_date__lte=date_to)
+        
+    if overdue:
+        today = timezone.now().date()
+        invoices = invoices.filter(status__in=['unpaid', 'partial'], due_date__lt=today)
+    
+    # Pagination
+    paginator = Paginator(invoices, 25)  # Show 25 invoices per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'customer_filter': customer_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'overdue': overdue,
+        'status_choices': Invoice.STATUS_CHOICES,
+        'customers': Customer.objects.filter(status='active').order_by('name'),
+        'today': timezone.now().date(),
+    }
+    
+    return render(request, 'sales/invoice_list.html', context)

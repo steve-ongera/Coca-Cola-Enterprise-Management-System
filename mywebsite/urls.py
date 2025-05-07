@@ -172,6 +172,7 @@ urlpatterns = [
     path('orders/<int:pk>/edit/', views.sales_order_update, name='sales_order_update'),
     path('orders/<int:pk>/delete/', views.SalesOrderDeleteView.as_view(), name='sales_order_delete'),
     path('orders/<int:pk>/invoice/create/', views.InvoiceCreateView.as_view(), name='invoice_create'),
+    path('invoices/', views.invoice_list, name='invoice_list'),
 
 
     
