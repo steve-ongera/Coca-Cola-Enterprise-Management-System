@@ -7,7 +7,7 @@
       <h5 style="color:white;" class="mb-0 fw-bold">
         <i class="bi bi-cart-plus me-2"></i>Record New Sale
       </h5>
-      <a href="{% url 'sales_order_list' %}" class="btn btn-light btn-sm rounded-pill px-3">
+      <a href="#" class="btn btn-light btn-sm rounded-pill px-3">
         <i class="bi bi-arrow-left me-1"></i> Back to Sales
       </a>
     </div>
@@ -22,7 +22,7 @@
         {% endfor %}
       {% endif %}
       
-      <form method="post" id="sales-form">
+      <form method="post" id="sales-form" novalidate>
         {% csrf_token %}
         
         <!-- Customer Selection Section -->
@@ -300,9 +300,9 @@
             let totalAmount = 0;
             
             document.querySelectorAll('.item-form').forEach(row => {
-                const quantityInput = row.querySelector('.quantity');
-                const priceInput = row.querySelector('.unit-price');
-                const discountInput = row.querySelector('.discount');
+                const quantityInput = row.querySelector('[name$="quantity"]');
+                const priceInput = row.querySelector('[name$="unit_price"]');
+                const discountInput = row.querySelector('[name$="discount"]');
                 const subtotalDisplay = row.querySelector('.subtotal-display');
                 
                 if (quantityInput && priceInput && discountInput && subtotalDisplay) {
@@ -354,8 +354,8 @@
                     const customer = customersData.find(c => c.id == customerId);
                     if (customer) {
                         // Auto-fill billing and shipping address if customer is selected
-                        const billingAddressInput = document.querySelector('[name*="billing_address"]');
-                        const shippingAddressInput = document.querySelector('[name*="shipping_address"]');
+                        const billingAddressInput = document.querySelector('[name$="billing_address"]');
+                        const shippingAddressInput = document.querySelector('[name$="shipping_address"]');
                         
                         if (billingAddressInput) {
                             billingAddressInput.value = customer.address || '';
@@ -443,11 +443,8 @@
                         }
                         
                         // Add quantity/price/discount change listeners
-                        ['quantity', 'unit-price', 'discount'].forEach(cls => {
-                            const input = newRow.querySelector('.' + cls);
-                            if (input) {
-                                input.addEventListener('input', calculateTotals);
-                            }
+                        newRow.querySelectorAll('[name$="quantity"], [name$="unit_price"], [name$="discount"]').forEach(input => {
+                            input.addEventListener('input', calculateTotals);
                         });
                         
                         // Add product variant change listener
@@ -518,7 +515,7 @@
         });
         
         // Add input event listeners for quantity, price, and discount fields
-        document.querySelectorAll('.quantity, .unit-price, .discount').forEach(input => {
+        document.querySelectorAll('[name$="quantity"], [name$="unit_price"], [name$="discount"]').forEach(input => {
             input.addEventListener('input', calculateTotals);
         });
         
@@ -529,8 +526,8 @@
         const sameAddressToggle = document.getElementById('same-address-toggle');
         if (sameAddressToggle) {
             sameAddressToggle.addEventListener('change', function() {
-                const billingAddressInput = document.querySelector('[name*="billing_address"]');
-                const shippingAddressInput = document.querySelector('[name*="shipping_address"]');
+                const billingAddressInput = document.querySelector('[name$="billing_address"]');
+                const shippingAddressInput = document.querySelector('[name$="shipping_address"]');
                 
                 if (this.checked && billingAddressInput && shippingAddressInput) {
                     shippingAddressInput.value = billingAddressInput.value;
@@ -542,12 +539,12 @@
         }
         
         // Copy customer address to billing/shipping when creating new customer
-        const customerAddressInput = document.querySelector('[name="address"]');
+        const customerAddressInput = document.querySelector('[name$="address"]');
         if (customerAddressInput) {
             customerAddressInput.addEventListener('input', function() {
                 if (!existingCustomerToggle.checked) {
-                    const billingAddressInput = document.querySelector('[name*="billing_address"]');
-                    const shippingAddressInput = document.querySelector('[name*="shipping_address"]');
+                    const billingAddressInput = document.querySelector('[name$="billing_address"]');
+                    const shippingAddressInput = document.querySelector('[name$="shipping_address"]');
                     
                     if (billingAddressInput) {
                         billingAddressInput.value = this.value;
@@ -560,52 +557,47 @@
             });
         }
         
-        // Form validation before submit
-        const salesForm = document.getElementById('sales-form');
-        if (salesForm) {
-            salesForm.addEventListener('submit', function(e) {
-                // Check if at least one product is added
-                const productSelects = document.querySelectorAll('[name$="product_variant"]');
-                let hasProducts = false;
-                
-                for (let i = 0; i < productSelects.length; i++) {
-                    if (productSelects[i].value) {
-                        hasProducts = true;
-                        break;
-                    }
+        // Form validation checks before form submission
+        document.getElementById('sales-form').addEventListener('submit', function(event) {
+            const isExistingCustomer = document.getElementById('existingCustomerToggle').checked;
+            let formIsValid = true;
+            
+            // Validate customer section
+            if (isExistingCustomer) {
+                const customerSelect = document.getElementById('customer_select');
+                if (!customerSelect.value) {
+                    formIsValid = false;
+                    alert('Please select an existing customer.');
                 }
-                
-                if (!hasProducts) {
-                    e.preventDefault();
-                    alert('Please add at least one product to the order.');
-                    return false;
-                }
-                
-                // Check if customer information is provided
-                if (!existingCustomerToggle.checked) {
-                    const customerName = document.querySelector('[name="name"]');
-                    if (!customerName || !customerName.value.trim()) {
-                        e.preventDefault();
-                        alert('Please provide customer name.');
-                        return false;
+            } else {
+                // Check required fields in customer form
+                const requiredFields = ['name', 'customer_type', 'email', 'phone', 'address'];
+                requiredFields.forEach(field => {
+                    const input = document.querySelector(`[name$="${field}"]`);
+                    if (input && !input.value.trim()) {
+                        formIsValid = false;
+                        input.classList.add('is-invalid');
+                    } else if (input) {
+                        input.classList.remove('is-invalid');
                     }
-                } else {
-                    const customerSelect = document.getElementById('customer_select');
-                    if (!customerSelect || !customerSelect.value) {
-                        e.preventDefault();
-                        alert('Please select a customer.');
-                        return false;
-                    }
-                }
-                
-                // Proceed with form submission
-                return true;
-            });
-        }
+                });
+            }
+            
+            // Check if at least one product is added with valid quantity
+            const hasValidProducts = Array.from(document.querySelectorAll('[name$="product_variant"]'))
+                .some(select => select.value && 
+                      parseFloat(select.closest('.item-form').querySelector('[name$="quantity"]').value) > 0);
+            
+            if (!hasValidProducts) {
+                formIsValid = false;
+                alert('Please add at least one product with a valid quantity.');
+            }
+            
+            if (!formIsValid) {
+                event.preventDefault();
+            }
+        });
     });
-
 </script>
-
-
 
 {% endblock %}
