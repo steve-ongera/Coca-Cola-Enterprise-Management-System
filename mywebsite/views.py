@@ -3436,3 +3436,165 @@ def invoice_list(request):
     }
     
     return render(request, 'sales/invoice_list.html', context)
+from django.shortcuts import render
+from django.db.models import Sum, Count, F, Q, ExpressionWrapper, FloatField, DecimalField
+from django.utils import timezone
+from datetime import timedelta
+from .models import SalesOrder, SalesOrderItem, Customer, ProductVariant, Invoice
+import calendar
+
+def sales_dashboard(request):
+    today = timezone.now().date()
+    twelve_months_ago = today - timedelta(days=365)
+    six_months_ago = today - timedelta(days=180)
+
+    # 1. Revenue Trend
+    monthly_revenue = []
+    month_labels = []
+
+    for i in range(12):
+        month = today.month - i
+        year = today.year
+        if month < 1:
+            month += 12
+            year -= 1
+
+        start_date = today.replace(year=year, month=month, day=1)
+        if month == 12:
+            end_date = start_date.replace(year=year+1, month=1, day=1) - timedelta(days=1)
+        else:
+            end_date = start_date.replace(month=month+1, day=1) - timedelta(days=1)
+
+        revenue = Invoice.objects.filter(
+            invoice_date__range=(start_date, end_date)
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+
+        monthly_revenue.insert(0, float(revenue))
+        month_labels.insert(0, f"{calendar.month_abbr[month]} {year}")
+
+    total_revenue = sum(monthly_revenue)
+    average_monthly_revenue = round(total_revenue / 12, 2) if monthly_revenue else 0
+    max_monthly_revenue = max(monthly_revenue) if monthly_revenue else 0
+
+    # 2. Top Products
+    top_products_qs = SalesOrderItem.objects.filter(
+        sales_order__order_date__gte=twelve_months_ago
+    ).values(
+        'product_variant__name',
+        'product_variant__size',
+        'product_variant__packaging_type'
+    ).annotate(
+        total_sold=Sum('quantity'),
+        total_revenue=ExpressionWrapper(
+            Sum(F('quantity') * F('unit_price') * (1.0 - F('discount') / 100.0)),
+            output_field=FloatField()
+        )
+    ).order_by('-total_revenue')[:10]
+
+    top_products = list(top_products_qs)
+
+    top_product_labels = [
+        f"{item['product_variant__name']} ({item['product_variant__size']}, {item['product_variant__packaging_type']})"
+        for item in top_products
+    ]
+
+    # 3. Product Performance
+    performance_months = []
+    product_performance = {}
+    for i in range(5, -1, -1):
+        month = today.month - i
+        year = today.year
+        if month < 1:
+            month += 12
+            year -= 1
+        performance_months.append(calendar.month_abbr[month])
+
+    top_5_products = SalesOrderItem.objects.filter(
+        sales_order__order_date__gte=six_months_ago
+    ).values('product_variant__name').annotate(
+        total_sold=Sum('quantity')
+    ).order_by('-total_sold')[:5]
+
+    for product in top_5_products:
+        name = product['product_variant__name']
+        product_performance[name] = []
+
+        for i in range(5, -1, -1):
+            month = today.month - i
+            year = today.year
+            if month < 1:
+                month += 12
+                year -= 1
+
+            start_date = today.replace(year=year, month=month, day=1)
+            if month == 12:
+                end_date = start_date.replace(year=year+1, month=1, day=1) - timedelta(days=1)
+            else:
+                end_date = start_date.replace(month=month+1, day=1) - timedelta(days=1)
+
+            sold = SalesOrderItem.objects.filter(
+                product_variant__name=name,
+                sales_order__order_date__range=(start_date, end_date)
+            ).aggregate(total=Sum('quantity'))['total'] or 0
+
+            product_performance[name].append(float(sold))
+
+    # 4. Top Customers
+    top_customers_qs = Customer.objects.filter(
+        sales_orders__order_date__gte=twelve_months_ago
+    ).annotate(
+        total_spent=Sum('sales_orders__total_amount'),
+        order_count=Count('sales_orders')
+    ).order_by('-total_spent')[:10]
+
+    top_customers = list(top_customers_qs)
+
+    # 5. Analysis Tables
+    recent_orders = SalesOrder.objects.select_related('customer').order_by('-order_date')[:10]
+    overdue_invoices = Invoice.objects.filter(
+        status__in=['unpaid', 'partial'],
+        due_date__lt=today
+    ).select_related('sales_order__customer').order_by('due_date')[:10]
+
+    product_variant_performance = ProductVariant.objects.filter(
+        status='active'
+    ).annotate(
+        total_sold=Sum('salesorderitem__quantity'),
+        total_revenue=ExpressionWrapper(
+            Sum(F('salesorderitem__quantity') * F('salesorderitem__unit_price') * (1.0 - F('salesorderitem__discount') / 100.0)),
+            output_field=FloatField()
+        )
+    ).order_by('-total_revenue')
+
+    # Fix for division error - ensure operands are the same type and specify output field
+    if recent_orders:
+        avg_revenue_per_order = round(float(total_revenue) / len(recent_orders), 2)
+    else:
+        avg_revenue_per_order = 0
+
+    # Sample Chart Colors (add more if needed)
+    chart_colors = [
+        "#F40009", "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
+        "#9966FF", "#FF9F40", "#C9CBCF", "#3D9970", "#B10DC9"
+    ]
+
+    context = {
+        'monthly_revenue': monthly_revenue,
+        'month_labels': month_labels,
+        'top_products': top_products,
+        'top_product_labels': top_product_labels,
+        'product_performance': product_performance,
+        'performance_months': performance_months,
+        'top_customers': top_customers,
+        'total_revenue': total_revenue,
+        'average_monthly_revenue': average_monthly_revenue,
+        'max_monthly_revenue': max_monthly_revenue,
+        'avg_revenue_per_order': avg_revenue_per_order,
+        'recent_orders': recent_orders,
+        'overdue_invoices': overdue_invoices,
+        'product_variant_performance': product_variant_performance,
+        'chart_colors': chart_colors,
+        'today': today,
+    }
+
+    return render(request, 'sales/dashboard.html', context)
