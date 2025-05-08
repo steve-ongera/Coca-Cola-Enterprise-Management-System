@@ -3545,7 +3545,7 @@ def sales_dashboard(request):
     ).annotate(
         total_spent=Sum('sales_orders__total_amount'),
         order_count=Count('sales_orders')
-    ).order_by('-total_spent')[:10]
+    ).order_by('-total_spent')[:11]
 
     top_customers = list(top_customers_qs)
 
