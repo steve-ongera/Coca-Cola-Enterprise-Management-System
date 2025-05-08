@@ -31,6 +31,9 @@ def redirect_to_dashboard(user):
         return redirect('admin_dashboard')
     elif user.user_type == 'manager':
         return redirect('manager_dashboard')
+    
+    elif user.user_type == 'security':
+        return redirect('security_dashboard')
     else:
         return redirect('employee_dashboard')
 

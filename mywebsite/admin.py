@@ -595,3 +595,102 @@ class RegionAdmin(admin.ModelAdmin):
     list_display = ('name', 'country', 'currency', 'language', 'tax_rate')
     search_fields = ('name', 'country')
     list_filter = ('country', 'currency')
+
+
+from .models import (
+    SecurityGuard, 
+    Visitor, 
+    VisitLog, 
+    Vehicle, 
+    VehicleLog, 
+    SecurityReport,
+    Department
+)
+
+
+class SecurityGuardInline(admin.StackedInline):
+    model = SecurityGuard
+    can_delete = False
+    verbose_name_plural = 'Security Guard Details'
+    fk_name = 'user'
+
+class CustomUserAdmin(UserAdmin):
+    inlines = (SecurityGuardInline,)
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_security_guard')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'is_security_guard')
+    
+    def get_inline_instances(self, request, obj=None):
+        if not obj:
+            return list()
+        return super().get_inline_instances(request, obj)
+
+@admin.register(SecurityGuard)
+class SecurityGuardAdmin(admin.ModelAdmin):
+    list_display = ('badge_number', 'user', 'shift_start', 'shift_end', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'badge_number')
+    raw_id_fields = ('user',)
+
+
+
+@admin.register(Visitor)
+class VisitorAdmin(admin.ModelAdmin):
+    list_display = ('first_name', 'last_name', 'company', 'visitor_type', 'phone', 'email')
+    list_filter = ('visitor_type', 'company')
+    search_fields = ('first_name', 'last_name', 'company', 'email', 'phone')
+    list_per_page = 20
+
+class VisitLogInline(admin.TabularInline):
+    model = VisitLog
+    extra = 0
+    readonly_fields = ('check_in_time', 'check_out_time')
+    fields = ('visitor', 'department', 'purpose', 'check_in_time', 'check_out_time', 'is_inside')
+
+@admin.register(VisitLog)
+class VisitLogAdmin(admin.ModelAdmin):
+    list_display = ('visitor', 'department', 'check_in_time', 'check_out_time', 'is_inside', 'security_guard')
+    list_filter = ('department', 'is_inside', 'check_in_time')
+    search_fields = ('visitor__first_name', 'visitor__last_name', 'visitor__company')
+    raw_id_fields = ('visitor', 'security_guard')
+    date_hierarchy = 'check_in_time'
+    readonly_fields = ('check_in_time',)
+    list_per_page = 30
+
+@admin.register(Vehicle)
+class VehicleAdmin(admin.ModelAdmin):
+    list_display = ('license_plate', 'make', 'model', 'color', 'vehicle_type', 'owner', 'visitor_owner')
+    list_filter = ('vehicle_type', 'make')
+    search_fields = ('license_plate', 'make', 'model', 'owner__username', 'visitor_owner__first_name')
+    raw_id_fields = ('owner', 'visitor_owner')
+
+@admin.register(VehicleLog)
+class VehicleLogAdmin(admin.ModelAdmin):
+    list_display = ('vehicle', 'entry_time', 'exit_time', 'is_inside', 'security_guard')
+    list_filter = ('is_inside', 'vehicle__vehicle_type')
+    search_fields = ('vehicle__license_plate', 'vehicle__make', 'vehicle__model')
+    raw_id_fields = ('vehicle', 'security_guard')
+    date_hierarchy = 'entry_time'
+    readonly_fields = ('entry_time',)
+
+@admin.register(SecurityReport)
+class SecurityReportAdmin(admin.ModelAdmin):
+    list_display = ('title', 'report_type', 'priority', 'reporter', 'date_reported', 'is_resolved')
+    list_filter = ('report_type', 'priority', 'is_resolved', 'date_reported')
+    search_fields = ('title', 'description', 'reporter__user__username')
+    raw_id_fields = ('reporter', 'supervisor')
+    date_hierarchy = 'date_reported'
+    list_editable = ('is_resolved',)
+    readonly_fields = ('date_reported',)
+    fieldsets = (
+        (None, {
+            'fields': ('title', 'report_type', 'description', 'priority')
+        }),
+        ('Resolution', {
+            'fields': ('is_resolved', 'resolution_notes', 'supervisor'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('reporter', 'date_reported'),
+            'classes': ('collapse',)
+        })
+    )

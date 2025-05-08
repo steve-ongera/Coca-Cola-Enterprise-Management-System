@@ -6,6 +6,15 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from decimal import Decimal
 from datetime import date
 
+from django.db import models
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.conf import settings
+from django.dispatch import receiver
+from django.db.models.signals import post_save
+
+
+
 
 class User(AbstractUser):
     employee_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
@@ -17,6 +26,7 @@ class User(AbstractUser):
         ('employee', 'Employee'),
         ('manager', 'Manager'),
         ('admin', 'Admin'),
+        ('security', 'Security'),
     ]
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='employee')
 
@@ -1654,3 +1664,144 @@ class IncidentReport(models.Model):
     
 
 
+
+
+class SecurityGuard(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    badge_number = models.CharField(max_length=20, unique=True)
+    shift_start = models.TimeField()
+    shift_end = models.TimeField()
+    is_active = models.BooleanField(default=True)
+    date_joined = models.DateField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.badge_number}"
+
+
+
+class Visitor(models.Model):
+    VISITOR_TYPES = (
+        ('contractor', 'Contractor'),
+        ('vendor', 'Vendor'),
+        ('guest', 'Guest'),
+        ('official', 'Official Visitor'),
+    )
+    
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    company = models.CharField(max_length=100)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20)
+    visitor_type = models.CharField(max_length=20, choices=VISITOR_TYPES)
+    id_number = models.CharField(max_length=50, blank=True, null=True)
+    id_type = models.CharField(max_length=50, blank=True, null=True)
+    
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.company})"
+
+class VisitLog(models.Model):
+    visitor = models.ForeignKey(Visitor, on_delete=models.CASCADE)
+    purpose = models.TextField()
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    security_guard = models.ForeignKey(SecurityGuard, on_delete=models.SET_NULL, null=True)
+    check_in_time = models.DateTimeField(auto_now_add=True)
+    check_out_time = models.DateTimeField(null=True, blank=True)
+    badge_issued = models.BooleanField(default=False)
+    badge_number = models.CharField(max_length=20, blank=True, null=True)
+    is_inside = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.visitor} - {self.department} ({'Inside' if self.is_inside else 'Checked Out'})"
+    
+    def save(self, *args, **kwargs):
+        # Send notification when visit is created
+        if not self.pk:  # Only on creation
+            self.send_notification()
+        super().save(*args, **kwargs)
+    
+    def send_notification(self):
+        subject = f"Visitor Notification: {self.visitor.first_name} {self.visitor.last_name}"
+        message = f"""
+        Visitor Details:
+        Name: {self.visitor.first_name} {self.visitor.last_name}
+        Company: {self.visitor.company}
+        Purpose: {self.purpose}
+        Check-in Time: {self.check_in_time}
+        
+        Please be prepared to receive this visitor.
+        """
+        recipient_email = self.department.contact_email
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient_email],
+            fail_silently=False,
+        )
+
+
+
+class Vehicle(models.Model):
+    VEHICLE_TYPES = (
+        ('employee', 'Employee Vehicle'),
+        ('visitor', 'Visitor Vehicle'),
+        ('delivery', 'Delivery Vehicle'),
+        ('company', 'Company Vehicle'),
+    )
+    
+    license_plate = models.CharField(max_length=20, unique=True)
+    make = models.CharField(max_length=50)
+    model = models.CharField(max_length=50)
+    color = models.CharField(max_length=30)
+    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPES)
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    visitor_owner = models.ForeignKey(Visitor, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.make} {self.model} ({self.license_plate})"
+
+class VehicleLog(models.Model):
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+    entry_time = models.DateTimeField(auto_now_add=True)
+    exit_time = models.DateTimeField(null=True, blank=True)
+    security_guard = models.ForeignKey(SecurityGuard, on_delete=models.SET_NULL, null=True)
+    purpose = models.TextField(blank=True, null=True)
+    is_inside = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.vehicle} - {'Entry' if self.is_inside else 'Exit'} at {self.entry_time}"
+
+class SecurityReport(models.Model):
+    REPORT_TYPES = (
+        ('incident', 'Incident Report'),
+        ('daily', 'Daily Activity Report'),
+        ('suspicious', 'Suspicious Activity'),
+        ('equipment', 'Equipment Issue'),
+        ('other', 'Other'),
+    )
+    
+    PRIORITY_LEVELS = (
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    )
+    
+    report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    reporter = models.ForeignKey(SecurityGuard, on_delete=models.CASCADE)
+    date_reported = models.DateTimeField(auto_now_add=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_LEVELS, default='medium')
+    is_resolved = models.BooleanField(default=False)
+    resolution_notes = models.TextField(blank=True, null=True)
+    supervisor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='security_reports')
+    
+    def __str__(self):
+        return f"{self.get_report_type_display()} - {self.title} ({'Resolved' if self.is_resolved else 'Pending'})"
+
+# Signal to create a security guard profile when a user is assigned as a guard
+@receiver(post_save, sender=User)
+def create_security_guard(sender, instance, created, **kwargs):
+    if created and hasattr(instance, 'is_security_guard') and instance.is_security_guard:
+        SecurityGuard.objects.create(user=instance)

@@ -410,7 +410,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return 'ksh  ' + context.parsed.y.toFixed(2);
+                            return 'ksh  ' + context.parsed.y.toLocaleString('en-KE',{
+                                minimumFractionDigits:2,
+                                maximumFractionDigits:2
+                            });
                         }
                     }
                 }
@@ -420,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return 'ksh  ' + value;
+                            return 'ksh  ' + value.toLocaleString('en-KE');
                         }
                     }
                 }

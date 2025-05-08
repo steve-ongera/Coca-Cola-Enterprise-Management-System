@@ -70,10 +70,10 @@
         {% include "base/sidebars/employee_sidebar.html" %}
     {% elif request.user.user_type == 'finance' %}
         {% include "base/sidebars/finance_sidebar.html" %}
-    {% elif request.user.user_type == 'lecturer' %}
-        {% include "base/sidebars/lecturer_sidebar.html" %}
+    {% elif request.user.user_type == 'secuity' %}
+        {% include "base/sidebars/securityguard_sidebar.html" %}
     {% else %}
-        {% include "base/sidebars/student_sidebar.html" %}
+        {% include "base/sidebars/staff_sidebar.html" %}
     {% endif %}
 
 
