@@ -362,6 +362,8 @@
 </div>
 
 <!-- Chart Colors -->
+<!-- Chart Colors -->
+<!-- Chart Colors -->
 <script>
     const chart_colors = [
         '#F40009', // Coca-Cola Red
@@ -375,12 +377,9 @@
         '#FF4500', // Orange Red
         '#9932CC', // Dark Orchid
     ];
-    </script>
+</script>
 
 <!-- Chart.js Scripts -->
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -445,11 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {{ product.total_revenue }}{% if not forloop.last %},{% endif %}
                     {% endfor %}
                 ],
-                backgroundColor: [
-                    {% for color in chart_colors %}
-                    "{{ color }}"{% if not forloop.last %},{% endif %}
-                    {% endfor %}
-                ],
+                backgroundColor: chart_colors.slice(0, {{ top_products|length }}),
                 borderWidth: 1
             }]
         },
@@ -481,22 +476,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Prepare datasets for product performance
     const performanceDatasets = [];
-    const colorIndex = {};
-    let i = 0;
     
-    {% for product_name, data_points in product_performance.items %}
-    colorIndex['{{ product_name }}'] = i % {{ chart_colors|length }};
-    performanceDatasets.push({
-        label: '{{ product_name }}',
-        data: {{ data_points|safe }},
-        backgroundColor: '{{ chart_colors|safe }}[colorIndex["{{ product_name }}"]]',
-        borderColor: '{{ chart_colors|safe }}[colorIndex["{{ product_name }}"]]',
-        tension: 0.4,
-        borderWidth: 2,
-        pointRadius: 3
+    // Process all product data in a single array to avoid variable redeclaration
+    const productData = [
+        {% for product_name, data_points in product_performance.items %}
+        {
+            name: '{{ product_name }}',
+            points: {{ data_points|safe }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    // Create datasets from the array (no variable declarations in template loop)
+    productData.forEach((product, index) => {
+        const colorIndex = index % chart_colors.length;
+        performanceDatasets.push({
+            label: product.name,
+            data: product.points,
+            backgroundColor: chart_colors[colorIndex],
+            borderColor: chart_colors[colorIndex],
+            tension: 0.4,
+            borderWidth: 2,
+            pointRadius: 3
+        });
     });
-    i++;
-    {% endfor %}
     
     const performanceChart = new Chart(performanceCtx, {
         type: 'line',
@@ -574,7 +577,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
     
 
 
