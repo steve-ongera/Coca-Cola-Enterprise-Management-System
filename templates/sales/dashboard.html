@@ -363,179 +363,218 @@
 
 <!-- Chart Colors -->
 <script>
-const chart_colors = [
-    '#F40009', // Coca-Cola Red
-    '#FFC72C', // Yellow
-    '#1E90FF', // Dodger Blue
-    '#32CD32', // Lime Green
-    '#FF8C00', // Dark Orange
-    '#9370DB', // Medium Purple
-    '#FF69B4', // Hot Pink
-    '#20B2AA', // Light Sea Green
-    '#FF4500', // Orange Red
-    '#9932CC', // Dark Orchid
-];
-</script>
+    const chart_colors = [
+        '#F40009', // Coca-Cola Red
+        '#FFC72C', // Yellow
+        '#1E90FF', // Dodger Blue
+        '#32CD32', // Lime Green
+        '#FF8C00', // Dark Orange
+        '#9370DB', // Medium Purple
+        '#FF69B4', // Hot Pink
+        '#20B2AA', // Light Sea Green
+        '#FF4500', // Orange Red
+        '#9932CC', // Dark Orchid
+    ];
+    </script>
 
 <!-- Chart.js Scripts -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Revenue Trend Chart (Line)
-        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-        new Chart(revenueCtx, {
-            type: 'line',
-            data: {
-                labels: {{ month_labels|safe }},
-                datasets: [{
-                    label: 'Monthly Revenue',
-                    data: {{ monthly_revenue|safe }},
-                    borderColor: '#F40009',
-                    backgroundColor: 'rgba(244, 0, 9, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true
-                }]
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueChart = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: {{ month_labels|safe }},
+            datasets: [{
+                label: 'Monthly Revenue',
+                data: {{ monthly_revenue|safe }},
+                backgroundColor: 'rgba(244, 0, 9, 0.1)',
+                borderColor: 'rgba(244, 0, 9, 1)',
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$ ' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return '$' + context.raw.toLocaleString();
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
-                            }
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$ ' + value;
                         }
                     }
                 }
             }
-        });
-    
-        // Top Products Chart (Doughnut)
-        const productsCtx = document.getElementById('productsChart').getContext('2d');
-        new Chart(productsCtx, {
-            type: 'doughnut',
-            data: {
-                labels: {{ top_product_labels|safe }},
-                datasets: [{
-                    data: {{ top_product_revenue|safe }},
-                    backgroundColor: chart_colors,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'right' },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.raw;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = Math.round((value / total) * 100);
-                                return `${context.label}: $${value.toLocaleString()} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    
-        // Product Performance Chart (Line)
-        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
-        const performanceData = {
-            labels: {{ performance_months|safe }},
-            datasets: [
-                {% for product in product_performance %}
-                {
-                    label: '{{ product.label }}',
-                    data: {{ product.data|safe }},
-                    borderColor: chart_colors[{{ forloop.counter0 }} % chart_colors.length],
-                    backgroundColor: 'rgba(0, 0, 0, 0)',
-                    borderWidth: 2,
-                    tension: 0.4
-                },
-                {% endfor %}
-            ]
-        };
-        new Chart(performanceCtx, {
-            type: 'line',
-            data: performanceData,
-            options: {
-                responsive: true,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.dataset.label}: ${context.raw.toLocaleString()} units`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return value.toLocaleString();
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    
-        // Top Customers Chart (Bar)
-        const customersCtx = document.getElementById('customersChart').getContext('2d');
-        new Chart(customersCtx, {
-            type: 'bar',
-            data: {
-                labels: {{ top_customer_names|safe }},
-                datasets: [{
-                    label: 'Total Revenue',
-                    data: {{ top_customer_spending|safe }},
-                    backgroundColor: '#F40009',
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return '$' + context.raw.toLocaleString();
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        }
     });
-    </script>
+
+    // Products Chart (Donut)
+    const productsCtx = document.getElementById('productsChart').getContext('2d');
+    const productsChart = new Chart(productsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                {% for product in top_products %}
+                "{{ product.product_variant__name }} ({{ product.product_variant__size }})"{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for product in top_products %}
+                    {{ product.total_revenue }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    {% for color in chart_colors %}
+                    "{{ color }}"{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var label = context.label || '';
+                            var value = context.parsed || 0;
+                            var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            var percentage = Math.round((value / total) * 100);
+                            return label + ': $' + value.toFixed(2) + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+
+    // Product Performance Chart (Line)
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+    
+    // Prepare datasets for product performance
+    const performanceDatasets = [];
+    const colorIndex = {};
+    let i = 0;
+    
+    {% for product_name, data_points in product_performance.items %}
+    colorIndex['{{ product_name }}'] = i % {{ chart_colors|length }};
+    performanceDatasets.push({
+        label: '{{ product_name }}',
+        data: {{ data_points|safe }},
+        backgroundColor: '{{ chart_colors|safe }}[colorIndex["{{ product_name }}"]]',
+        borderColor: '{{ chart_colors|safe }}[colorIndex["{{ product_name }}"]]',
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 3
+    });
+    i++;
+    {% endfor %}
+    
+    const performanceChart = new Chart(performanceCtx, {
+        type: 'line',
+        data: {
+            labels: {{ performance_months|safe }},
+            datasets: performanceDatasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Units Sold'
+                    }
+                }
+            }
+        }
+    });
+
+    // Customers Chart (Bar)
+    const customersCtx = document.getElementById('customersChart').getContext('2d');
+    const customersChart = new Chart(customersCtx, {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for customer in top_customers %}
+                "{{ customer.name }}"{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Revenue',
+                data: [
+                    {% for customer in top_customers %}
+                    {{ customer.total_spent }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: "#F40009",
+                borderWidth: 0,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$ ' + context.parsed.x.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$ ' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
     
 
 
