@@ -70,6 +70,7 @@ class Department(models.Model):
     description = models.TextField(null=True, blank=True)
     manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='managed_departments')
     cost_center = models.CharField(max_length=20, null=True, blank=True)
+    contact_email = models.EmailField(null=True , blank=True)  # <-- Add this line
     
     def __str__(self):
         return self.name

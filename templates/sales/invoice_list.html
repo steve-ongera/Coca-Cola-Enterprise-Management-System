@@ -107,7 +107,7 @@
                                     <i class="fas fa-exclamation-circle text-danger ms-1"></i>
                                 {% endif %}
                             </td>
-                            <td class="text-end">${{ invoice.total_amount }}</td>
+                            <td class="text-end">ksh {{ invoice.total_amount }}</td>
                             <td>
                                 <span class="badge 
                                     {% if invoice.status == 'paid' %}bg-success
@@ -120,7 +120,7 @@
                                 {% if invoice.due_date < today and invoice.status != 'paid' %}
                                     {{ today|timeuntil:invoice.due_date }} overdue
                                 {% else %}
-                                    -
+                                    N/A
                                 {% endif %}
                             </td>
                             <td>
@@ -131,7 +131,7 @@
                                     </button>
                                     <ul class="dropdown-menu">
                                         <li>
-                                            <a class="dropdown-item" href="#">
+                                            <a class="dropdown-item" href="{% url 'sales_order_detail' invoice.pk %}">
                                                 <i class="fas fa-eye me-2"></i>View
                                             </a>
                                         </li>
