@@ -3616,8 +3616,7 @@ def security_guard_dashboard(request):
     if not request.user.is_authenticated or request.user.user_type != 'security':
         return render(request, 'security/unauthorized.html')
     
-    # Get the current security guard - you might need to adjust this based on your model structure
-    # If you have a separate SecurityGuard model related to User
+    # Get the current security guard
     security_guard = request.user
     
     # Today's date
@@ -3626,35 +3625,34 @@ def security_guard_dashboard(request):
     # Visitor Statistics (last 12 months)
     twelve_months_ago = today - timedelta(days=365)
     
-    # Get monthly visitor counts
-    monthly_visits = VisitLog.objects.filter(
+    # Get all visit logs from the last 12 months
+    all_visits = VisitLog.objects.filter(
         check_in_time__gte=twelve_months_ago
-    ).extra(
-        {'month': "date_trunc('month', check_in_time)"}
-    ).values('month').annotate(
-        total_visits=Count('id'),
-        checked_out=Count('id', filter=Q(check_out_time__isnull=False)),
-        still_inside=Count('id', filter=Q(check_out_time__isnull=True))
-    ).order_by('month')
+    ).order_by('check_in_time')
+    
+    # Manually aggregate by month (SQLite compatible)
+    month_data = defaultdict(lambda: {
+        'total_visits': 0,
+        'checked_out': 0,
+        'still_inside': 0
+    })
+    
+    for visit in all_visits:
+        # Extract year and month for grouping
+        year_month = visit.check_in_time.strftime('%Y-%m')
+        
+        # Increment counters
+        month_data[year_month]['total_visits'] += 1
+        
+        if visit.check_out_time is not None:
+            month_data[year_month]['checked_out'] += 1
+        else:
+            month_data[year_month]['still_inside'] += 1
     
     # Prepare data for charts
     months = []
     visit_counts = []
     checked_out_counts = []
-    
-    # Initialize all months with 0 values
-    all_months_data = defaultdict(lambda: {
-        'total': 0,
-        'checked_out': 0,
-        'inside': 0
-    })
-    
-    # Fill with actual data
-    for visit in monthly_visits:
-        month = visit['month'].strftime('%Y-%m')
-        all_months_data[month]['total'] = visit['total_visits']
-        all_months_data[month]['checked_out'] = visit['checked_out']
-        all_months_data[month]['inside'] = visit['still_inside']
     
     # Generate complete 12-month data
     for i in range(12):
@@ -3663,8 +3661,8 @@ def security_guard_dashboard(request):
         month_name = calendar.month_name[current_month.month] + ' ' + str(current_month.year)
         
         months.append(month_name)
-        visit_counts.append(all_months_data[month_key]['total'])
-        checked_out_counts.append(all_months_data[month_key]['checked_out'])
+        visit_counts.append(month_data[month_key]['total_visits'])
+        checked_out_counts.append(month_data[month_key]['checked_out'])
     
     # Today's visitors
     todays_visits = VisitLog.objects.filter(
