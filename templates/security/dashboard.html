@@ -221,11 +221,11 @@ var ctx = document.getElementById('visitorTrendChart');
 var visitorTrendChart = new Chart(ctx, {
     type: 'line',
     data: {
-        labels: {{ months|safe }},
+        labels: {{ months_json|safe }},
         datasets: [
             {
                 label: 'Total Visits',
-                data: {{ visit_counts }},
+                data: {{ visit_counts_json|safe }},
                 backgroundColor: 'rgba(78, 115, 223, 0.05)',
                 borderColor: 'rgba(78, 115, 223, 1)',
                 pointBackgroundColor: 'rgba(78, 115, 223, 1)',
@@ -236,7 +236,7 @@ var visitorTrendChart = new Chart(ctx, {
             },
             {
                 label: 'Checked Out',
-                data: {{ checked_out_counts }},
+                data: {{ checked_out_counts_json|safe }},
                 backgroundColor: 'rgba(28, 200, 138, 0.05)',
                 borderColor: 'rgba(28, 200, 138, 1)',
                 pointBackgroundColor: 'rgba(28, 200, 138, 1)',
@@ -247,22 +247,7 @@ var visitorTrendChart = new Chart(ctx, {
             }
         ]
     },
-    options: {
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        if (Number.isInteger(value)) {
-                            return value;
-                        }
-                    }
-                }
-            }
-        }
-    }
-});
+    //
 
 // Attendance Pie Chart
 var ctx2 = document.getElementById('attendancePieChart');

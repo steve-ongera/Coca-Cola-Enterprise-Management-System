@@ -3602,7 +3602,8 @@ def sales_dashboard(request):
 
     return render(request, 'sales/dashboard.html', context)
 
-
+# Add to your imports
+import json
 from django.shortcuts import render
 from django.db.models import Count, Q
 from django.utils import timezone
@@ -3709,6 +3710,11 @@ def security_guard_dashboard(request):
         'employees_signed_out': signed_out,
         'employees_signed_in_not_out': signed_in_not_out,
         'total_employees': todays_attendance.count(),
+
+        # Chart data - properly serialize for JavaScript
+        'months_json': json.dumps(months),
+        'visit_counts_json': json.dumps(visit_counts),
+        'checked_out_counts_json': json.dumps(checked_out_counts),
         
         # Chart data
         'months': months,
