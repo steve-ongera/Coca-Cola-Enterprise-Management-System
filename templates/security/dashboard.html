@@ -190,9 +190,9 @@
                                     <td>{{ vehicle.entry_time|time }}</td>
                                     <td>
                                         {% if vehicle.is_inside %}
-                                        <span class="badge badge-warning">Inside</span>
+                                        <span class="badge bg-warning">Inside</span>
                                         {% else %}
-                                        <span class="badge badge-success">Exited</span>
+                                        <span class="badge bg-success">Exited</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -209,9 +209,7 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -247,7 +245,23 @@ var visitorTrendChart = new Chart(ctx, {
             }
         ]
     },
-    //
+    options: {
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: true
+            }
+        }
+    }
+});
 
 // Attendance Pie Chart
 var ctx2 = document.getElementById('attendancePieChart');
@@ -259,7 +273,7 @@ var attendancePieChart = new Chart(ctx2, {
             data: [
                 {{ employees_signed_out }},
                 {{ employees_signed_in_not_out }},
-                {{ total_employees|add:"-employees_signed_in" }}
+                {{ total_employees }} - {{ employees_signed_in }}
             ],
             backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b'],
             hoverBackgroundColor: ['#17a673', '#dda20a', '#be2617'],
@@ -277,4 +291,5 @@ var attendancePieChart = new Chart(ctx2, {
     },
 });
 </script>
+
 {% endblock %}

@@ -182,5 +182,8 @@ urlpatterns = [
     path('find-visitor/', views.find_visitor, name='find_visitor'),
     path('check-in/success/', views.check_in_success, name='visitor_check_in_success'),
     path('check-out/success/', views.check_out_success, name='visitor_check_out_success'),
+
+    path('vehicle_management/', views.vehicle_management, name='vehicle_management'),
+    path('vehicles/get-details/', views.get_vehicle_details, name='get_vehicle_details'),
   
 ]

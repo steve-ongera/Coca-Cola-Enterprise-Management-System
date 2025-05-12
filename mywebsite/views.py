@@ -3894,3 +3894,188 @@ def check_out_success(request):
         'badge_return_message': True  # Flag to show badge return reminder
     }
     return render(request, 'visitors/success_page.html', context)
+
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth import get_user_model
+from .models import Vehicle, VehicleLog, SecurityGuard
+from .models import Visitor
+from django.utils import timezone
+
+User = get_user_model()
+
+@login_required
+def vehicle_management(request):
+    # Get security guard instance for the current user
+    try:
+        security_guard = SecurityGuard.objects.get(user=request.user)
+    except SecurityGuard.DoesNotExist:
+        security_guard = None
+    
+    # Handle form submissions
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'check_in':
+            return handle_vehicle_checkin(request, security_guard)
+        elif action == 'check_out':
+            return handle_vehicle_checkout(request, security_guard)
+    
+    # Get active vehicle logs and recent activity
+    active_vehicle_logs = VehicleLog.objects.filter(is_inside=True).order_by('-entry_time')[:20]
+    recent_vehicle_logs = VehicleLog.objects.all().order_by('-entry_time')[:10]
+    
+    # Get lists for owner selection
+    employees = User.objects.filter(is_active=True).order_by('last_name')
+    visitors = Visitor.objects.order_by('last_name')
+    
+    context = {
+        'active_vehicle_logs': active_vehicle_logs,
+        'recent_vehicle_logs': recent_vehicle_logs,
+        'employees': employees,
+        'visitors': visitors,
+    }
+    return render(request, 'security/vehicle_management.html', context)
+
+def handle_vehicle_checkin(request, security_guard):
+    license_plate = request.POST.get('license_plate', '').strip().upper()
+    vehicle_type = request.POST.get('vehicle_type')
+    make = request.POST.get('make', '').strip()
+    model = request.POST.get('model', '').strip()
+    color = request.POST.get('color', '').strip()
+    purpose = request.POST.get('purpose', '').strip()
+    owner_type = request.POST.get('owner_type')
+    
+    # Validate required fields
+    if not license_plate or not vehicle_type or not owner_type:
+        return JsonResponse({'success': False, 'error': 'Required fields are missing'})
+    
+    try:
+        # Get or create the vehicle
+        vehicle, created = Vehicle.objects.get_or_create(
+            license_plate=license_plate,
+            defaults={
+                'make': make,
+                'model': model,
+                'color': color,
+                'vehicle_type': vehicle_type,
+            }
+        )
+        
+        # Update owner based on owner type
+        if owner_type == 'employee':
+            employee_id = request.POST.get('employee_owner')
+            if employee_id:
+                employee = User.objects.get(id=employee_id)
+                vehicle.owner = employee
+                vehicle.visitor_owner = None
+        elif owner_type == 'visitor':
+            visitor_id = request.POST.get('visitor_owner')
+            if visitor_id:
+                visitor = Visitor.objects.get(id=visitor_id)
+                vehicle.visitor_owner = visitor
+                vehicle.owner = None
+        
+        # Update vehicle details if they were provided
+        if make:
+            vehicle.make = make
+        if model:
+            vehicle.model = model
+        if color:
+            vehicle.color = color
+        if vehicle_type:
+            vehicle.vehicle_type = vehicle_type
+        
+        vehicle.save()
+        
+        # Create vehicle log entry
+        VehicleLog.objects.create(
+            vehicle=vehicle,
+            security_guard=security_guard,
+            purpose=purpose,
+            is_inside=True
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'license_plate': vehicle.license_plate,
+            'vehicle_type': vehicle.get_vehicle_type_display(),
+            'entry_time': timezone.localtime().strftime('%Y-%m-%d %H:%M:%S'),
+        })
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+def handle_vehicle_checkout(request, security_guard):
+    license_plate = request.POST.get('license_plate', '').strip().upper()
+    
+    if not license_plate:
+        return JsonResponse({'success': False, 'error': 'License plate is required'})
+    
+    try:
+        # Get the active vehicle log
+        vehicle_log = VehicleLog.objects.filter(
+            vehicle__license_plate=license_plate,
+            is_inside=True
+        ).latest('entry_time')
+        
+        # Update the log with checkout info
+        vehicle_log.exit_time = timezone.now()
+        vehicle_log.is_inside = False
+        vehicle_log.save()
+        
+        return JsonResponse({
+            'success': True,
+            'license_plate': vehicle_log.vehicle.license_plate,
+            'vehicle_type': vehicle_log.vehicle.get_vehicle_type_display(),
+            'exit_time': timezone.localtime().strftime('%Y-%m-%d %H:%M:%S'),
+        })
+    
+    except VehicleLog.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'No active vehicle found with that license plate'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@require_http_methods(['GET'])
+def get_vehicle_details(request):
+    license_plate = request.GET.get('license_plate', '').strip().upper()
+    
+    if not license_plate:
+        return JsonResponse({'exists': False, 'error': 'License plate is required'})
+    
+    try:
+        # Get the active vehicle log
+        vehicle_log = VehicleLog.objects.filter(
+            vehicle__license_plate=license_plate,
+            is_inside=True
+        ).latest('entry_time')
+        
+        vehicle = vehicle_log.vehicle
+        owner = ''
+        
+        if vehicle.owner:
+            owner = f"{vehicle.owner.get_full_name()} (Employee)"
+        elif vehicle.visitor_owner:
+            owner = f"{vehicle.visitor_owner.first_name} {vehicle.visitor_owner.last_name} (Visitor)"
+        
+        return JsonResponse({
+            'exists': True,
+            'license_plate': vehicle.license_plate,
+            'make': vehicle.make,
+            'model': vehicle.model,
+            'color': vehicle.color,
+            'vehicle_type': vehicle.get_vehicle_type_display(),
+            'owner': owner,
+            'entry_time': timezone.localtime(vehicle_log.entry_time).strftime('%Y-%m-%d %H:%M:%S'),
+            'purpose': vehicle_log.purpose or '',
+        })
+    
+    except VehicleLog.DoesNotExist:
+        return JsonResponse({'exists': False, 'error': 'No active vehicle found with that license plate'})
+    except Exception as e:
+        return JsonResponse({'exists': False, 'error': str(e)})
