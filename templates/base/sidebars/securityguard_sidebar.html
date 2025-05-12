@@ -37,20 +37,11 @@
                 </li>
             
                 <li>
-                    <a href="#">
-                        <i class="bi bi-list-ul"></i> Active Visitors
+                    <a href="{% url 'visitor_management'%}">
+                        <i class="bi bi-list-ul"></i> Visitors Records
                     </a>
                 </li>
-                <li>
-                    <a href="#">
-                        <i class="bi bi-card-checklist"></i> Scheduled Appointments
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="bi bi-qr-code"></i> Generate Visitor Pass
-                    </a>
-                </li>
+                
             </ul>
         </li>
 
@@ -133,7 +124,7 @@
         </li>
 
         <li class="nav-item">
-            <a class="nav-link collapsed" href="#">
+            <a class="nav-link collapsed" href="{% url 'emergency_protocols'%}">
                 <i class="bi bi-shield-check" style="color: #f40009;"></i>
                 <span>Emergency Protocols</span>
             </a>

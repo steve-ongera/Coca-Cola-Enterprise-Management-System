@@ -189,5 +189,13 @@ urlpatterns = [
 
     path('employee-attendance/', views.employee_attendance, name='employee_attendance'),
     path('attendance/get-details/', views.get_employee_attendance, name='get_employee_attendance'),
+
+
+    path('visitors/', views.visitor_management, name='visitor_management'),
+    path('visitors/<int:visitor_id>/details/', views.get_visitor_details, name='get_visitor_details'),
+    path('visitors/<int:visitor_id>/update/', views.update_visitor, name='update_visitor'),
+    path('visitors/<int:visitor_id>/delete/', views.delete_visitor, name='delete_visitor'),
+
+    path('emergency_protocols/', views.emergency_protocols, name='emergency_protocols'),
   
 ]

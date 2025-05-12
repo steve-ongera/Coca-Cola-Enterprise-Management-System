@@ -4231,3 +4231,87 @@ def get_employee_attendance(request):
         return JsonResponse({'exists': False, 'error': 'Employee not found'})
     except Exception as e:
         return JsonResponse({'exists': False, 'error': str(e)})
+    
+
+
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.core.paginator import Paginator
+from .models import Visitor
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def visitor_management(request):
+    # Get all visitors ordered by last name
+    visitors_list = Visitor.objects.all().order_by('-id')
+    
+    # Pagination
+    paginator = Paginator(visitors_list, 10)  # Show 10 visitors per page
+    page_number = request.GET.get('page')
+    visitors = paginator.get_page(page_number)
+    
+    context = {
+        'visitors': visitors,
+    }
+    return render(request, 'security/visitor_management.html', context)
+
+@login_required
+@require_http_methods(['GET'])
+def get_visitor_details(request, visitor_id):
+    visitor = get_object_or_404(Visitor, id=visitor_id)
+    
+    data = {
+        'id': visitor.id,
+        'first_name': visitor.first_name,
+        'last_name': visitor.last_name,
+        'company': visitor.company,
+        'email': visitor.email,
+        'phone': visitor.phone,
+        'visitor_type': visitor.visitor_type,
+        'visitor_type_display': visitor.get_visitor_type_display(),
+        'id_number': visitor.id_number,
+        'id_type': visitor.id_type,
+    }
+    return JsonResponse(data)
+
+@login_required
+@require_http_methods(['POST'])
+def update_visitor(request, visitor_id):
+    visitor = get_object_or_404(Visitor, id=visitor_id)
+    
+    try:
+        visitor.first_name = request.POST.get('first_name', visitor.first_name)
+        visitor.last_name = request.POST.get('last_name', visitor.last_name)
+        visitor.company = request.POST.get('company', visitor.company)
+        visitor.email = request.POST.get('email', visitor.email)
+        visitor.phone = request.POST.get('phone', visitor.phone)
+        visitor.visitor_type = request.POST.get('visitor_type', visitor.visitor_type)
+        visitor.id_number = request.POST.get('id_number', visitor.id_number)
+        visitor.id_type = request.POST.get('id_type', visitor.id_type)
+        visitor.save()
+        
+        return JsonResponse({'success': True, 'message': 'Visitor updated successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+@login_required
+@require_http_methods(['POST'])
+def delete_visitor(request, visitor_id):
+    visitor = get_object_or_404(Visitor, id=visitor_id)
+    
+    try:
+        visitor.delete()
+        return JsonResponse({'success': True, 'message': 'Visitor deleted successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+    
+
+
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def emergency_protocols(request):
+    return render(request, 'security/emergency_protocols.html')
