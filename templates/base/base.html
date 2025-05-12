@@ -70,7 +70,7 @@
         {% include "base/sidebars/employee_sidebar.html" %}
     {% elif request.user.user_type == 'finance' %}
         {% include "base/sidebars/finance_sidebar.html" %}
-    {% elif request.user.user_type == 'secuity' %}
+    {% elif request.user.user_type == 'security' %}
         {% include "base/sidebars/securityguard_sidebar.html" %}
     {% else %}
         {% include "base/sidebars/staff_sidebar.html" %}

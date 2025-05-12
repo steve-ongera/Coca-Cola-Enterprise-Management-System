@@ -33,7 +33,7 @@ def redirect_to_dashboard(user):
         return redirect('manager_dashboard')
     
     elif user.user_type == 'security':
-        return redirect('security_dashboard')
+        return redirect('security_guard_dashboard')
     else:
         return redirect('employee_dashboard')
 
@@ -3601,3 +3601,125 @@ def sales_dashboard(request):
     }
 
     return render(request, 'sales/dashboard.html', context)
+
+
+from django.shortcuts import render
+from django.db.models import Count, Q
+from django.utils import timezone
+from datetime import timedelta
+from .models import VisitLog, Attendance, SecurityGuard, VehicleLog
+import calendar
+from collections import defaultdict
+
+def security_guard_dashboard(request):
+    # Check if user is authenticated and is a security guard
+    if not request.user.is_authenticated or request.user.user_type != 'security':
+        return render(request, 'security/unauthorized.html')
+    
+    # Get the current security guard - you might need to adjust this based on your model structure
+    # If you have a separate SecurityGuard model related to User
+    security_guard = request.user
+    
+    # Today's date
+    today = timezone.now().date()
+    
+    # Visitor Statistics (last 12 months)
+    twelve_months_ago = today - timedelta(days=365)
+    
+    # Get monthly visitor counts
+    monthly_visits = VisitLog.objects.filter(
+        check_in_time__gte=twelve_months_ago
+    ).extra(
+        {'month': "date_trunc('month', check_in_time)"}
+    ).values('month').annotate(
+        total_visits=Count('id'),
+        checked_out=Count('id', filter=Q(check_out_time__isnull=False)),
+        still_inside=Count('id', filter=Q(check_out_time__isnull=True))
+    ).order_by('month')
+    
+    # Prepare data for charts
+    months = []
+    visit_counts = []
+    checked_out_counts = []
+    
+    # Initialize all months with 0 values
+    all_months_data = defaultdict(lambda: {
+        'total': 0,
+        'checked_out': 0,
+        'inside': 0
+    })
+    
+    # Fill with actual data
+    for visit in monthly_visits:
+        month = visit['month'].strftime('%Y-%m')
+        all_months_data[month]['total'] = visit['total_visits']
+        all_months_data[month]['checked_out'] = visit['checked_out']
+        all_months_data[month]['inside'] = visit['still_inside']
+    
+    # Generate complete 12-month data
+    for i in range(12):
+        current_month = twelve_months_ago + timedelta(days=30*i)
+        month_key = current_month.strftime('%Y-%m')
+        month_name = calendar.month_name[current_month.month] + ' ' + str(current_month.year)
+        
+        months.append(month_name)
+        visit_counts.append(all_months_data[month_key]['total'])
+        checked_out_counts.append(all_months_data[month_key]['checked_out'])
+    
+    # Today's visitors
+    todays_visits = VisitLog.objects.filter(
+        check_in_time__date=today
+    )
+    
+    # Visitors currently inside
+    visitors_inside = VisitLog.objects.filter(
+        is_inside=True
+    ).count()
+    
+    # Vehicle statistics
+    todays_vehicles = VehicleLog.objects.filter(
+        entry_time__date=today
+    )
+    vehicles_inside = VehicleLog.objects.filter(
+        is_inside=True
+    ).count()
+    
+    # Attendance statistics
+    todays_attendance = Attendance.objects.filter(date=today)
+    signed_in = todays_attendance.filter(check_in_time__isnull=False).count()
+    signed_out = todays_attendance.filter(check_out_time__isnull=False).count()
+    signed_in_not_out = todays_attendance.filter(
+        check_in_time__isnull=False,
+        check_out_time__isnull=True
+    ).count()
+    
+    context = {
+        'security_guard': security_guard,
+        'today': today,
+        
+        # Visitor statistics
+        'total_visitors_last_12_months': sum(visit_counts),
+        'visitors_today': todays_visits.count(),
+        'visitors_inside': visitors_inside,
+        
+        # Vehicle statistics
+        'vehicles_today': todays_vehicles.count(),
+        'vehicles_inside': vehicles_inside,
+        
+        # Attendance statistics
+        'employees_signed_in': signed_in,
+        'employees_signed_out': signed_out,
+        'employees_signed_in_not_out': signed_in_not_out,
+        'total_employees': todays_attendance.count(),
+        
+        # Chart data
+        'months': months,
+        'visit_counts': visit_counts,
+        'checked_out_counts': checked_out_counts,
+        
+        # Recent logs
+        'recent_visits': todays_visits.order_by('-check_in_time')[:5],
+        'recent_vehicles': todays_vehicles.order_by('-entry_time')[:5],
+    }
+    
+    return render(request, 'security/dashboard.html', context)

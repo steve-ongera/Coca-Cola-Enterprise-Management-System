@@ -1,0 +1,295 @@
+{% extends "xbase/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4">Security Dashboard</h1>
+    <div class="row mt-4">
+        <!-- Visitor Summary -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Visitors Today</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ visitors_today }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visitors Inside -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Visitors Currently Inside</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ visitors_inside }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Attendance -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Employees Signed In</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ employees_signed_in }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicles Inside -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Vehicles Inside</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ vehicles_inside }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-car fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- Visitor Trend Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Visitor Trend (Last 12 Months)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="visitorTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Attendance Pie Chart -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Today's Employee Attendance</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="attendancePieChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-success"></i> Signed In & Out
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-warning"></i> Signed In Only
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-danger"></i> Not Signed In
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Row -->
+    <div class="row">
+        <!-- Recent Visitors -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Visitors</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Company</th>
+                                    <th>Check In</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for visit in recent_visits %}
+                                <tr>
+                                    <td>{{ visit.visitor.first_name }} {{ visit.visitor.last_name }}</td>
+                                    <td>{{ visit.visitor.company }}</td>
+                                    <td>{{ visit.check_in_time|time }}</td>
+                                    <td>
+                                        {% if visit.is_inside %}
+                                        <span class="badge badge-warning">Inside</span>
+                                        {% else %}
+                                        <span class="badge badge-success">Checked Out</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No visitors today</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Vehicles -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Vehicle Movements</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>License Plate</th>
+                                    <th>Type</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vehicle in recent_vehicles %}
+                                <tr>
+                                    <td>{{ vehicle.vehicle.license_plate }}</td>
+                                    <td>{{ vehicle.vehicle.get_vehicle_type_display }}</td>
+                                    <td>{{ vehicle.entry_time|time }}</td>
+                                    <td>
+                                        {% if vehicle.is_inside %}
+                                        <span class="badge badge-warning">Inside</span>
+                                        {% else %}
+                                        <span class="badge badge-success">Exited</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No vehicle movements today</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Visitor Trend Chart
+var ctx = document.getElementById('visitorTrendChart');
+var visitorTrendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ months|safe }},
+        datasets: [
+            {
+                label: 'Total Visits',
+                data: {{ visit_counts }},
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                borderColor: 'rgba(78, 115, 223, 1)',
+                pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+                fill: true
+            },
+            {
+                label: 'Checked Out',
+                data: {{ checked_out_counts }},
+                backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                borderColor: 'rgba(28, 200, 138, 1)',
+                pointBackgroundColor: 'rgba(28, 200, 138, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(28, 200, 138, 1)',
+                fill: true
+            }
+        ]
+    },
+    options: {
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        if (Number.isInteger(value)) {
+                            return value;
+                        }
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Attendance Pie Chart
+var ctx2 = document.getElementById('attendancePieChart');
+var attendancePieChart = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+        labels: ["Signed In & Out", "Signed In Only", "Not Signed In"],
+        datasets: [{
+            data: [
+                {{ employees_signed_out }},
+                {{ employees_signed_in_not_out }},
+                {{ total_employees|add:"-employees_signed_in" }}
+            ],
+            backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b'],
+            hoverBackgroundColor: ['#17a673', '#dda20a', '#be2617'],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    },
+});
+</script>
+{% endblock %}
