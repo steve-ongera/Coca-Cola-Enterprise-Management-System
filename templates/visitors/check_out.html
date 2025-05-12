@@ -289,7 +289,6 @@
     }
 </style>
 
-
 <script>
 $(document).ready(function() {
     // Search for visitor when ID number changes
@@ -297,48 +296,62 @@ $(document).ready(function() {
         var idNumber = $(this).val();
         
         if (idNumber.length > 3) {
-            $.get('{% url "find_visitor" %}', {id_number: idNumber}, function(response) {
-                if (response.found) {
-                    $('#visitorInfo').removeClass('d-none');
-                    $('#visitorName').text(response.visitor_name);
-                    $('#visitorCompany').text(response.company);
-                    $('#checkInTime').text(response.check_in_time);
-                    $('#badgeNumber').text(response.badge_number);
-                } else {
-                    $('#visitorInfo').addClass('d-none');
-                    alert('No active visit found with this ID number');
-                }
-            });
+            // Replace $.get with fetch API since jQuery slim doesn't have Ajax
+            fetch('{% url "find_visitor" %}?id_number=' + encodeURIComponent(idNumber))
+                .then(response => response.json())
+                .then(response => {
+                    if (response.found) {
+                        $('#visitorInfo').removeClass('d-none');
+                        $('#visitorName').text(response.visitor_name);
+                        $('#visitorCompany').text(response.company);
+                        $('#checkInTime').text(response.check_in_time);
+                        $('#badgeNumber').text(response.badge_number);
+                    } else {
+                        $('#visitorInfo').addClass('d-none');
+                        alert('No active visit found with this ID number');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         }
     });
     
     $('#checkOutForm').on('submit', function(e) {
         e.preventDefault();
         var form = $(this);
+        var formData = new FormData(form[0]);
+        var formDataObject = {};
         
-        $.ajax({
-            type: 'POST',
-            url: '{% url "visitor_check_out" %}',
-            data: form.serialize(),
-            dataType: 'json',
+        // Convert FormData to a plain object for the fetch request
+        formData.forEach((value, key) => {
+            formDataObject[key] = value;
+        });
+        
+        // Replace $.ajax with fetch API
+        fetch('{% url "visitor_check_out" %}', {
+            method: 'POST',
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             },
-            success: function(response) {
-                if (response.success) {
-                    $('.visitor-name').text(response.visitor_name);
-                    $('.check-in-time').text(response.check_in_time);
-                    $('.check-out-time').text(response.check_out_time);
-                    $('#successModal').modal('show');
-                    form[0].reset();
-                    $('#visitorInfo').addClass('d-none');
-                }
-            },
-            error: function(xhr) {
-                // Handle form errors
-                var errors = xhr.responseJSON;
-                alert('Error: ' + errors.error);
+            body: JSON.stringify(formDataObject)
+        })
+        .then(response => response.json())
+        .then(response => {
+            if (response.success) {
+                $('.visitor-name').text(response.visitor_name);
+                $('.check-in-time').text(response.check_in_time);
+                $('.check-out-time').text(response.check_out_time);
+                $('#successModal').modal('show');
+                form[0].reset();
+                $('#visitorInfo').addClass('d-none');
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error occurred while processing request');
         });
     });
 });
