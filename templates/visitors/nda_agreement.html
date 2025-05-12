@@ -1,0 +1,85 @@
+<div class="nda-agreement">
+    <h4 class="text-center mb-4">COCA-COLA COMPANY</h4>
+    <h2 class="text-center mb-4 text-primary">NON-DISCLOSURE AGREEMENT</h2>
+    
+    <div class="nda-content border p-4 mb-4" style="max-height: 400px; overflow-y: auto;">
+        <p><strong>Effective Date:</strong> {% now "F j, Y" %}</p>
+        
+        <h5 class="mt-4">1. CONFIDENTIAL INFORMATION</h5>
+        <p>As a visitor to The Coca-Cola Company ("Company"), you may receive or have access to confidential information 
+        including but not limited to: trade secrets, business strategies, product formulations, marketing plans, 
+        financial information, and other proprietary information (collectively "Confidential Information").</p>
+        
+        <h5 class="mt-4">2. OBLIGATIONS</h5>
+        <p>You agree to:</p>
+        <ul>
+            <li>Maintain all Confidential Information in strict confidence</li>
+            <li>Use Confidential Information solely for the purpose of your visit</li>
+            <li>Not disclose, reproduce, or distribute any Confidential Information</li>
+            <li>Return or destroy all Confidential Information upon request</li>
+        </ul>
+        
+        <h5 class="mt-4">3. OWNERSHIP</h5>
+        <p>All Confidential Information remains the sole property of The Coca-Cola Company. No license or other rights 
+        to Confidential Information are granted or implied.</p>
+        
+        <h5 class="mt-4">4. DURATION</h5>
+        <p>This Agreement shall remain in effect for a period of five (5) years from the Effective Date, 
+        except for trade secrets which shall remain protected indefinitely.</p>
+        
+        <h5 class="mt-4">5. REMEDIES</h5>
+        <p>You acknowledge that unauthorized disclosure of Confidential Information would cause irreparable harm 
+        to The Coca-Cola Company, and that monetary damages would be inadequate. The Company shall be entitled 
+        to seek injunctive relief in addition to other legal remedies.</p>
+        
+        <h5 class="mt-4">6. GENERAL PROVISIONS</h5>
+        <ul>
+            <li>This Agreement shall be governed by the laws of the State of Georgia</li>
+            <li>Any disputes shall be resolved in Atlanta, Georgia</li>
+            <li>If any provision is found invalid, the remainder shall remain in effect</li>
+            <li>This Agreement constitutes the entire understanding between the parties</li>
+        </ul>
+        
+        <div class="signature-section mt-5">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="border-top pt-2">Visitor Signature</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="border-top pt-2">Date</p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <p><strong>Printed Name:</strong> <span class="visitor-name-placeholder">[Visitor Name]</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="nda-footer text-center">
+        <p class="text-muted"><small>The Coca-Cola Company • One Coca-Cola Plaza • Atlanta, GA 30313 • USA</small></p>
+        <p class="text-muted"><small>Document ID: CC-NDA-2023-001 • Revision: 3.1</small></p>
+    </div>
+</div>
+
+<style>
+    .nda-agreement {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+    }
+    .nda-content {
+        background-color: #f9f9f9;
+        border-radius: 5px;
+    }
+    .nda-content h5 {
+        color: #c00; /* Coca-Cola red */
+        font-weight: bold;
+    }
+    .visitor-name-placeholder {
+        border-bottom: 1px dashed #999;
+        padding-bottom: 2px;
+        min-width: 200px;
+        display: inline-block;
+    }
+</style>

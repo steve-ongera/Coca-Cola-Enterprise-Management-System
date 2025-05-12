@@ -3721,3 +3721,170 @@ def security_guard_dashboard(request):
     }
     
     return render(request, 'security/dashboard.html', context)
+
+
+
+
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from .forms import VisitorCheckInForm, VisitorCheckOutForm
+from .models import Visitor, VisitLog, SecurityGuard
+
+@login_required
+def visitor_check_in(request):
+    if request.method == 'POST':
+        form = VisitorCheckInForm(request.POST)
+        if form.is_valid():
+            visitor = form.save()
+            
+            # Create visit log
+            visit = VisitLog.objects.create(
+                visitor=visitor,
+                purpose=form.cleaned_data['purpose'],
+                department=form.cleaned_data['department'],
+                security_guard=request.user.securityguard,
+                badge_issued=True,
+                badge_number=f"CC-{timezone.now().strftime('%Y%m%d')}-{visitor.id}"
+            )
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'badge_number': visit.badge_number,
+                    'visitor_name': f"{visitor.first_name} {visitor.last_name}",
+                    'check_in_time': visit.check_in_time.strftime('%Y-%m-%d %H:%M:%S')
+                })
+            return redirect('visitor_check_in_success')
+    else:
+        form = VisitorCheckInForm()
+    
+    return render(request, 'visitors/check_in.html', {'form': form})
+
+@login_required
+def visitor_check_out(request):
+    if request.method == 'POST':
+        form = VisitorCheckOutForm(request.POST)
+        if form.is_valid():
+            id_number = form.cleaned_data['id_number']
+            
+            try:
+                visitor = Visitor.objects.get(id_number=id_number)
+                visit = VisitLog.objects.filter(
+                    visitor=visitor, 
+                    check_out_time__isnull=True
+                ).latest('check_in_time')
+                
+                visit.check_out_time = timezone.now()
+                visit.is_inside = False
+                visit.save()
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'visitor_name': f"{visitor.first_name} {visitor.last_name}",
+                        'check_in_time': visit.check_in_time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'check_out_time': visit.check_out_time.strftime('%Y-%m-%d %H:%M:%S')
+                    })
+                return redirect('visitor_check_out_success')
+            except (Visitor.DoesNotExist, VisitLog.DoesNotExist):
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'No active visit found with this ID number'
+                    })
+                form.add_error('id_number', 'No active visit found with this ID number')
+    else:
+        form = VisitorCheckOutForm()
+    
+    return render(request, 'visitors/check_out.html', {'form': form})
+
+def find_visitor(request):
+    if request.method == 'GET' and 'id_number' in request.GET:
+        id_number = request.GET['id_number']
+        try:
+            visitor = Visitor.objects.get(id_number=id_number)
+            active_visit = VisitLog.objects.filter(
+                visitor=visitor,
+                check_out_time__isnull=True
+            ).latest('check_in_time')
+            
+            return JsonResponse({
+                'found': True,
+                'visitor_name': f"{visitor.first_name} {visitor.last_name}",
+                'company': visitor.company,
+                'check_in_time': active_visit.check_in_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'badge_number': active_visit.badge_number
+            })
+        except (Visitor.DoesNotExist, VisitLog.DoesNotExist):
+            return JsonResponse({'found': False})
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
+@login_required
+def check_in_success(request):
+    """Display success page after visitor check-in"""
+    context = {
+        'title': 'Check-In Successful',
+        'icon': 'fas fa-check-circle',
+        'heading': 'Visitor Checked In Successfully',
+        'message': 'The visitor has been successfully registered in the system.',
+        'action_text': 'Check In Another Visitor',
+        'action_url': 'visitor_check_in',
+        'badge_info': request.session.pop('badge_info', None)  # Optional: if you want to show badge info
+    }
+    return render(request, 'visitors/success_page.html', context)
+
+@login_required
+def check_out_success(request):
+    """Display success page after visitor check-out"""
+    context = {
+        'title': 'Check-Out Successful',
+        'icon': 'fas fa-check-circle',
+        'heading': 'Visitor Checked Out Successfully',
+        'message': 'The visitor has been successfully checked out of the system.',
+        'action_text': 'Check Out Another Visitor',
+        'action_url': 'visitor_check_out',
+        'badge_return_message': True  # Flag to show badge return reminder
+    }
+    return render(request, 'visitors/success_page.html', context)
+
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
+@login_required
+def check_in_success(request):
+    """Display success page after visitor check-in"""
+    context = {
+        'title': 'Check-In Successful',
+        'icon': 'fas fa-check-circle',
+        'heading': 'Visitor Checked In Successfully',
+        'message': 'The visitor has been successfully registered in the system.',
+        'action_text': 'Check In Another Visitor',
+        'action_url': 'visitor_check_in',
+        'badge_info': request.session.pop('badge_info', None)  # Optional: if you want to show badge info
+    }
+    return render(request, 'visitors/success_page.html', context)
+
+@login_required
+def check_out_success(request):
+    """Display success page after visitor check-out"""
+    context = {
+        'title': 'Check-Out Successful',
+        'icon': 'fas fa-check-circle',
+        'heading': 'Visitor Checked Out Successfully',
+        'message': 'The visitor has been successfully checked out of the system.',
+        'action_text': 'Check Out Another Visitor',
+        'action_url': 'visitor_check_out',
+        'badge_return_message': True  # Flag to show badge return reminder
+    }
+    return render(request, 'visitors/success_page.html', context)

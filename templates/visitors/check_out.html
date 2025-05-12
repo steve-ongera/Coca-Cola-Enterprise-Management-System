@@ -1,0 +1,138 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <img src="{% static 'images/coca-cola-logo.png' %}" height="40" class="mr-2">
+                        Visitor Check-Out
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form id="checkOutForm" method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.id_number.id_for_label }}">ID Number</label>
+                            {{ form.id_number }}
+                            <small class="form-text text-muted">Enter the ID number used during check-in</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Check Out
+                        </button>
+                    </form>
+                    
+                    <div id="visitorInfo" class="mt-4 d-none">
+                        <div class="card border-info">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">Visitor Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Name:</strong> <span id="visitorName"></span></p>
+                                        <p><strong>Company:</strong> <span id="visitorCompany"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Check-in Time:</strong> <span id="checkInTime"></span></p>
+                                        <p><strong>Badge Number:</strong> <span id="badgeNumber"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Check-Out Successful</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
+                <h4>Thank You for Visiting Coca-Cola</h4>
+                <p class="visitor-name"></p>
+                <p>Check-in time: <span class="check-in-time"></span></p>
+                <p>Check-out time: <span class="check-out-time"></span></p>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Please return your visitor badge to security personnel.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Search for visitor when ID number changes
+    $('#id_id_number').on('change', function() {
+        var idNumber = $(this).val();
+        
+        if (idNumber.length > 3) {
+            $.get('{% url "find_visitor" %}', {id_number: idNumber}, function(response) {
+                if (response.found) {
+                    $('#visitorInfo').removeClass('d-none');
+                    $('#visitorName').text(response.visitor_name);
+                    $('#visitorCompany').text(response.company);
+                    $('#checkInTime').text(response.check_in_time);
+                    $('#badgeNumber').text(response.badge_number);
+                } else {
+                    $('#visitorInfo').addClass('d-none');
+                    alert('No active visit found with this ID number');
+                }
+            });
+        }
+    });
+    
+    $('#checkOutForm').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        
+        $.ajax({
+            type: 'POST',
+            url: '{% url "visitor_check_out" %}',
+            data: form.serialize(),
+            dataType: 'json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('.visitor-name').text(response.visitor_name);
+                    $('.check-in-time').text(response.check_in_time);
+                    $('.check-out-time').text(response.check_out_time);
+                    $('#successModal').modal('show');
+                    form[0].reset();
+                    $('#visitorInfo').addClass('d-none');
+                }
+            },
+            error: function(xhr) {
+                // Handle form errors
+                var errors = xhr.responseJSON;
+                alert('Error: ' + errors.error);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

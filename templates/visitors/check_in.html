@@ -1,0 +1,173 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <img src="{% static 'images/coca-cola-logo.png' %}" height="40" class="mr-2">
+                        Visitor Check-In
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form id="checkInForm" method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.company.id_for_label }}">Company</label>
+                            {{ form.company }}
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="{{ form.email.id_for_label }}">Email</label>
+                                {{ form.email }}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="{{ form.phone.id_for_label }}">Phone</label>
+                                {{ form.phone }}
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="{{ form.visitor_type.id_for_label }}">Visitor Type</label>
+                                {{ form.visitor_type }}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="{{ form.id_type.id_for_label }}">ID Type</label>
+                                {{ form.id_type }}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.id_number.id_for_label }}">ID Number</label>
+                            {{ form.id_number }}
+                            <small class="form-text text-muted">This will be used for check-out</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.department.id_for_label }}">Department Visiting</label>
+                            {{ form.department }}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.purpose.id_for_label }}">Purpose of Visit</label>
+                            {{ form.purpose }}
+                        </div>
+                        
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="ndaCheck" required>
+                            <label class="form-check-label" for="ndaCheck">
+                                I agree to the <a href="#" data-toggle="modal" data-target="#ndaModal">NDA terms</a>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-sign-in-alt mr-2"></i> Check In
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NDA Modal -->
+<div class="modal fade" id="ndaModal" tabindex="-1" role="dialog" aria-labelledby="ndaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="ndaModalLabel">Non-Disclosure Agreement</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {% include 'visitors/nda_agreement.html' %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Check-In Successful</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
+                <h4>Welcome to Coca-Cola</h4>
+                <p class="visitor-name"></p>
+                <p>Your badge number: <strong class="badge-number"></strong></p>
+                <p>Check-in time: <span class="check-in-time"></span></p>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Please wear your visitor badge at all times and return it when checking out.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal">Print Badge</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#checkInForm').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        
+        $.ajax({
+            type: 'POST',
+            url: '{% url "visitor_check_in" %}',
+            data: form.serialize(),
+            dataType: 'json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('.visitor-name').text(response.visitor_name);
+                    $('.badge-number').text(response.badge_number);
+                    $('.check-in-time').text(response.check_in_time);
+                    $('#successModal').modal('show');
+                    form[0].reset();
+                }
+            },
+            error: function(xhr) {
+                // Handle form errors
+                var errors = xhr.responseJSON;
+                alert('Error: ' + errors.error);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

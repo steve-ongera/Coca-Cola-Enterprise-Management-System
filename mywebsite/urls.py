@@ -11,7 +11,7 @@ urlpatterns = [
     path('manager-dashboard/', views.manager_dashboard_view, name='manager_dashboard'),
     path('employee-dashboard/', views.employee_dashboard_view, name='employee_dashboard'),
     path('security_guard_dashboard/', views.security_guard_dashboard, name='security_guard_dashboard'),
-    
+
 
     #Employee Records URLs
     path('employees/', views.employee_list, name='employee_list'),
@@ -176,5 +176,11 @@ urlpatterns = [
     path('orders/<int:pk>/invoice/create/', views.InvoiceCreateView.as_view(), name='invoice_create'),
     path('invoices/', views.invoice_list, name='invoice_list'),
     path('sales-dashboard/', views.sales_dashboard, name='sales_dashboard'),
+
+    path('check-in/', views.visitor_check_in, name='visitor_check_in'),
+    path('check-out/', views.visitor_check_out, name='visitor_check_out'),
+    path('find-visitor/', views.find_visitor, name='find_visitor'),
+    path('check-in/success/', views.check_in_success, name='visitor_check_in_success'),
+    path('check-out/success/', views.check_out_success, name='visitor_check_out_success'),
   
 ]

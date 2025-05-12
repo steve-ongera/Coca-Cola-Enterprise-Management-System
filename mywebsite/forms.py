@@ -965,3 +965,41 @@ SalesOrderItemFormSet = inlineformset_factory(
     can_delete=True, 
     fields=['product_variant', 'quantity', 'unit_price', 'discount']
 )
+
+from django import forms
+from .models import Visitor, VisitLog, Department
+
+class VisitorCheckInForm(forms.ModelForm):
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    purpose = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
+    )
+    
+    class Meta:
+        model = Visitor
+        fields = ['first_name', 'last_name', 'company', 'email', 'phone', 
+                 'visitor_type', 'id_type', 'id_number']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'company': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'visitor_type': forms.Select(attrs={'class': 'form-control'}),
+            'id_type': forms.TextInput(attrs={'class': 'form-control'}),
+            'id_number': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class VisitorCheckOutForm(forms.ModelForm):
+    id_number = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter your ID number used during check-in'
+        }))
+    
+    class Meta:
+        model = VisitLog
+        fields = ['id_number']
