@@ -1,49 +1,196 @@
 {% extends "base/base.html" %}
 {% load static %}
 
+{% block title %}Visitor Check-Out - Coca-Cola Security{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">
-                        <img src="{% static 'images/coca-cola-logo.png' %}" height="40" class="mr-2">
-                        Visitor Check-Out
-                    </h3>
+<div class="container-fluid">
+    <!-- Check-Out Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="d-inline-block mb-0" style="color: #F40009;">
+                        <i class="fas fa-user-minus me-2"></i>Visitor Check-Out
+                    </h2>
+                </div>
+                <div class="text-end">
+                    <div class="badge bg-danger fs-6 mb-2">SECURE AREA</div>
+                    <div class="text-muted small">{% now "F j, Y" %}</div>
+                </div>
+            </div>
+            <hr class="mt-3 mb-1" style="border-color: #F40009; opacity: 0.2;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ request.site.name }}
+                </div>
+                <div class="text-muted small">
+                    <i class="fas fa-shield-alt text-danger me-1"></i> Security Portal
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Check-Out Form -->
+    <div class="row">
+        <!-- Main Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-bold" style="color: #F40009;">
+                        <i class="fas fa-sign-out-alt me-2"></i>Visitor Check-Out
+                    </h5>
                 </div>
                 <div class="card-body">
                     <form id="checkOutForm" method="post" novalidate>
                         {% csrf_token %}
                         
-                        <div class="form-group">
-                            <label for="{{ form.id_number.id_for_label }}">ID Number</label>
-                            {{ form.id_number }}
-                            <small class="form-text text-muted">Enter the ID number used during check-in</small>
+                        <!-- ID Entry Section -->
+                        <div class="mb-4">
+                            <h6 class="mb-3" style="color: #F40009;">
+                                <i class="fas fa-id-card me-2"></i>Identification
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="{{ form.id_number.id_for_label }}" class="form-label">ID Number</label>
+                                    {{ form.id_number }}
+                                    <div class="form-text">Enter the ID number used during check-in</div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-sign-out-alt mr-2"></i> Check Out
-                        </button>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-sign-out-alt me-2"></i> Complete Check-Out
+                            </button>
+                        </div>
                     </form>
                     
+                    <!-- Visitor Information (Hidden initially) -->
                     <div id="visitorInfo" class="mt-4 d-none">
-                        <div class="card border-info">
-                            <div class="card-header bg-info text-white">
-                                <h5 class="mb-0">Visitor Information</h5>
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white border-bottom">
+                                <h6 class="mb-0 fw-bold" style="color: #F40009;">
+                                    <i class="fas fa-user me-2"></i>Visitor Information
+                                </h6>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <p><strong>Name:</strong> <span id="visitorName"></span></p>
-                                        <p><strong>Company:</strong> <span id="visitorCompany"></span></p>
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted small">Full Name</label>
+                                            <p class="mb-0 fw-bold" id="visitorName"></p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted small">Company</label>
+                                            <p class="mb-0" id="visitorCompany"></p>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <p><strong>Check-in Time:</strong> <span id="checkInTime"></span></p>
-                                        <p><strong>Badge Number:</strong> <span id="badgeNumber"></span></p>
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted small">Check-in Time</label>
+                                            <p class="mb-0" id="checkInTime"></p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted small">Badge Number</label>
+                                            <p class="mb-0" id="badgeNumber"></p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar - Instructions -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-bold" style="color: #F40009;">
+                        <i class="fas fa-info-circle me-2"></i>Check-Out Instructions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="bg-light rounded-circle p-2 me-3">
+                            <i class="fas fa-id-card text-danger"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">ID Verification</h6>
+                            <small class="text-muted">Enter the same ID number used during check-in</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="bg-light rounded-circle p-2 me-3">
+                            <i class="fas fa-id-badge text-danger"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Return Badge</h6>
+                            <small class="text-muted">Please return your visitor badge to security</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="bg-light rounded-circle p-2 me-3">
+                            <i class="fas fa-clipboard-check text-danger"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Confirm Details</h6>
+                            <small class="text-muted">Verify your information before completing check-out</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-start">
+                        <div class="bg-light rounded-circle p-2 me-3">
+                            <i class="fas fa-handshake text-danger"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Thank You</h6>
+                            <small class="text-muted">We appreciate your visit to Coca-Cola</small>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="alert alert-light border">
+                        <h6 class="mb-2" style="color: #F40009;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Important Notice
+                        </h6>
+                        <p class="small mb-0">All visitors must check out before leaving the premises. Please ensure all company property is returned to your host.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Assisted Check-Out -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-bold" style="color: #F40009;">
+                        <i class="fas fa-headset me-2"></i>Need Assistance?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-3">If you need help with check-out, please contact:</p>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light p-2 rounded-circle me-3">
+                            <i class="fas fa-phone text-danger"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Security Desk</h6>
+                            <small class="text-muted">Ext. 5555</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <div class="bg-light p-2 rounded-circle me-3">
+                            <i class="fas fa-user-shield text-danger"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Reception</h6>
+                            <small class="text-muted">Ext. 5000</small>
                         </div>
                     </div>
                 </div>
@@ -53,35 +200,96 @@
 </div>
 
 <!-- Success Modal -->
-<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Check-Out Successful</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            <div class="modal-header bg-white border-bottom">
+                <h5 class="modal-title" style="color: #F40009;">Check-Out Complete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center">
-                <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
-                <h4>Thank You for Visiting Coca-Cola</h4>
-                <p class="visitor-name"></p>
-                <p>Check-in time: <span class="check-in-time"></span></p>
-                <p>Check-out time: <span class="check-out-time"></span></p>
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle mr-2"></i>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle fa-5x text-success"></i>
+                </div>
+                <h4 class="mb-3">Thank You for Visiting Coca-Cola</h4>
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body">
+                        <h5 class="visitor-name mb-1"></h5>
+                        <div class="mb-3">
+                            <small class="text-muted">Visit Duration</small>
+                            <div class="row g-2 mt-1">
+                                <div class="col-6">
+                                    <div class="bg-light rounded p-2">
+                                        <small class="text-muted d-block">Check-In</small>
+                                        <span class="fw-bold check-in-time"></span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="bg-light rounded p-2">
+                                        <small class="text-muted d-block">Check-Out</small>
+                                        <span class="fw-bold check-out-time"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info border-0">
+                    <i class="fas fa-info-circle me-2"></i>
                     Please return your visitor badge to security personnel.
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <div class="modal-footer bg-light justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<style>
+    /* Enhanced Coca-Cola Red Theme */
+    :root {
+        --coke-red: #F40009;
+        --coke-red-light: rgba(244, 0, 9, 0.1);
+    }
+    
+    .form-control, .form-select {
+        border-radius: 0.25rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--coke-red);
+        box-shadow: 0 0 0 0.25rem rgba(244, 0, 9, 0.1);
+    }
+    
+    .btn-danger {
+        background-color: var(--coke-red);
+        border-color: var(--coke-red);
+        padding: 0.5rem 1rem;
+    }
+    
+    .btn-danger:hover {
+        background-color: #d10008;
+        border-color: #d10008;
+    }
+    
+    .card {
+        border-radius: 0.5rem;
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-header {
+        background-color: white;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 1.25rem;
+    }
+</style>
+
+
 <script>
 $(document).ready(function() {
     // Search for visitor when ID number changes
