@@ -4079,3 +4079,155 @@ def get_vehicle_details(request):
         return JsonResponse({'exists': False, 'error': 'No active vehicle found with that license plate'})
     except Exception as e:
         return JsonResponse({'exists': False, 'error': str(e)})
+    
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+from .models import Attendance, Employee, SecurityGuard
+from django.contrib import messages
+
+@login_required
+def employee_attendance(request):
+    # Get security guard instance for the current user
+    try:
+        security_guard = SecurityGuard.objects.get(user=request.user)
+    except SecurityGuard.DoesNotExist:
+        security_guard = None
+    
+    # Handle form submissions
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'check_in':
+            return handle_employee_checkin(request, security_guard)
+        elif action == 'check_out':
+            return handle_employee_checkout(request, security_guard)
+    
+    # Get today's attendance records
+    today = timezone.localdate()
+    todays_attendance = Attendance.objects.filter(date=today).select_related('employee').order_by('-check_in_time')[:20]
+    recent_attendance = Attendance.objects.all().select_related('employee').order_by('-date', '-check_in_time')[:10]
+    
+    # Get active employees for dropdown
+    active_employees = Employee.objects.order_by('user__last_name')
+    
+    context = {
+        'todays_attendance': todays_attendance,
+        'recent_attendance': recent_attendance,
+        'active_employees': active_employees,
+    }
+    return render(request, 'security/employee_attendance.html', context)
+
+def handle_employee_checkin(request, security_guard):
+    employee_id = request.POST.get('employee')
+    status = request.POST.get('status', 'present')
+    
+    if not employee_id:
+        return JsonResponse({'success': False, 'error': 'Employee selection is required'})
+    
+    try:
+        employee = Employee.objects.get(id=employee_id)
+        today = timezone.localdate()
+        now = timezone.localtime()
+        
+        # Create or update attendance record
+        attendance, created = Attendance.objects.get_or_create(
+            employee=employee,
+            date=today,
+            defaults={
+                'check_in_time': now.time(),
+                'status': status,
+            }
+        )
+        
+        # If record exists but check-in time is empty (manual status update)
+        if not created and not attendance.check_in_time:
+            attendance.check_in_time = now.time()
+            attendance.status = status
+            attendance.save()
+        
+        return JsonResponse({
+            'success': True,
+            'employee_name': employee.user.get_full_name(),
+            'check_in_time': now.strftime('%Y-%m-%d %H:%M:%S'),
+            'status': attendance.get_status_display(),
+        })
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+def handle_employee_checkout(request, security_guard):
+    employee_id = request.POST.get('employee')
+    
+    if not employee_id:
+        return JsonResponse({'success': False, 'error': 'Employee selection is required'})
+    
+    try:
+        employee = Employee.objects.get(id=employee_id)
+        today = timezone.localdate()
+        now = timezone.localtime()
+        
+        # Get today's attendance record
+        attendance = Attendance.objects.get(
+            employee=employee,
+            date=today
+        )
+        
+        # Update checkout time
+        attendance.check_out_time = now.time()
+        
+        # Update status to half_day if check-out is before 1 PM (example logic)
+        if now.hour < 13 and attendance.status == 'present':
+            attendance.status = 'half_day'
+        
+        attendance.save()
+        
+        return JsonResponse({
+            'success': True,
+            'employee_name': employee.user.get_full_name(),
+            'check_out_time': now.strftime('%Y-%m-%d %H:%M:%S'),
+            'status': attendance.get_status_display(),
+        })
+    
+    except Attendance.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'No check-in record found for today'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@require_http_methods(['GET'])
+def get_employee_attendance(request):
+    employee_id = request.GET.get('employee')
+    date = request.GET.get('date', timezone.localdate().isoformat())
+    
+    if not employee_id:
+        return JsonResponse({'exists': False, 'error': 'Employee ID is required'})
+    
+    try:
+        employee = Employee.objects.get(id=employee_id)
+        
+        try:
+            attendance = Attendance.objects.get(
+                employee=employee,
+                date=date
+            )
+            
+            return JsonResponse({
+                'exists': True,
+                'employee_name': employee.user.get_full_name(),
+                'check_in_time': attendance.check_in_time.strftime('%H:%M:%S') if attendance.check_in_time else None,
+                'check_out_time': attendance.check_out_time.strftime('%H:%M:%S') if attendance.check_out_time else None,
+                'status': attendance.get_status_display(),
+            })
+        
+        except Attendance.DoesNotExist:
+            return JsonResponse({'exists': False})
+    
+    except Employee.DoesNotExist:
+        return JsonResponse({'exists': False, 'error': 'Employee not found'})
+    except Exception as e:
+        return JsonResponse({'exists': False, 'error': str(e)})

@@ -1,0 +1,406 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Employee Attendance - Coca-Cola Security{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Attendance Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="d-inline-block mb-0" style="color: #F40009;">
+                        <i class="fas fa-user-check me-2"></i>Employee Attendance
+                    </h2>
+                </div>
+                <div class="text-end">
+                    <div class="badge bg-danger fs-6 mb-2">SECURE AREA</div>
+                    <div class="text-muted small">{% now "F j, Y" %}</div>
+                </div>
+            </div>
+            <hr class="mt-3 mb-1" style="border-color: #F40009; opacity: 0.2;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ request.site.name }}
+                </div>
+                <div class="text-muted small">
+                    <i class="fas fa-shield-alt text-danger me-1"></i> Security Portal
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Attendance Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="checkin-tab" data-bs-toggle="tab" href="#checkin" style="color: #F40009;">
+                                <i class="fas fa-sign-in-alt me-2"></i>Check-In
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="checkout-tab" data-bs-toggle="tab" href="#checkout" style="color: #F40009;">
+                                <i class="fas fa-sign-out-alt me-2"></i>Check-Out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Check-In Tab -->
+                        <div class="tab-pane fade show active" id="checkin">
+                            <form id="employeeCheckInForm" method="post" novalidate>
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="check_in">
+                                
+                                <div class="mb-4">
+                                    <h6 class="mb-3" style="color: #F40009;">
+                                        <i class="fas fa-user me-2"></i>Employee Information
+                                    </h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-8">
+                                            <label for="employee" class="form-label">Employee</label>
+                                            <select class="form-select" id="employee" name="employee" required>
+                                                <option value="">Select employee...</option>
+                                                {% for employee in active_employees %}
+                                                <option value="{{ employee.id }}">{{ employee.user.get_full_name }} ({{ employee.department }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="status" class="form-label">Status</label>
+                                            <select class="form-select" id="status" name="status">
+                                                <option value="present">Present</option>
+                                                <option value="half_day">Half Day</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-danger btn-lg">
+                                        <i class="fas fa-sign-in-alt me-2"></i> Record Check-In
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Check-Out Tab -->
+                        <div class="tab-pane fade" id="checkout">
+                            <form id="employeeCheckOutForm" method="post" novalidate>
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="check_out">
+                                
+                                <div class="mb-4">
+                                    <h6 class="mb-3" style="color: #F40009;">
+                                        <i class="fas fa-user me-2"></i>Employee Check-Out
+                                    </h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-8">
+                                            <label for="checkout_employee" class="form-label">Employee</label>
+                                            <select class="form-select" id="checkout_employee" name="employee" required>
+                                                <option value="">Select employee...</option>
+                                                {% for employee in active_employees %}
+                                                <option value="{{ employee.id }}">{{ employee.user.get_full_name }} ({{ employee.department }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <button type="button" class="btn btn-outline-secondary w-100" id="searchEmployeeBtn">
+                                                <i class="fas fa-search me-2"></i>Find
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Employee Details Display (hidden by default) -->
+                                <div class="card mb-4 d-none" id="employeeDetailsCard">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-muted">Employee</h6>
+                                                <h5 id="detail_employee_name">-</h5>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="text-muted">Check-In Time</h6>
+                                                <h5 id="detail_check_in_time">-</h5>
+                                            </div>
+                                            <div class="col-md-6 mt-3">
+                                                <h6 class="text-muted">Status</h6>
+                                                <h5 id="detail_status">-</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-danger btn-lg d-none" id="checkOutBtn">
+                                        <i class="fas fa-sign-out-alt me-2"></i> Record Check-Out
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar - Current Attendance -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-bold" style="color: #F40009;">
+                        <i class="fas fa-users me-2"></i>Today's Attendance
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Status</th>
+                                    <th>Time In</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in todays_attendance %}
+                                <tr>
+                                    <td>{{ record.employee.user.get_full_name }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if record.status == 'present' %}success{% elif record.status == 'half_day' %}warning{% else %}secondary{% endif %}">
+                                            {{ record.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ record.check_in_time|time }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">No attendance records today</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Attendance -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-bold" style="color: #F40009;">
+                        <i class="fas fa-history me-2"></i>Recent Attendance
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for record in recent_attendance|slice:":5" %}
+                        <div class="list-group-item border-0 px-0 py-2">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="mb-0">{{ record.employee.user.get_full_name }}</h6>
+                                    <small class="text-muted">{{ record.date }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">{{ record.check_in_time|time }}</small><br>
+                                    <span class="badge bg-{% if record.status == 'present' %}success{% elif record.status == 'half_day' %}warning{% else %}secondary{% endif %}">
+                                        {{ record.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-white border-bottom">
+                <h5 class="modal-title" style="color: #F40009;" id="successModalTitle">Operation Successful</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle fa-5x text-success"></i>
+                </div>
+                <h4 class="mb-3" id="successModalMessage">Attendance Recorded</h4>
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body">
+                        <h5 id="detail_employee_name_modal" class="mb-1"></h5>
+                        <div class="d-flex justify-content-between">
+                            <div class="text-start">
+                                <small class="text-muted">Status</small>
+                                <p class="mb-0 fw-bold" id="detail_status_modal"></p>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">Time</small>
+                                <p class="mb-0 fw-bold" id="detail_operation_time"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-light border">
+                    <i class="fas fa-info-circle text-danger me-2"></i>
+                    <span id="detail_additional_info"></span>
+                </div>
+            </div>
+            <div class="modal-footer bg-light justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Employee check-in form submission
+    const checkInForm = document.getElementById('employeeCheckInForm');
+    if (checkInForm) {
+        checkInForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('{% url "employee_attendance" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update success modal
+                    document.getElementById('successModalTitle').textContent = 'Check-In Recorded';
+                    document.getElementById('successModalMessage').textContent = 'Employee successfully checked in';
+                    document.getElementById('detail_employee_name_modal').textContent = data.employee_name;
+                    document.getElementById('detail_status_modal').textContent = data.status;
+                    document.getElementById('detail_operation_time').textContent = data.check_in_time;
+                    document.getElementById('detail_additional_info').textContent = 'Employee attendance has been recorded.';
+                    
+                    // Show success modal
+                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                    successModal.show();
+                    
+                    // Reset form
+                    checkInForm.reset();
+                    location.reload(); // Refresh to update the lists
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during check-in');
+            });
+        });
+    }
+    
+    // Employee search for check-out
+    const searchEmployeeBtn = document.getElementById('searchEmployeeBtn');
+    if (searchEmployeeBtn) {
+        searchEmployeeBtn.addEventListener('click', function() {
+            const employeeId = document.getElementById('checkout_employee').value;
+            if (!employeeId) {
+                alert('Please select an employee');
+                return;
+            }
+            
+            fetch(`{% url 'get_employee_attendance' %}?employee=${employeeId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    // Show employee details
+                    document.getElementById('detail_employee_name').textContent = data.employee_name;
+                    document.getElementById('detail_check_in_time').textContent = data.check_in_time || 'Not checked in';
+                    document.getElementById('detail_status').textContent = data.status;
+                    
+                    // Show the details card and check-out button if checked in
+                    document.getElementById('employeeDetailsCard').classList.remove('d-none');
+                    if (data.check_in_time) {
+                        document.getElementById('checkOutBtn').classList.remove('d-none');
+                    } else {
+                        document.getElementById('checkOutBtn').classList.add('d-none');
+                        alert('This employee has not checked in today');
+                    }
+                } else {
+                    alert('No attendance record found for today');
+                    document.getElementById('employeeDetailsCard').classList.add('d-none');
+                    document.getElementById('checkOutBtn').classList.add('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while searching for employee');
+            });
+        });
+    }
+    
+    // Employee check-out form submission
+    const checkOutForm = document.getElementById('employeeCheckOutForm');
+    if (checkOutForm) {
+        checkOutForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('{% url "employee_attendance" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update success modal
+                    document.getElementById('successModalTitle').textContent = 'Check-Out Recorded';
+                    document.getElementById('successModalMessage').textContent = 'Employee successfully checked out';
+                    document.getElementById('detail_employee_name_modal').textContent = data.employee_name;
+                    document.getElementById('detail_status_modal').textContent = data.status;
+                    document.getElementById('detail_operation_time').textContent = data.check_out_time;
+                    document.getElementById('detail_additional_info').textContent = 'Employee check-out has been recorded.';
+                    
+                    // Show success modal
+                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                    successModal.show();
+                    
+                    // Reset form
+                    checkOutForm.reset();
+                    document.getElementById('employeeDetailsCard').classList.add('d-none');
+                    document.getElementById('checkOutBtn').classList.add('d-none');
+                    location.reload(); // Refresh to update the lists
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during check-out');
+            });
+        });
+    }
+});
+</script>
+
+{% endblock %}

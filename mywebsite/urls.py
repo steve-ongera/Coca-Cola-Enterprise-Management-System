@@ -185,5 +185,9 @@ urlpatterns = [
 
     path('vehicle_management/', views.vehicle_management, name='vehicle_management'),
     path('vehicles/get-details/', views.get_vehicle_details, name='get_vehicle_details'),
+
+
+    path('employee-attendance/', views.employee_attendance, name='employee_attendance'),
+    path('attendance/get-details/', views.get_employee_attendance, name='get_employee_attendance'),
   
 ]
