@@ -1,0 +1,61 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<h1>Access Control Dashboard</h1>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <h3>Active Doors</h3>
+        <div class="list-group">
+            {% for door in doors %}
+            <a href="{% url 'door_detail' door.id %}" class="list-group-item list-group-item-action">
+                {{ door.name }} - {{ door.location }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <h3>Users with Biometrics</h3>
+        <div class="list-group">
+            {% for user in users %}
+            <a href="{% url 'user_detail' user.id %}" class="list-group-item list-group-item-action">
+                {{ user.username }} - {{ user.get_full_name }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <h3>Recent Access Logs</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>User</th>
+                <th>Door</th>
+                <th>Biometric</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in access_logs %}
+            <tr>
+                <td>{{ log.access_time }}</td>
+                <td>{{ log.user.username }}</td>
+                <td>{{ log.door.name }}</td>
+                <td>{{ log.get_biometric_used_display }}</td>
+                <td>
+                    {% if log.access_granted %}
+                        <span class="badge bg-success">Granted</span>
+                    {% else %}
+                        <span class="badge bg-danger">Denied</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

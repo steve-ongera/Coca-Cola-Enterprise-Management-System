@@ -724,3 +724,33 @@ class CCTVRecordingAdmin(admin.ModelAdmin):
     list_filter = ('cctv__location', 'incident_reported', 'start_time')
     search_fields = ('cctv__name', 'notes', 'file_path')
     date_hierarchy = 'start_time'
+
+
+
+from django.contrib import admin
+from django.contrib.auth import get_user_model
+from .models import Door, BiometricData, AccessLog
+
+User = get_user_model()
+
+@admin.register(Door)
+class DoorAdmin(admin.ModelAdmin):
+    list_display = ('name', 'location', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('name', 'location')
+
+
+@admin.register(BiometricData)
+class BiometricDataAdmin(admin.ModelAdmin):
+    list_display = ('user', 'biometric_type', 'registered_at')
+    list_filter = ('biometric_type', 'registered_at')
+    search_fields = ('user__username', 'user__email')
+
+
+@admin.register(AccessLog)
+class AccessLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'door', 'access_granted', 'biometric_used', 'access_time')
+    list_filter = ('access_granted', 'biometric_used', 'access_time')
+    search_fields = ('user__username', 'door__name')
+    ordering = ('-access_time',)
+

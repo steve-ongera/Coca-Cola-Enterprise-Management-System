@@ -2000,3 +2000,42 @@ class CCTVRecording(models.Model):
     
     def __str__(self):
         return f"Recording from {self.cctv.name} at {self.start_time}"
+    
+
+
+
+class Door(models.Model):
+    name = models.CharField(max_length=100)
+    location = models.CharField(max_length=200)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.location})"
+
+class BiometricData(models.Model):
+    BIOMETRIC_TYPES = [
+        ('FINGERPRINT', 'Fingerprint'),
+        ('FACE', 'Facial Recognition'),
+        ('IRIS', 'Iris Scan'),
+        ('VOICE', 'Voice Recognition'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    biometric_type = models.CharField(max_length=20, choices=BIOMETRIC_TYPES)
+    template_data = models.BinaryField()  # Stores the biometric template
+    registered_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.username}'s {self.get_biometric_type_display()}"
+
+class AccessLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    door = models.ForeignKey(Door, on_delete=models.CASCADE)
+    access_time = models.DateTimeField(auto_now_add=True)
+    access_granted = models.BooleanField()
+    biometric_used = models.CharField(max_length=20, choices=BiometricData.BIOMETRIC_TYPES)
+    
+    def __str__(self):
+        status = "Granted" if self.access_granted else "Denied"
+        return f"{self.user.username} - {self.door.name} - {status} at {self.access_time}"

@@ -1,0 +1,37 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<h1>{{ door.name }} - {{ door.location }}</h1>
+<p>Status: {% if door.is_active %}Active{% else %}Inactive{% endif %}</p>
+
+<h3 class="mt-4">Access History</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>User</th>
+            <th>Biometric</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in access_logs %}
+        <tr>
+            <td>{{ log.access_time }}</td>
+            <td>{{ log.user.username }}</td>
+            <td>{{ log.get_biometric_used_display }}</td>
+            <td>
+                {% if log.access_granted %}
+                    <span class="badge bg-success">Granted</span>
+                {% else %}
+                    <span class="badge bg-danger">Denied</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'access-control-dashboard' %}" class="btn btn-secondary mt-3">Back to access-control-dashboard</a>
+{% endblock %}
+

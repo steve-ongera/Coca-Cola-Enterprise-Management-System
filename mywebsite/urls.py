@@ -212,5 +212,9 @@ urlpatterns = [
     path('cctvs/', views.cctv_list, name='cctv_list'),
     path('cctvs/<int:cctv_id>/', views.cctv_detail, name='cctv_detail'),
     path('recordings/<int:recording_id>/', views.recording_detail, name='recording_detail'),
+
+    path('access-control-dashboard/', views.access_control_dashboard, name='access-control-dashboard'),
+    path('door/<int:door_id>/', views.door_detail, name='door_detail'),
+    path('user/<int:user_id>/', views.user_detail, name='user_detail'),
   
 ]

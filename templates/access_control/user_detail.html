@@ -1,0 +1,49 @@
+
+{% extends 'base/base.html' %}
+
+{% block content %}
+<h1>{{ user_profile.username }}</h1>
+<p>{{ user_profile.get_full_name }}</p>
+
+{% if biometric_data %}
+<h3 class="mt-4">Biometric Data</h3>
+<div class="card">
+    <div class="card-body">
+        <p><strong>Type:</strong> {{ biometric_data.get_biometric_type_display }}</p>
+        <p><strong>Registered:</strong> {{ biometric_data.registered_at }}</p>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-warning">No biometric data registered for this user</div>
+{% endif %}
+
+<h3 class="mt-4">Access History</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Door</th>
+            <th>Biometric</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in access_logs %}
+        <tr>
+            <td>{{ log.access_time }}</td>
+            <td>{{ log.door.name }}</td>
+            <td>{{ log.get_biometric_used_display }}</td>
+            <td>
+                {% if log.access_granted %}
+                    <span class="badge bg-success">Granted</span>
+                {% else %}
+                    <span class="badge bg-danger">Denied</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'access-control-dashboard' %}" class="btn btn-secondary mt-3">Back to access-control-dashboard</a>
+{% endblock %}

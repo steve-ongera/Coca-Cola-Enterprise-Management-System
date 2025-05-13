@@ -4659,3 +4659,54 @@ def cctv_detail(request, cctv_id):
 def recording_detail(request, recording_id):
     recording = get_object_or_404(CCTVRecording, pk=recording_id)
     return render(request, 'security/recording_detail.html', {'recording': recording})
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Door, BiometricData, AccessLog
+from django.contrib.auth.models import User
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.contrib.auth import get_user_model
+from .models import Door, AccessLog
+
+User = get_user_model()
+
+@login_required
+def access_control_dashboard(request):
+    doors = Door.objects.filter(is_active=True)
+    access_logs = AccessLog.objects.all().order_by('-access_time')[:50]
+    users_with_biometrics = User.objects.filter(biometricdata__isnull=False)
+
+    context = {
+        'doors': doors,
+        'access_logs': access_logs,
+        'users': users_with_biometrics,
+    }
+    return render(request, 'access_control/dashboard.html', context)
+
+
+@login_required
+def door_detail(request, door_id):
+    door = Door.objects.get(id=door_id)
+    access_logs = AccessLog.objects.filter(door=door).order_by('-access_time')
+    
+    context = {
+        'door': door,
+        'access_logs': access_logs,
+    }
+    return render(request, 'access_control/door_detail.html', context)
+
+@login_required
+def user_detail(request, user_id):
+    user = User.objects.get(id=user_id)
+    biometric_data = BiometricData.objects.filter(user=user).first()
+    access_logs = AccessLog.objects.filter(user=user).order_by('-access_time')
+    
+    context = {
+        'user_profile': user,
+        'biometric_data': biometric_data,
+        'access_logs': access_logs,
+    }
+    return render(request, 'access_control/user_detail.html', context)
