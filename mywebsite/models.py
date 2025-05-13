@@ -1897,3 +1897,18 @@ class SecurityIncidentReport(models.Model):
 
     def __str__(self):
         return f"{self.reference_number} - {self.title}"
+    
+class IncidentMedia(models.Model):
+    incident = models.ForeignKey(SecurityIncidentReport, on_delete=models.CASCADE, related_name='media')
+    file = models.FileField(upload_to='incident_media/')
+    file_type = models.CharField(max_length=20, choices=[
+        ('photo', 'Photo'),
+        ('video', 'Video'),
+        ('document', 'Document'),
+        ('audio', 'Audio'),
+    ])
+    caption = models.CharField(max_length=200, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.incident.reference_number} - {self.file_type}"
