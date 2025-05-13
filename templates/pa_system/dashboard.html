@@ -1,0 +1,285 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="company-header">
+                
+                    <h1>Almasi Bottlers Ltd</h1>
+                    <p class="location">Nyeri Plant • Security Department</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-coke-red text-white">
+                    <h3><i class="fas fa-bullhorn me-2"></i>Public Address System Control</h3>
+                </div>
+                <div class="card-body">
+                    <div class="pa-display mb-4">
+                        <div class="line1" id="current-line1">SYSTEM READY</div>
+                        <div class="line2" id="current-line2">ALMASI BOTTLERS NYERI</div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-coke-dark fw-bold">PA System</label>
+                                {{ form.system }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-coke-dark fw-bold">Priority Level</label>
+                                {{ form.priority }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-coke-dark fw-bold">Message Line 1 (Primary)</label>
+                                {{ form.message_line1 }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-coke-dark fw-bold">Message Line 2 (Secondary)</label>
+                                {{ form.message_line2 }}
+                            </div>
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-coke btn-lg w-100 py-3">
+                                    <i class="fas fa-broadcast-tower me-2"></i> BROADCAST ANNOUNCEMENT
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-coke-red text-white">
+                    <h3><i class="fas fa-server me-2"></i>Available PA Systems</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for system in systems %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-volume-up text-coke-red me-2"></i>
+                                <strong>{{ system.name }}</strong>
+                                <div class="text-muted small">{{ system.location }}</div>
+                            </div>
+                            <span class="badge bg-{% if system.is_active %}success{% else %}secondary{% endif %} rounded-pill">
+                                {% if system.is_active %}ACTIVE{% else %}INACTIVE{% endif %}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-coke-red text-white">
+                    <h3><i class="fas fa-history me-2"></i>Recent Announcements</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush announcement-list">
+                        {% for announcement in recent_announcements %}
+                        <div class="list-group-item priority-{{ announcement.priority }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 fw-bold">{{ announcement.message_line1 }}</h6>
+                                <small class="text-muted">{{ announcement.created_at|time }}</small>
+                            </div>
+                            {% if announcement.message_line2 %}
+                            <p class="mb-1">{{ announcement.message_line2 }}</p>
+                            {% endif %}
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">
+                                    <i class="fas fa-map-marker-alt text-coke-red"></i> {{ announcement.system.name }}
+                                </small>
+                                <small class="text-{{ announcement.priority|lower }}">
+                                    <i class="fas fa-exclamation-circle"></i> {{ announcement.get_priority_display }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="card-footer text-center bg-light">
+                        <a href="#" class="text-coke-red">View Full Announcement History</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+:root {
+    --coke-red: #ed1c16;
+    --coke-dark: #000000;
+    --coke-light: #f5f5f5;
+    --coke-silver: #cccccc;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.company-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.company-logo {
+    height: 60px;
+    margin-right: 20px;
+}
+
+.company-info h1 {
+    color: var(--coke-dark);
+    font-weight: 700;
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.location {
+    color: var(--coke-red);
+    font-weight: 500;
+    margin: 0;
+}
+
+.pa-display {
+    background-color: var(--coke-dark);
+    color: white;
+    border-radius: 8px;
+    padding: 20px;
+    font-family: 'Courier New', monospace;
+    min-height: 120px;
+    border: 3px solid var(--coke-silver);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+.line1 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: white;
+    text-transform: uppercase;
+}
+
+.line2 {
+    font-size: 1.4rem;
+    color: var(--coke-silver);
+}
+
+.btn-coke {
+    background-color: var(--coke-red);
+    color: white;
+    border: none;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    transition: all 0.3s;
+}
+
+.btn-coke:hover {
+    background-color: var(--coke-dark);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.bg-coke-red {
+    background-color: var(--coke-red) !important;
+}
+
+.text-coke-red {
+    color: var(--coke-red) !important;
+}
+
+.text-coke-dark {
+    color: var(--coke-dark) !important;
+}
+
+.announcement-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.priority-LOW { border-left: 5px solid #28a745; }
+.priority-MEDIUM { border-left: 5px solid #ffc107; }
+.priority-HIGH { border-left: 5px solid #fd7e14; }
+.priority-EMERGENCY { 
+    border-left: 5px solid #dc3545;
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+.form-control, .form-select {
+    border: 1px solid var(--coke-silver);
+    padding: 10px 15px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--coke-red);
+    box-shadow: 0 0 0 0.25rem rgba(237, 28, 22, 0.25);
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: 600;
+}
+
+.list-group-item {
+    padding: 1rem 1.25rem;
+    border-left: none;
+    border-right: none;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 5px 10px;
+}
+</style>
+
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const line1 = document.getElementById('id_message_line1').value;
+            const line2 = document.getElementById('id_message_line2').value;
+            
+            document.getElementById('current-line1').textContent = line1 || "[NO MESSAGE]";
+            document.getElementById('current-line2').textContent = line2 || "ALMASI BOTTLERS NYERI";
+            
+            // Simulate broadcast animation
+            const display = document.querySelector('.pa-display');
+            display.style.boxShadow = 'inset 0 0 20px rgba(237, 28, 22, 0.8)';
+            setTimeout(() => {
+                display.style.boxShadow = 'inset 0 0 10px rgba(0,0,0,0.5)';
+            }, 1000);
+        });
+    }
+    
+    // Add current time to the display
+    function updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        document.getElementById('current-time').textContent = timeString;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+});
+</script>
+{% endblock %}

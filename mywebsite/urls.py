@@ -216,5 +216,7 @@ urlpatterns = [
     path('access-control-dashboard/', views.access_control_dashboard, name='access-control-dashboard'),
     path('door/<int:door_id>/', views.door_detail, name='door_detail'),
     path('user/<int:user_id>/', views.user_detail, name='user_detail'),
+
+    path('pa_dashboard' , views.pa_dashboard , name="pa_dashboard"),
   
 ]

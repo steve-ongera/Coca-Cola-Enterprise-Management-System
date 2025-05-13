@@ -4710,3 +4710,32 @@ def user_detail(request, user_id):
         'access_logs': access_logs,
     }
     return render(request, 'access_control/user_detail.html', context)
+
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import PASystem, PAAnnouncement
+from .forms import AnnouncementForm
+
+@login_required
+def pa_dashboard(request):
+    systems = PASystem.objects.filter(is_active=True)
+    recent_announcements = PAAnnouncement.objects.order_by('-created_at')[:10]
+    
+    if request.method == 'POST':
+        form = AnnouncementForm(request.POST)
+        if form.is_valid():
+            announcement = form.save(commit=False)
+            announcement.created_by = request.user
+            announcement.save()
+            return redirect('pa_dashboard')
+    else:
+        form = AnnouncementForm()
+    
+    context = {
+        'systems': systems,
+        'recent_announcements': recent_announcements,
+        'form': form,
+    }
+    return render(request, 'pa_system/dashboard.html', context)

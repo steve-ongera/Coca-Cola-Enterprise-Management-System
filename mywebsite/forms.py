@@ -1040,3 +1040,25 @@ class IncidentReportForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(IncidentReportForm, self).__init__(*args, **kwargs)
         self.fields['media_files'].widget.attrs.update({'class': 'form-control'})
+
+
+
+from django import forms
+from .models import PAAnnouncement
+
+class AnnouncementForm(forms.ModelForm):
+    class Meta:
+        model = PAAnnouncement
+        fields = ['system', 'message_line1', 'message_line2', 'priority']
+        widgets = {
+            'message_line1': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter first line message...'
+            }),
+            'message_line2': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter second line message...'
+            }),
+            'system': forms.Select(attrs={'class': 'form-select'}),
+            'priority': forms.Select(attrs={'class': 'form-select'}),
+        }
