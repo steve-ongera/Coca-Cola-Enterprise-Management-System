@@ -1630,8 +1630,42 @@ class SafetyChecklistCompletion(models.Model):
     
     def __str__(self):
         return f"{self.checklist} completed by {self.completed_by}"
+    
 
+class IncidentCategory(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    severity_level = models.CharField(max_length=20, choices=[
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    ])
+    requires_followup = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+
+class IncidentLocation(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    zone = models.CharField(max_length=50, choices=[
+        ('production', 'Production Area'),
+        ('warehouse', 'Warehouse'),
+        ('office', 'Office Area'),
+        ('parking', 'Parking Lot'),
+        ('perimeter', 'Perimeter'),
+        ('gate', 'Gate'),
+        ('other', 'Other'),
+    ])
+    is_high_risk = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.name} ({self.zone})"
+    
 class IncidentReport(models.Model):
+    
     INCIDENT_TYPE_CHOICES = [
         ('injury', 'Personal Injury'),
         ('equipment', 'Equipment Failure'),
@@ -1814,3 +1848,52 @@ class SecurityReport(models.Model):
 def create_security_guard(sender, instance, created, **kwargs):
     if created and hasattr(instance, 'is_security_guard') and instance.is_security_guard:
         SecurityGuard.objects.create(user=instance)
+
+
+class SecurityIncidentReport(models.Model):
+    INCIDENT_STATUS = (
+        ('reported', 'Reported'),
+        ('under_investigation', 'Under Investigation'),
+        ('resolved', 'Resolved'),
+        ('escalated', 'Escalated'),
+        ('closed', 'Closed'),
+    )
+
+    reference_number = models.CharField(max_length=20, unique=True, editable=False)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    category = models.ForeignKey(IncidentCategory, on_delete=models.PROTECT)
+    location = models.ForeignKey(IncidentLocation, on_delete=models.PROTECT)
+    reported_by = models.ForeignKey(SecurityGuard, on_delete=models.PROTECT, related_name='reported_incidents')
+    reported_datetime = models.DateTimeField(default=timezone.now)
+    status = models.CharField(max_length=50, choices=INCIDENT_STATUS, default='reported')
+    severity = models.CharField(max_length=20, choices=[
+        ('minor', 'Minor'),
+        ('moderate', 'Moderate'),
+        ('major', 'Major'),
+        ('critical', 'Critical'),
+    ])
+    witnesses = models.TextField(blank=True, null=True)
+    immediate_actions_taken = models.TextField()
+    potential_impact = models.TextField(blank=True, null=True)
+    requires_management_notification = models.BooleanField(default=False)
+    notification_sent = models.BooleanField(default=False)
+    assigned_to = models.ForeignKey(SecurityGuard, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_incidents')
+    is_safety_related = models.BooleanField(default=False)
+    is_security_related = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        if not self.reference_number:
+            # Generate reference number: YYYYMMDD-XXXX
+            date_part = timezone.now().strftime('%Y%m%d')
+            last_incident = IncidentReport.objects.filter(reference_number__startswith=date_part).order_by('-reference_number').first()
+            if last_incident:
+                last_num = int(last_incident.reference_number.split('-')[1])
+                new_num = last_num + 1
+            else:
+                new_num = 1
+            self.reference_number = f"{date_part}-{new_num:04d}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.reference_number} - {self.title}"
