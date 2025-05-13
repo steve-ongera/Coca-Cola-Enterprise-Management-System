@@ -203,5 +203,10 @@ urlpatterns = [
     path('visitors/<int:visitor_id>/delete/', views.delete_visitor, name='delete_visitor'),
 
     path('emergency_protocols/', views.emergency_protocols, name='emergency_protocols'),
+
+    path('incidents/', views.incident_dashboard, name='incident_dashboard'),
+    path('incidents/report/', views.report_incident, name='report_incident'),
+    path('incidents/<int:incident_id>/', views.incident_detail, name='incident_detail'),
+    path('incidents/update-status/', views.update_incident_status, name='update_incident_status'),
   
 ]

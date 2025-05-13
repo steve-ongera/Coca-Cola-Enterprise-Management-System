@@ -4510,3 +4510,131 @@ def check_in_out_vehicle(request):
             return JsonResponse({'success': False, 'message': 'No active check-in found for this vehicle'})
     
     return JsonResponse({'success': True, 'message': message})
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+from .models import SecurityIncidentReport, IncidentMedia, IncidentCategory, IncidentLocation, SecurityGuard
+from .forms import IncidentReportForm
+
+@login_required
+def incident_dashboard(request):
+    # Get the security guard profile
+    try:
+        security_guard = SecurityGuard.objects.get(user=request.user)
+    except SecurityGuard.DoesNotExist:
+        return redirect('access_denied')
+
+    # Get all incidents reported by this guard
+    incidents_list = SecurityIncidentReport.objects.filter(
+        reported_by=security_guard
+    ).order_by('-reported_datetime')
+
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        incidents_list = incidents_list.filter(
+            Q(reference_number__icontains=search_query) |
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(category__name__icontains=search_query) |
+            Q(location__name__icontains=search_query)
+        )
+
+    # Filter by status if requested
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        incidents_list = incidents_list.filter(status=status_filter)
+
+    # Filter by severity if requested
+    severity_filter = request.GET.get('severity', '')
+    if severity_filter:
+        incidents_list = incidents_list.filter(severity=severity_filter)
+
+    # Pagination
+    paginator = Paginator(incidents_list, 10)
+    page_number = request.GET.get('page')
+    incidents = paginator.get_page(page_number)
+
+    context = {
+        'incidents': incidents,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'severity_filter': severity_filter,
+    }
+    return render(request, 'security/incident_dashboard.html', context)
+
+@login_required
+def report_incident(request):
+    try:
+        security_guard = SecurityGuard.objects.get(user=request.user)
+    except SecurityGuard.DoesNotExist:
+        return redirect('access_denied')
+
+    if request.method == 'POST':
+        form = IncidentReportForm(request.POST, request.FILES)
+        if form.is_valid():
+            incident = form.save(commit=False)
+            incident.reported_by = security_guard
+            incident.save()
+
+            # Handle file uploads
+            files = request.FILES.getlist('media_files')
+            for file in files:
+                file_type = 'photo' if file.content_type.startswith('image/') else 'video' if file.content_type.startswith('video/') else 'document'
+                IncidentMedia.objects.create(
+                    incident=incident,
+                    file=file,
+                    file_type=file_type
+                )
+
+            return redirect('incident_detail', incident_id=incident.id)
+    else:
+        form = IncidentReportForm()
+
+    context = {
+        'form': form,
+        'categories': IncidentCategory.objects.all(),
+        'locations': IncidentLocation.objects.all(),
+    }
+    return render(request, 'security/report_incident.html', context)
+
+@login_required
+def incident_detail(request, incident_id):
+    try:
+        security_guard = SecurityGuard.objects.get(user=request.user)
+    except SecurityGuard.DoesNotExist:
+        return redirect('access_denied')
+
+    incident = get_object_or_404(SecurityIncidentReport, id=incident_id, reported_by=security_guard)
+    media_files = IncidentMedia.objects.filter(incident=incident)
+
+    context = {
+        'incident': incident,
+        'media_files': media_files,
+    }
+    return render(request, 'security/incident_detail.html', context)
+
+@login_required
+@require_POST
+def update_incident_status(request):
+    incident_id = request.POST.get('incident_id')
+    new_status = request.POST.get('new_status')
+
+    if not incident_id or not new_status:
+        return JsonResponse({'success': False, 'message': 'Missing parameters'})
+
+    try:
+        security_guard = SecurityGuard.objects.get(user=request.user)
+        incident = SecurityIncidentReport.objects.get(id=incident_id, reported_by=security_guard)
+        incident.status = new_status
+        incident.save()
+        return JsonResponse({'success': True, 'message': 'Status updated successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})

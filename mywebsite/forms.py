@@ -1003,3 +1003,29 @@ class VisitorCheckOutForm(forms.ModelForm):
     class Meta:
         model = VisitLog
         fields = ['id_number']
+
+
+from django import forms
+from .models import SecurityIncidentReport, IncidentMedia
+
+class IncidentReportForm(forms.ModelForm):
+    media_files = forms.FileField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'multiple': True}),
+        help_text="Upload photos, videos, or documents related to the incident"
+    )
+
+    class Meta:
+        model = SecurityIncidentReport
+        fields = [
+            'title', 'description', 'category', 'location', 
+            'severity', 'witnesses', 'immediate_actions_taken',
+            'potential_impact', 'is_safety_related', 'is_security_related',
+            'requires_management_notification'
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'witnesses': forms.Textarea(attrs={'rows': 2}),
+            'immediate_actions_taken': forms.Textarea(attrs={'rows': 3}),
+            'potential_impact': forms.Textarea(attrs={'rows': 2}),
+        }

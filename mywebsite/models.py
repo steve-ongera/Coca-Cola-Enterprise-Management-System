@@ -1912,3 +1912,54 @@ class IncidentMedia(models.Model):
 
     def __str__(self):
         return f"{self.incident.reference_number} - {self.file_type}"
+    
+
+class IncidentFollowUp(models.Model):
+    incident = models.ForeignKey(SecurityIncidentReport, on_delete=models.CASCADE, related_name='followups')
+    action_taken = models.TextField()
+    taken_by = models.ForeignKey(SecurityGuard, on_delete=models.PROTECT)
+    followup_datetime = models.DateTimeField(default=timezone.now)
+    notes = models.TextField(blank=True)
+    status_update = models.CharField(max_length=50, choices=SecurityIncidentReport.INCIDENT_STATUS)
+    requires_additional_action = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Follow-up for {self.incident.reference_number}"
+    
+
+class ManagementNotification(models.Model):
+    incident = models.ForeignKey(SecurityIncidentReport, on_delete=models.CASCADE, related_name='notifications')
+    notified_person = models.CharField(max_length=100)
+    position = models.CharField(max_length=100)
+    notification_method = models.CharField(max_length=50, choices=[
+        ('email', 'Email'),
+        ('phone', 'Phone Call'),
+        ('in_person', 'In Person'),
+        ('message', 'Text Message'),
+    ])
+    notification_datetime = models.DateTimeField(default=timezone.now)
+    response_received = models.BooleanField(default=False)
+    response_notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Notification for {self.incident.reference_number} to {self.notified_person}"
+    
+
+class SecurityShiftLog(models.Model):
+    guard = models.ForeignKey(SecurityGuard, on_delete=models.PROTECT)
+    shift_date = models.DateField()
+    shift_type = models.CharField(max_length=50, choices=[
+        ('morning', 'Morning Shift (6AM-6PM)'),
+        ('afternoon', 'Afternoon Shift (2PM-10PM)'),
+        ('night', 'Night Shift (6PM-6AM)'),
+    ])
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
+    handover_notes = models.TextField(blank=True)
+    equipment_handover = models.TextField(blank=True)
+    incidents_during_shift = models.ManyToManyField(IncidentReport, blank=True)
+    supervisor_comments = models.TextField(blank=True)
+    is_approved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.guard.user.get_full_name()} - {self.shift_date} ({self.shift_type})"
