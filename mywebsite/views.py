@@ -4247,10 +4247,47 @@ from django.core.paginator import Paginator
 from .models import Visitor
 from django.contrib.auth.decorators import login_required
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q, OuterRef, Subquery, BooleanField
+from django.db.models.functions import Coalesce
+from .models import Visitor, VisitLog
+
 @login_required
 def visitor_management(request):
-    # Get all visitors ordered by last name
-    visitors_list = Visitor.objects.all().order_by('-id')
+    # Create a subquery to get the latest visit log for each visitor
+    latest_visit = VisitLog.objects.filter(
+        visitor=OuterRef('pk')
+    ).order_by('-check_in_time')
+    
+    # Annotate visitors with their latest visit status
+    visitors_list = Visitor.objects.annotate(
+        latest_visit_id=Subquery(latest_visit.values('id')[:1]),
+        latest_check_in=Subquery(latest_visit.values('check_in_time')[:1]),
+        latest_check_out=Subquery(latest_visit.values('check_out_time')[:1]),
+        is_inside=Subquery(latest_visit.values('is_inside')[:1]),
+        badge_number=Subquery(latest_visit.values('badge_number')[:1]),
+    ).order_by('-id')
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        visitors_list = visitors_list.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(company__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(id_number__icontains=search_query)
+        )
+    
+    # Filter by status if requested
+    status_filter = request.GET.get('status', '')
+    if status_filter == 'inside':
+        visitors_list = visitors_list.filter(is_inside=True)
+    elif status_filter == 'outside':
+        visitors_list = visitors_list.filter(is_inside=False)
     
     # Pagination
     paginator = Paginator(visitors_list, 10)  # Show 10 visitors per page
@@ -4259,6 +4296,8 @@ def visitor_management(request):
     
     context = {
         'visitors': visitors,
+        'search_query': search_query,
+        'status_filter': status_filter,
     }
     return render(request, 'security/visitor_management.html', context)
 
@@ -4321,3 +4360,153 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def emergency_protocols(request):
     return render(request, 'security/emergency_protocols.html')
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q, OuterRef, Subquery
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Vehicle, VehicleLog, SecurityGuard
+
+@login_required
+def vehicle_record_management(request):
+    # Create a subquery to get the latest log for each vehicle
+    latest_log = VehicleLog.objects.filter(
+        vehicle=OuterRef('pk')
+    ).order_by('-entry_time')
+    
+    # Annotate vehicles with their latest log status
+    vehicles_list = Vehicle.objects.annotate(
+        latest_log_id=Subquery(latest_log.values('id')[:1]),
+        latest_entry=Subquery(latest_log.values('entry_time')[:1]),
+        latest_exit=Subquery(latest_log.values('exit_time')[:1]),
+        is_inside=Subquery(latest_log.values('is_inside')[:1]),
+        purpose=Subquery(latest_log.values('purpose')[:1]),
+    ).order_by('-latest_entry')
+
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        vehicles_list = vehicles_list.filter(
+            Q(license_plate__icontains=search_query) |
+            Q(make__icontains=search_query) |
+            Q(model__icontains=search_query) |
+            Q(color__icontains=search_query) |
+            Q(owner__username__icontains=search_query) |
+            Q(visitor_owner__first_name__icontains=search_query) |
+            Q(visitor_owner__last_name__icontains=search_query)
+        )
+    
+    # Filter by status if requested
+    status_filter = request.GET.get('status', '')
+    if status_filter == 'inside':
+        vehicles_list = vehicles_list.filter(is_inside=True)
+    elif status_filter == 'outside':
+        vehicles_list = vehicles_list.filter(is_inside=False)
+    
+    # Filter by vehicle type if requested
+    type_filter = request.GET.get('type', '')
+    if type_filter:
+        vehicles_list = vehicles_list.filter(vehicle_type=type_filter)
+    
+    # Pagination
+    paginator = Paginator(vehicles_list, 10)
+    page_number = request.GET.get('page')
+    vehicles = paginator.get_page(page_number)
+    
+    context = {
+        'vehicles': vehicles,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'type_filter': type_filter,
+    }
+    return render(request, 'security/vehicle_record_management.html', context)
+
+@login_required
+def get_vehicle_details(request, vehicle_id):
+    vehicle = get_object_or_404(Vehicle, id=vehicle_id)
+    data = {
+        'id': vehicle.id,
+        'license_plate': vehicle.license_plate,
+        'make': vehicle.make,
+        'model': vehicle.model,
+        'color': vehicle.color,
+        'vehicle_type': vehicle.vehicle_type,
+        'owner': vehicle.owner.username if vehicle.owner else None,
+        'visitor_owner': f"{vehicle.visitor_owner.first_name} {vehicle.visitor_owner.last_name}" if vehicle.visitor_owner else None,
+    }
+    return JsonResponse(data)
+
+@login_required
+@require_POST
+def update_vehicle(request):
+    vehicle_id = request.POST.get('vehicle_id')
+    if not vehicle_id:
+        return JsonResponse({'success': False, 'message': 'Vehicle ID is required'})
+    
+    vehicle = get_object_or_404(Vehicle, id=vehicle_id)
+    
+    try:
+        vehicle.license_plate = request.POST.get('license_plate', vehicle.license_plate)
+        vehicle.make = request.POST.get('make', vehicle.make)
+        vehicle.model = request.POST.get('model', vehicle.model)
+        vehicle.color = request.POST.get('color', vehicle.color)
+        vehicle.vehicle_type = request.POST.get('vehicle_type', vehicle.vehicle_type)
+        vehicle.save()
+        return JsonResponse({'success': True, 'message': 'Vehicle updated successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+@login_required
+@require_POST
+def delete_vehicle(request):
+    vehicle_id = request.POST.get('vehicle_id')
+    if not vehicle_id:
+        return JsonResponse({'success': False, 'message': 'Vehicle ID is required'})
+    
+    vehicle = get_object_or_404(Vehicle, id=vehicle_id)
+    try:
+        vehicle.delete()
+        return JsonResponse({'success': True, 'message': 'Vehicle deleted successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+@login_required
+@require_POST
+def check_in_out_vehicle(request):
+    vehicle_id = request.POST.get('vehicle_id')
+    action = request.POST.get('action')
+    
+    if not vehicle_id or not action:
+        return JsonResponse({'success': False, 'message': 'Missing parameters'})
+    
+    vehicle = get_object_or_404(Vehicle, id=vehicle_id)
+    
+    try:
+        security_guard = SecurityGuard.objects.get(user=request.user)
+    except SecurityGuard.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Only security guards can perform this action'})
+    
+    if action == 'in':
+        # Create new log entry
+        VehicleLog.objects.create(
+            vehicle=vehicle,
+            security_guard=security_guard,
+            purpose=request.POST.get('purpose', ''),
+            is_inside=True
+        )
+        message = 'Vehicle checked in successfully'
+    else:
+        # Update latest log entry
+        log = VehicleLog.objects.filter(vehicle=vehicle, is_inside=True).order_by('-entry_time').first()
+        if log:
+            log.exit_time = timezone.now()
+            log.is_inside = False
+            log.save()
+            message = 'Vehicle checked out successfully'
+        else:
+            return JsonResponse({'success': False, 'message': 'No active check-in found for this vehicle'})
+    
+    return JsonResponse({'success': True, 'message': message})

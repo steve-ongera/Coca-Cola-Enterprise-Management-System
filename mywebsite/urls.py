@@ -185,6 +185,12 @@ urlpatterns = [
 
     path('vehicle_management/', views.vehicle_management, name='vehicle_management'),
     path('vehicles/get-details/', views.get_vehicle_details, name='get_vehicle_details'),
+    path('vehicle-records/' , views.vehicle_record_management , name="vehicle_record_management"),
+    #
+    path('vehicles/<int:vehicle_id>/details/', views.get_vehicle_details, name='get_vehicle_details'),
+    path('vehicles/update/', views.update_vehicle, name='update_vehicle'),
+    path('vehicles/delete/', views.delete_vehicle, name='delete_vehicle'),
+    path('vehicles/checkinout/', views.check_in_out_vehicle, name='check_in_out_vehicle'),
 
 
     path('employee-attendance/', views.employee_attendance, name='employee_attendance'),

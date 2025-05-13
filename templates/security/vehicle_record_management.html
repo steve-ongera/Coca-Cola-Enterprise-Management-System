@@ -1,7 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %}Visitor Management - Coca-Cola Security{% endblock %}
+{% block title %}Vehicle Management - Security Portal{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -11,7 +11,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h2 class="d-inline-block mb-0" style="color: #F40009;">
-                        <i class="fas fa-users me-2"></i>Visitor Management
+                        <i class="fas fa-car me-2"></i>Vehicle Management
                     </h2>
                 </div>
                 <div class="text-end">
@@ -35,7 +35,7 @@
     <div class="row mb-3">
         <div class="col-md-8">
             <form method="get" class="input-group">
-                <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search visitors...">
+                <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search vehicles...">
                 <button class="btn btn-outline-danger" type="submit">
                     <i class="fas fa-search"></i>
                 </button>
@@ -45,21 +45,27 @@
             <div class="btn-group float-end">
                 <a href="?status=" class="btn btn-outline-secondary {% if not status_filter %}active{% endif %}">All</a>
                 <a href="?status=inside" class="btn btn-outline-success {% if status_filter == 'inside' %}active{% endif %}">
-                    <i class="fas fa-door-open"></i> Inside
+                    <i class="fas fa-parking"></i> Inside
                 </a>
                 <a href="?status=outside" class="btn btn-outline-warning {% if status_filter == 'outside' %}active{% endif %}">
-                    <i class="fas fa-door-closed"></i> Outside
+                    <i class="fas fa-sign-out-alt"></i> Outside
                 </a>
-                {% comment %}
-                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#visitorModal">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-filter"></i> Type
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item {% if not type_filter %}active{% endif %}" href="?type=">All Types</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item {% if type_filter == 'employee' %}active{% endif %}" href="?type=employee">Employee</a></li>
+                        <li><a class="dropdown-item {% if type_filter == 'visitor' %}active{% endif %}" href="?type=visitor">Visitor</a></li>
+                        <li><a class="dropdown-item {% if type_filter == 'delivery' %}active{% endif %}" href="?type=delivery">Delivery</a></li>
+                        <li><a class="dropdown-item {% if type_filter == 'company' %}active{% endif %}" href="?type=company">Company</a></li>
+                    </ul>
+                </div>
+                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#vehicleModal">
                     <i class="fas fa-plus"></i> New
                 </button>
-                {%  endcomment %}
-                <a href="{% url 'visitor_check_in'%}" style="decorations:none;">
-                    <button class="btn btn-outline-danger">
-                        <i class="fas fa-plus"></i> New
-                    </button>
-                </a>        
             </div>
         </div>
     </div>
@@ -70,109 +76,110 @@
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold" style="color: #F40009;">
-                        <i class="fas fa-list me-2"></i>Visitor Records
+                        <i class="fas fa-list me-2"></i>Vehicle Records
                     </h5>
                     <div class="text-muted small">
-                        Showing {{ visitors.start_index }}-{{ visitors.end_index }} of {{ visitors.paginator.count }}
+                        Showing {{ vehicles.start_index }}-{{ vehicles.end_index }} of {{ vehicles.paginator.count }}
                     </div>
                 </div>
                 
-                <!-- Visitor Table -->
+                <!-- Vehicle Table -->
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Visitor</th>
-                                    <th>Company</th>
+                                    <th>Vehicle</th>
                                     <th>Type</th>
-                                    <th>Contact</th>
-                                    <th>ID</th>
+                                    <th>Owner</th>
                                     <th>Status</th>
+                                    <th>Last Activity</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for visitor in visitors %}
+                                {% for vehicle in vehicles %}
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="position-relative me-3">
                                                 <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                                                    style="width: 36px; height: 36px; background-color: #f8f9fa; border: 2px solid {% if visitor.is_inside %}#28a745{% else %}#6c757d{% endif %};">
-                                                    <i class="fas fa-user text-secondary" style="font-size: 1rem;"></i>
+                                                    style="width: 36px; height: 36px; background-color: #f8f9fa; border: 2px solid {% if vehicle.is_inside %}#28a745{% else %}#6c757d{% endif %};">
+                                                    <i class="fas fa-car text-secondary" style="font-size: 1rem;"></i>
                                                 </div>
                                                 <span class="position-absolute bottom-0 end-0 translate-middle p-1 border border-light rounded-circle 
-                                                    {% if visitor.is_inside %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {% if vehicle.is_inside %}bg-success{% else %}bg-secondary{% endif %}">
                                                     <span class="visually-hidden">Status</span>
                                                 </span>
                                             </div>
                                             <div>
-                                                <div class="fw-bold">{{ visitor.first_name }} {{ visitor.last_name }}</div>
-                                                <small class="text-muted">ID: {{ visitor.id }}</small>
+                                                <div class="fw-bold">{{ vehicle.make }} {{ vehicle.model }}</div>
+                                                <small class="text-muted">{{ vehicle.license_plate }}</small>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{{ visitor.company|default:"-" }}</td>
                                     <td>
-                                        <span class="badge bg-{% if visitor.visitor_type == 'official' %}danger{% elif visitor.visitor_type == 'contractor' %}warning text-dark{% elif visitor.visitor_type == 'vendor' %}info{% else %}secondary{% endif %} rounded-pill">
-                                            {{ visitor.get_visitor_type_display }}
+                                        <span class="badge bg-{% if vehicle.vehicle_type == 'employee' %}primary{% elif vehicle.vehicle_type == 'visitor' %}info{% elif vehicle.vehicle_type == 'delivery' %}warning text-dark{% else %}secondary{% endif %} rounded-pill">
+                                            {{ vehicle.get_vehicle_type_display }}
                                         </span>
                                     </td>
                                     <td>
-                                        {% if visitor.phone %}
-                                            <a href="tel:{{ visitor.phone }}" class="text-decoration-none">
-                                                <i class="fas fa-phone me-1 text-muted"></i> {{ visitor.phone }}
-                                            </a><br>
-                                        {% endif %}
-                                        {% if visitor.email %}
-                                            <a href="mailto:{{ visitor.email }}" class="text-decoration-none">
-                                                <i class="fas fa-envelope me-1 text-muted"></i> {{ visitor.email|truncatechars:20 }}
-                                            </a>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if visitor.id_number %}
-                                            <small>{{ visitor.id_type|default:"ID" }}:</small><br>
-                                            <code>{{ visitor.id_number }}</code>
+                                        {% if vehicle.owner %}
+                                            <i class="fas fa-user-tie me-1"></i> {{ vehicle.owner.get_full_name|default:vehicle.owner.username }}
+                                        {% elif vehicle.visitor_owner %}
+                                            <i class="fas fa-user me-1"></i> {{ vehicle.visitor_owner.first_name }} {{ vehicle.visitor_owner.last_name }}
                                         {% else %}
-                                            <span class="text-muted">Not provided</span>
+                                            <span class="text-muted">Unknown</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if visitor.is_inside %}
+                                        {% if vehicle.is_inside %}
                                             <span class="badge bg-success">
-                                                <i class="fas fa-door-open"></i> Inside
+                                                <i class="fas fa-parking"></i> Inside
                                             </span>
                                             <div class="small text-muted mt-1">
-                                                Since: {{ visitor.latest_check_in|date:"M j, H:i" }}
+                                                Since: {{ vehicle.latest_entry|date:"M j, H:i" }}
                                             </div>
                                         {% else %}
                                             <span class="badge bg-secondary">
-                                                <i class="fas fa-door-closed"></i> Outside
+                                                <i class="fas fa-sign-out-alt"></i> Outside
                                             </span>
-                                            {% if visitor.latest_check_out %}
+                                            {% if vehicle.latest_exit %}
                                                 <div class="small text-muted mt-1">
-                                                    Last: {{ visitor.latest_check_out|date:"M j, H:i" }}
+                                                    Last: {{ vehicle.latest_exit|date:"M j, H:i" }}
                                                 </div>
                                             {% endif %}
                                         {% endif %}
                                     </td>
                                     <td>
+                                        {% if vehicle.is_inside %}
+                                            <span class="text-success">Checked in</span>
+                                        {% else %}
+                                            <span class="text-muted">Checked out</span>
+                                        {% endif %}
+                                        <div class="small text-muted">
+                                            {% if vehicle.purpose %}
+                                                {{ vehicle.purpose|truncatechars:30 }}
+                                            {% else %}
+                                                No purpose specified
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-primary view-visitor" 
-                                                    data-visitor-id="{{ visitor.id }}" 
+                                            <button class="btn btn-outline-primary view-vehicle" 
+                                                    data-vehicle-id="{{ vehicle.id }}" 
                                                     data-bs-toggle="modal" 
-                                                    data-bs-target="#visitorModal">
+                                                    data-bs-target="#vehicleModal">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <button class="btn btn-outline-secondary checkinout-visitor" 
-                                                    data-visitor-id="{{ visitor.id }}"
-                                                    data-status="{% if visitor.is_inside %}out{% else %}in{% endif %}">
-                                                <i class="fas fa-{% if visitor.is_inside %}sign-out-alt{% else %}sign-in-alt{% endif %}"></i>
+                                            <button class="btn btn-outline-secondary checkinout-vehicle" 
+                                                    data-vehicle-id="{{ vehicle.id }}"
+                                                    data-status="{% if vehicle.is_inside %}out{% else %}in{% endif %}">
+                                                <i class="fas fa-{% if vehicle.is_inside %}sign-out-alt{% else %}sign-in-alt{% endif %}"></i>
                                             </button>
-                                            <button class="btn btn-outline-danger delete-visitor" 
-                                                    data-visitor-id="{{ visitor.id }}">
+                                            <button class="btn btn-outline-danger delete-vehicle" 
+                                                    data-vehicle-id="{{ vehicle.id }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -180,9 +187,9 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="7" class="text-center py-4">
-                                        <i class="fas fa-user-slash fa-2x text-muted mb-2"></i>
-                                        <h5 class="text-muted">No visitors found</h5>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-car-crash fa-2x text-muted mb-2"></i>
+                                        <h5 class="text-muted">No vehicles found</h5>
                                         {% if search_query %}
                                             <p>Try adjusting your search query</p>
                                         {% endif %}
@@ -194,39 +201,39 @@
                     </div>
                     
                     <!-- Pagination -->
-                    {% if visitors.paginator.num_pages > 1 %}
+                    {% if vehicles.paginator.num_pages > 1 %}
                     <div class="card-footer bg-white border-top">
-                        <nav aria-label="Visitor pagination">
+                        <nav aria-label="Vehicle pagination">
                             <ul class="pagination justify-content-center mb-0">
-                                {% if visitors.has_previous %}
+                                {% if vehicles.has_previous %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="First">
+                                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" aria-label="First">
                                         <span aria-hidden="true">&laquo;&laquo;</span>
                                     </a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ visitors.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Previous">
+                                    <a class="page-link" href="?page={{ vehicles.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" aria-label="Previous">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
                                 {% endif %}
                                 
-                                {% for num in visitors.paginator.page_range %}
-                                    {% if num > visitors.number|add:'-3' and num < visitors.number|add:'3' %}
-                                        <li class="page-item {% if visitors.number == num %}active{% endif %}">
-                                            <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>
+                                {% for num in vehicles.paginator.page_range %}
+                                    {% if num > vehicles.number|add:'-3' and num < vehicles.number|add:'3' %}
+                                        <li class="page-item {% if vehicles.number == num %}active{% endif %}">
+                                            <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">{{ num }}</a>
                                         </li>
                                     {% endif %}
                                 {% endfor %}
                                 
-                                {% if visitors.has_next %}
+                                {% if vehicles.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ visitors.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Next">
+                                    <a class="page-link" href="?page={{ vehicles.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" aria-label="Next">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ visitors.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Last">
+                                    <a class="page-link" href="?page={{ vehicles.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" aria-label="Last">
                                         <span aria-hidden="true">&raquo;&raquo;</span>
                                     </a>
                                 </li>
@@ -241,70 +248,60 @@
     </div>
 </div>
 
-<!-- Visitor Modal -->
-<div class="modal fade" id="visitorModal" tabindex="-1" aria-labelledby="visitorModalLabel" aria-hidden="true">
+<!-- Vehicle Modal -->
+<div class="modal fade" id="vehicleModal" tabindex="-1" aria-labelledby="vehicleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-white">
-                <h5 class="modal-title" style="color: #F40009;" id="visitorModalLabel">
-                    <i class="fas fa-user-plus me-2"></i>New Visitor
+                <h5 class="modal-title" style="color: #F40009;" id="vehicleModalLabel">
+                    <i class="fas fa-car me-2"></i>New Vehicle
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="visitorForm" method="post">
+            <form id="vehicleForm" method="post">
                 {% csrf_token %}
-                <input type="hidden" id="visitor_id" name="visitor_id">
+                <input type="hidden" id="vehicle_id" name="vehicle_id">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            <label for="license_plate" class="form-label">License Plate <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="license_plate" name="license_plate" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            <label for="make" class="form-label">Make <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="make" name="make" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="company" class="form-label">Company <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="company" name="company" required>
+                            <label for="model" class="form-label">Model <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="model" name="model" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="visitor_type" class="form-label">Visitor Type <span class="text-danger">*</span></label>
-                            <select class="form-select" id="visitor_type" name="visitor_type" required>
-                                <option value="contractor">Contractor</option>
-                                <option value="vendor">Vendor</option>
-                                <option value="guest">Guest</option>
-                                <option value="official">Official Visitor</option>
+                            <label for="color" class="form-label">Color <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="color" name="color" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="vehicle_type" class="form-label">Vehicle Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="vehicle_type" name="vehicle_type" required>
+                                <option value="employee">Employee Vehicle</option>
+                                <option value="visitor">Visitor Vehicle</option>
+                                <option value="delivery">Delivery Vehicle</option>
+                                <option value="company">Company Vehicle</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email">
+                            <label for="owner" class="form-label">Owner (Employee)</label>
+                            <input type="text" class="form-control" id="owner" name="owner" disabled>
                         </div>
                         <div class="col-md-6">
-                            <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" id="phone" name="phone" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="id_type" class="form-label">ID Type</label>
-                            <select class="form-select" id="id_type" name="id_type">
-                                <option value="">Select...</option>
-                                <option value="Passport">Passport</option>
-                                <option value="Driver License">Driver License</option>
-                                <option value="National ID">National ID</option>
-                                <option value="Company ID">Company ID</option>
-                            </select>
-                        </div>
-                        <div class="col-md-8">
-                            <label for="id_number" class="form-label">ID Number</label>
-                            <input type="text" class="form-control" id="id_number" name="id_number">
+                            <label for="visitor_owner" class="form-label">Owner (Visitor)</label>
+                            <input type="text" class="form-control" id="visitor_owner" name="visitor_owner" disabled>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-save me-1"></i> Save Visitor
+                        <i class="fas fa-save me-1"></i> Save Vehicle
                     </button>
                 </div>
             </form>
@@ -323,8 +320,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to permanently delete this visitor record? This action cannot be undone and will also remove all associated visit logs.</p>
-                <input type="hidden" id="delete_visitor_id">
+                <p>Are you sure you want to permanently delete this vehicle record? This action cannot be undone and will also remove all associated logs.</p>
+                <input type="hidden" id="delete_vehicle_id">
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -342,22 +339,18 @@
         <div class="modal-content">
             <div class="modal-header bg-white">
                 <h5 class="modal-title" style="color: #F40009;" id="checkinoutModalLabel">
-                    <i class="fas fa-door-open me-2"></i>Check <span id="actionType">In</span> Visitor
+                    <i class="fas fa-car me-2"></i>Check <span id="actionType">In</span> Vehicle
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="checkinoutForm" method="post">
                 {% csrf_token %}
-                <input type="hidden" id="check_visitor_id" name="visitor_id">
+                <input type="hidden" id="check_vehicle_id" name="vehicle_id">
                 <input type="hidden" id="check_action" name="action">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="badge_number" class="form-label">Badge Number</label>
-                        <input type="text" class="form-control" id="badge_number" name="badge_number" placeholder="Enter badge number if applicable">
-                    </div>
-                    <div class="mb-3">
-                        <label for="notes" class="form-label">Notes</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional notes about this visit"></textarea>
+                        <label for="purpose" class="form-label">Purpose</label>
+                        <textarea class="form-control" id="purpose" name="purpose" rows="3" placeholder="Enter the purpose of visit"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -446,15 +439,15 @@
     }
 </style>
 
-{% block extra_js %}
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // View visitor details
-    document.querySelectorAll('.view-visitor').forEach(button => {
+    // View vehicle details
+    document.querySelectorAll('.view-vehicle').forEach(button => {
         button.addEventListener('click', function() {
-            const visitorId = this.getAttribute('data-visitor-id');
+            const vehicleId = this.getAttribute('data-vehicle-id');
             
-            fetch(`/visitors/${visitorId}/details/`, {
+            fetch(`/vehicles/${vehicleId}/details/`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
@@ -462,43 +455,42 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(response => response.json())
             .then(data => {
                 // Populate the form
-                document.getElementById('visitor_id').value = data.id;
-                document.getElementById('first_name').value = data.first_name;
-                document.getElementById('last_name').value = data.last_name;
-                document.getElementById('company').value = data.company;
-                document.getElementById('email').value = data.email || '';
-                document.getElementById('phone').value = data.phone;
-                document.getElementById('visitor_type').value = data.visitor_type;
-                document.getElementById('id_type').value = data.id_type || '';
-                document.getElementById('id_number').value = data.id_number || '';
+                document.getElementById('vehicle_id').value = data.id;
+                document.getElementById('license_plate').value = data.license_plate;
+                document.getElementById('make').value = data.make;
+                document.getElementById('model').value = data.model;
+                document.getElementById('color').value = data.color;
+                document.getElementById('vehicle_type').value = data.vehicle_type;
+                document.getElementById('owner').value = data.owner || '';
+                document.getElementById('visitor_owner').value = data.visitor_owner || '';
                 
                 // Update modal title
-                document.getElementById('visitorModalLabel').innerHTML = 
-                    `<i class="fas fa-user-edit me-2"></i>Edit ${data.first_name} ${data.last_name}`;
+                document.getElementById('vehicleModalLabel').innerHTML = 
+                    `<i class="fas fa-car me-2"></i>${data.make} ${data.model} (${data.license_plate})`;
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error loading visitor details');
+                showToast('Error loading vehicle details', 'danger');
             });
         });
     });
     
-    // New visitor button clears the form
-    document.querySelector('[data-bs-target="#visitorModal"]').addEventListener('click', function() {
-        document.getElementById('visitorForm').reset();
-        document.getElementById('visitor_id').value = '';
-        document.getElementById('visitorModalLabel').innerHTML = 
-            `<i class="fas fa-user-plus me-2"></i>New Visitor`;
+    // New vehicle button clears the form
+    document.querySelector('[data-bs-target="#vehicleModal"]').addEventListener('click', function() {
+        document.getElementById('vehicleForm').reset();
+        document.getElementById('vehicle_id').value = '';
+        document.getElementById('vehicleModalLabel').innerHTML = 
+            `<i class="fas fa-car me-2"></i>New Vehicle`;
     });
     
-    // Update visitor form submission
-    const visitorForm = document.getElementById('visitorForm');
-    if (visitorForm) {
-        visitorForm.addEventListener('submit', function(e) {
+    // Update vehicle form submission
+    const vehicleForm = document.getElementById('vehicleForm');
+    if (vehicleForm) {
+        vehicleForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            const visitorId = formData.get('visitor_id');
-            const url = visitorId ? `/visitors/${visitorId}/update/` : '/visitors/create/';
+            const vehicleId = formData.get('vehicle_id');
+            const url = vehicleId ? '/vehicles/update/' : '/vehicles/create/';
             
             fetch(url, {
                 method: 'POST',
@@ -511,7 +503,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast('Visitor ' + (visitorId ? 'updated' : 'created') + ' successfully', 'success');
+                    showToast('Vehicle ' + (vehicleId ? 'updated' : 'created') + ' successfully', 'success');
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showToast('Error: ' + data.message, 'danger');
@@ -519,18 +511,18 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .catch(error => {
                 console.error('Error:', error);
-                showToast('An error occurred while saving visitor', 'danger');
+                showToast('An error occurred while saving vehicle', 'danger');
             });
         });
     }
     
     // Check in/out button handler
-    document.querySelectorAll('.checkinout-visitor').forEach(button => {
+    document.querySelectorAll('.checkinout-vehicle').forEach(button => {
         button.addEventListener('click', function() {
-            const visitorId = this.getAttribute('data-visitor-id');
+            const vehicleId = this.getAttribute('data-vehicle-id');
             const action = this.getAttribute('data-status');
             
-            document.getElementById('check_visitor_id').value = visitorId;
+            document.getElementById('check_vehicle_id').value = vehicleId;
             document.getElementById('check_action').value = action;
             document.getElementById('actionType').textContent = action === 'in' ? 'In' : 'Out';
             
@@ -545,10 +537,8 @@ document.addEventListener("DOMContentLoaded", function() {
         checkinoutForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            const visitorId = formData.get('visitor_id');
-            const action = formData.get('action');
             
-            fetch(`/visitors/${visitorId}/check${action}/`, {
+            fetch('/vehicles/checkinout/', {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -559,7 +549,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast(`Visitor checked ${action} successfully`, 'success');
+                    showToast(`Vehicle checked ${formData.get('action')} successfully`, 'success');
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showToast('Error: ' + data.message, 'danger');
@@ -572,11 +562,11 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
     
-    // Delete visitor confirmation
-    document.querySelectorAll('.delete-visitor').forEach(button => {
+    // Delete vehicle confirmation
+    document.querySelectorAll('.delete-vehicle').forEach(button => {
         button.addEventListener('click', function() {
-            const visitorId = this.getAttribute('data-visitor-id');
-            document.getElementById('delete_visitor_id').value = visitorId;
+            const vehicleId = this.getAttribute('data-vehicle-id');
+            document.getElementById('delete_vehicle_id').value = vehicleId;
             
             const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
             deleteModal.show();
@@ -585,19 +575,21 @@ document.addEventListener("DOMContentLoaded", function() {
     
     // Confirm delete action
     document.getElementById('confirmDelete').addEventListener('click', function() {
-        const visitorId = document.getElementById('delete_visitor_id').value;
+        const vehicleId = document.getElementById('delete_vehicle_id').value;
         
-        fetch(`/visitors/${visitorId}/delete/`, {
+        fetch('/vehicles/delete/', {
             method: 'POST',
+            body: JSON.stringify({'vehicle_id': vehicleId}),
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': '{{ csrf_token }}'
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
             }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showToast('Visitor deleted successfully', 'success');
+                showToast('Vehicle deleted successfully', 'success');
                 setTimeout(() => location.reload(), 1000);
             } else {
                 showToast('Error: ' + data.message, 'danger');
@@ -605,7 +597,7 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            showToast('An error occurred while deleting visitor', 'danger');
+            showToast('An error occurred while deleting vehicle', 'danger');
         });
     });
     
@@ -634,5 +626,5 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
-{% endblock %}
+
 {% endblock %}
