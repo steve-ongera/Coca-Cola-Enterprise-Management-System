@@ -1670,13 +1670,21 @@ class IncidentReport(models.Model):
 class SecurityGuard(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     badge_number = models.CharField(max_length=20, unique=True)
+    shift = models.CharField(max_length=50, choices=[
+        ('morning', 'Morning Shift (6AM-2PM)'),
+        ('afternoon', 'Afternoon Shift (2PM-10PM)'),
+        ('night', 'Night Shift (10PM-6AM)'),
+    ] , blank=True , null=True)
     shift_start = models.TimeField()
     shift_end = models.TimeField()
+    contact_number = models.CharField(max_length=20 , blank=True , null=True)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateField(auto_now_add=True)
     
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.badge_number}"
+
+
 
 
 
