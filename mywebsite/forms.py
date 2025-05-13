@@ -1006,26 +1006,37 @@ class VisitorCheckOutForm(forms.ModelForm):
 
 
 from django import forms
-from .models import SecurityIncidentReport, IncidentMedia
+from .models import SecurityIncidentReport
 
 class IncidentReportForm(forms.ModelForm):
     media_files = forms.FileField(
         required=False,
-        widget=forms.ClearableFileInput(attrs={'multiple': True}),
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control'}),
         help_text="Upload photos, videos, or documents related to the incident"
     )
 
     class Meta:
         model = SecurityIncidentReport
         fields = [
-            'title', 'description', 'category', 'location', 
+            'title', 'description', 'category', 'location',
             'severity', 'witnesses', 'immediate_actions_taken',
             'potential_impact', 'is_safety_related', 'is_security_related',
             'requires_management_notification'
         ]
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
-            'witnesses': forms.Textarea(attrs={'rows': 2}),
-            'immediate_actions_taken': forms.Textarea(attrs={'rows': 3}),
-            'potential_impact': forms.Textarea(attrs={'rows': 2}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'severity': forms.Select(attrs={'class': 'form-control'}),
+            'witnesses': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'immediate_actions_taken': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'potential_impact': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'is_safety_related': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_security_related': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'requires_management_notification': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super(IncidentReportForm, self).__init__(*args, **kwargs)
+        self.fields['media_files'].widget.attrs.update({'class': 'form-control'})

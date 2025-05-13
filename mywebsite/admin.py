@@ -694,3 +694,14 @@ class SecurityReportAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         })
     )
+
+
+
+from django.contrib import admin
+from .models import IncidentCategory
+
+@admin.register(IncidentCategory)
+class IncidentCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'severity_level', 'requires_followup')
+    list_filter = ('severity_level', 'requires_followup')
+    search_fields = ('name', 'description')

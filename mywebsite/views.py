@@ -4638,3 +4638,6 @@ def update_incident_status(request):
         return JsonResponse({'success': True, 'message': 'Status updated successfully'})
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
+    
+
+    

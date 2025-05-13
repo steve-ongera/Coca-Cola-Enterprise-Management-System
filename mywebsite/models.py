@@ -1963,3 +1963,40 @@ class SecurityShiftLog(models.Model):
 
     def __str__(self):
         return f"{self.guard.user.get_full_name()} - {self.shift_date} ({self.shift_type})"
+
+
+from django.db import models
+
+class CCTV(models.Model):
+    LOCATION_CHOICES = [
+        ('entrance', 'Main Entrance'),
+        ('parking', 'Parking Lot'),
+        ('warehouse', 'Warehouse'),
+        ('office', 'Office Area'),
+        ('production', 'Production Floor'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    location = models.CharField(max_length=50, choices=LOCATION_CHOICES)
+    ip_address = models.CharField(max_length=15)
+    is_active = models.BooleanField(default=True)
+    installation_date = models.DateField()
+    last_maintenance = models.DateField(null=True, blank=True)
+    description = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.get_location_display()})"
+
+class CCTVRecording(models.Model):
+    cctv = models.ForeignKey(CCTV, on_delete=models.CASCADE, related_name='recordings')
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    file_path = models.CharField(max_length=255)
+    incident_reported = models.BooleanField(default=False)
+    notes = models.TextField(blank=True)
+    
+    def duration(self):
+        return self.end_time - self.start_time
+    
+    def __str__(self):
+        return f"Recording from {self.cctv.name} at {self.start_time}"
