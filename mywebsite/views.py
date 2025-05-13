@@ -3607,7 +3607,8 @@ import json
 from django.shortcuts import render
 from django.db.models import Count, Q
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, date
+from dateutil.relativedelta import relativedelta
 from .models import VisitLog, Attendance, SecurityGuard, VehicleLog
 import calendar
 from collections import defaultdict
@@ -3623,8 +3624,8 @@ def security_guard_dashboard(request):
     # Today's date
     today = timezone.now().date()
     
-    # Visitor Statistics (last 12 months)
-    twelve_months_ago = today - timedelta(days=365)
+    # Starting date for visitor statistics (12 months ago)
+    twelve_months_ago = today - relativedelta(months=11, day=1)  # Start from the 1st of the month, 11 months ago
     
     # Get all visit logs from the last 12 months
     all_visits = VisitLog.objects.filter(
@@ -3655,15 +3656,20 @@ def security_guard_dashboard(request):
     visit_counts = []
     checked_out_counts = []
     
-    # Generate complete 12-month data
-    for i in range(12):
-        current_month = twelve_months_ago + timedelta(days=30*i)
-        month_key = current_month.strftime('%Y-%m')
-        month_name = calendar.month_name[current_month.month] + ' ' + str(current_month.year)
+    # Generate complete 12-month data, including the current month
+    current_date = twelve_months_ago
+    end_date = today
+    
+    while current_date <= end_date:
+        month_key = current_date.strftime('%Y-%m')
+        month_name = calendar.month_name[current_date.month] + ' ' + str(current_date.year)
         
         months.append(month_name)
         visit_counts.append(month_data[month_key]['total_visits'])
         checked_out_counts.append(month_data[month_key]['checked_out'])
+        
+        # Move to the next month
+        current_date = current_date + relativedelta(months=1)
     
     # Today's visitors
     todays_visits = VisitLog.objects.filter(

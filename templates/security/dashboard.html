@@ -2,6 +2,24 @@
 {% load static %}
 
 {% block content %}
+<style>
+    .chart-container {
+    min-height: 400px;
+    padding: 1rem;
+}
+
+.chart-area {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+#visitorTrendChart {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+</style>
 <div class="container-fluid">
     <h1 class="mt-4">Security Dashboard</h1>
     <div class="row mt-4">
@@ -86,7 +104,7 @@
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">Visitor Trend (Last 12 Months)</h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body chart-container">
                     <div class="chart-area">
                         <canvas id="visitorTrendChart"></canvas>
                     </div>
@@ -214,7 +232,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-// Visitor Trend Chart
+// Visitor Trend Chart with Coca-Cola Theme
 var ctx = document.getElementById('visitorTrendChart');
 var visitorTrendChart = new Chart(ctx, {
     type: 'line',
@@ -224,45 +242,106 @@ var visitorTrendChart = new Chart(ctx, {
             {
                 label: 'Total Visits',
                 data: {{ visit_counts_json|safe }},
-                backgroundColor: 'rgba(78, 115, 223, 0.05)',
-                borderColor: 'rgba(78, 115, 223, 1)',
-                pointBackgroundColor: 'rgba(78, 115, 223, 1)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+                backgroundColor: 'rgba(237, 29, 36, 0.1)', // Coca-Cola red with opacity
+                borderColor: 'rgba(237, 29, 36, 1)', // Coca-Cola primary red
+                borderWidth: 3,
+                pointBackgroundColor: 'rgba(237, 29, 36, 1)',
+                pointBorderColor: '#ffffff',
+                pointHoverRadius: 6,
+                pointRadius: 4,
+                pointHoverBackgroundColor: '#ffffff',
+                pointHoverBorderColor: 'rgba(237, 29, 36, 1)',
+                pointHoverBorderWidth: 2,
+                tension: 0.4, // Smooth curve
                 fill: true
             },
             {
                 label: 'Checked Out',
                 data: {{ checked_out_counts_json|safe }},
-                backgroundColor: 'rgba(28, 200, 138, 0.05)',
-                borderColor: 'rgba(28, 200, 138, 1)',
-                pointBackgroundColor: 'rgba(28, 200, 138, 1)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgba(28, 200, 138, 1)',
+                backgroundColor: 'rgba(0, 0, 0, 0.05)', // Coca-Cola black with opacity
+                borderColor: 'rgba(0, 0, 0, 0.8)', // Coca-Cola secondary black
+                borderWidth: 2,
+                borderDash: [0], // Solid line
+                pointBackgroundColor: 'rgba(0, 0, 0, 1)',
+                pointBorderColor: '#ffffff',
+                pointHoverRadius: 6,
+                pointRadius: 4,
+                pointHoverBackgroundColor: '#ffffff',
+                pointHoverBorderColor: 'rgba(0, 0, 0, 1)',
+                pointHoverBorderWidth: 2,
+                tension: 0.4, // Smooth curve
                 fill: true
             }
         ]
     },
     options: {
         maintainAspectRatio: false,
+        responsive: true,
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        },
         scales: {
             y: {
                 beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                },
                 ticks: {
-                    precision: 0
+                    precision: 0,
+                    font: {
+                        weight: 'bold'
+                    }
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    font: {
+                        weight: 'bold'
+                    }
                 }
             }
         },
         plugins: {
             legend: {
-                display: true
+                position: 'top',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleFont: {
+                    size: 14,
+                    weight: 'bold'
+                },
+                bodyFont: {
+                    size: 12
+                },
+                padding: 12,
+                usePointStyle: true,
+                callbacks: {
+                    label: function(context) {
+                        return context.dataset.label + ': ' + context.parsed.y;
+                    }
+                }
+            }
+        },
+        elements: {
+            line: {
+                cubicInterpolationMode: 'monotone' // Smoother curves
             }
         }
     }
 });
-
 // Attendance Pie Chart
 var ctx2 = document.getElementById('attendancePieChart');
 var attendancePieChart = new Chart(ctx2, {
