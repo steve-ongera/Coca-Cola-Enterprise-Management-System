@@ -208,5 +208,9 @@ urlpatterns = [
     path('incidents/report/', views.report_incident, name='report_incident'),
     path('incidents/<int:incident_id>/', views.incident_detail, name='incident_detail'),
     path('incidents/update-status/', views.update_incident_status, name='update_incident_status'),
+    
+    path('cctvs/', views.cctv_list, name='cctv_list'),
+    path('cctvs/<int:cctv_id>/', views.cctv_detail, name='cctv_detail'),
+    path('recordings/<int:recording_id>/', views.recording_detail, name='recording_detail'),
   
 ]

@@ -4640,4 +4640,22 @@ def update_incident_status(request):
         return JsonResponse({'success': False, 'message': str(e)})
     
 
-    
+
+from django.shortcuts import render, get_object_or_404
+from .models import CCTV, CCTVRecording
+
+def cctv_list(request):
+    cctvs = CCTV.objects.all().order_by('location')
+    return render(request, 'security/cctv_list.html', {'cctvs': cctvs})
+
+def cctv_detail(request, cctv_id):
+    cctv = get_object_or_404(CCTV, pk=cctv_id)
+    recordings = cctv.recordings.all().order_by('-start_time')
+    return render(request, 'security/cctv_detail.html', {
+        'cctv': cctv,
+        'recordings': recordings
+    })
+
+def recording_detail(request, recording_id):
+    recording = get_object_or_404(CCTVRecording, pk=recording_id)
+    return render(request, 'security/recording_detail.html', {'recording': recording})

@@ -1,0 +1,293 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}CCTV Management - Coca-Cola Security{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="d-inline-block mb-0" style="color: #F40009;">
+                        <i class="fas fa-video me-2"></i>CCTV Management
+                    </h2>
+                </div>
+                <div class="text-end">
+                    <div class="badge bg-danger fs-6 mb-2">SECURE AREA</div>
+                    <div class="text-muted small">{% now "F j, Y" %}</div>
+                </div>
+            </div>
+            <hr class="mt-3 mb-1" style="border-color: #F40009; opacity: 0.2;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    <i class="fas fa-map-marker-alt text-danger me-1"></i> Nyeri Plant
+                </div>
+                <div class="text-muted small">
+                    <i class="fas fa-shield-alt text-danger me-1"></i> Security Portal
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Controls -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <form method="get" class="input-group">
+                <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search cameras...">
+                <button class="btn btn-outline-danger" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+        <div class="col-md-4">
+            <div class="btn-group float-end">
+                <a href="?status=" class="btn btn-outline-secondary {% if not status_filter %}active{% endif %}">All</a>
+                <a href="?status=active" class="btn btn-outline-success {% if status_filter == 'active' %}active{% endif %}">
+                    <i class="fas fa-check-circle"></i> Active
+                </a>
+                <a href="?status=inactive" class="btn btn-outline-warning {% if status_filter == 'inactive' %}active{% endif %}">
+                    <i class="fas fa-times-circle"></i> Inactive
+                </a>
+                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cctvModal">
+                    <i class="fas fa-plus"></i> New Camera
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold" style="color: #F40009;">
+                        <i class="fas fa-list me-2"></i>Camera Inventory
+                    </h5>
+                    <div class="text-muted small">
+                        Showing {{ cctvs.start_index }}-{{ cctvs.end_index }} of {{ cctvs.paginator.count }}
+                    </div>
+                </div>
+                
+                <!-- CCTV Grid -->
+                <div class="card-body">
+                    <div class="row g-4">
+                        {% for cctv in cctvs %}
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-img-top position-relative" style="height: 180px; background-color: #f8f9fa;">
+                                    <!-- Placeholder for camera feed -->
+                                    <div class="d-flex align-items-center justify-content-center h-100">
+                                        <i class="fas fa-video fa-3x text-secondary"></i>
+                                    </div>
+                                    <div class="position-absolute top-0 end-0 m-2">
+                                        <span class="badge bg-{% if cctv.is_active %}success{% else %}secondary{% endif %} rounded-pill">
+                                            {% if cctv.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title mb-1">{{ cctv.name }}</h5>
+                                    <p class="card-text text-muted small mb-2">
+                                        <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ cctv.get_location_display }}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-light text-dark rounded-pill">
+                                            <i class="fas fa-network-wired me-1"></i> {{ cctv.ip_address }}
+                                        </span>
+                                        <small class="text-muted">
+                                            Installed: {{ cctv.installation_date|date:"M Y" }}
+                                        </small>
+                                    </div>
+                                    <p class="card-text small text-muted mb-3">
+                                        {{ cctv.description|truncatechars:100|default:"No description provided" }}
+                                    </p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'cctv_detail' cctv.id %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-eye me-1"></i> View Recordings
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-white border-top d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        {% if cctv.last_maintenance %}
+                                        <i class="fas fa-wrench me-1"></i> Last maintenance: {{ cctv.last_maintenance|date:"M d" }}
+                                        {% else %}
+                                        <i class="fas fa-exclamation-triangle text-warning me-1"></i> No maintenance
+                                        {% endif %}
+                                    </small>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-link text-muted p-0" type="button" id="cctvDropdown{{ cctv.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cctvDropdown{{ cctv.id }}">
+                                            <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="fas fa-wrench me-2"></i>Maintenance</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Decommission</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center py-5">
+                            <i class="fas fa-video-slash fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No CCTV cameras found</h4>
+                            {% if search_query %}
+                                <p class="text-muted">Try adjusting your search query</p>
+                            {% else %}
+                                <button class="btn btn-danger mt-2" data-bs-toggle="modal" data-bs-target="#cctvModal">
+                                    <i class="fas fa-plus me-1"></i> Add First Camera
+                                </button>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                {% if cctvs.paginator.num_pages > 1 %}
+                <div class="card-footer bg-white border-top">
+                    <nav aria-label="CCTV pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if cctvs.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ cctvs.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in cctvs.paginator.page_range %}
+                                {% if num > cctvs.number|add:'-3' and num < cctvs.number|add:'3' %}
+                                    <li class="page-item {% if cctvs.number == num %}active{% endif %}">
+                                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if cctvs.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ cctvs.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ cctvs.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CCTV Modal -->
+<div class="modal fade" id="cctvModal" tabindex="-1" aria-labelledby="cctvModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title" style="color: #F40009;" id="cctvModalLabel">
+                    <i class="fas fa-video me-2"></i>Add New Camera
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="cctvForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="cctv_name" class="form-label">Camera Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="cctv_name" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cctv_location" class="form-label">Location <span class="text-danger">*</span></label>
+                            <select class="form-select" id="cctv_location" name="location" required>
+                                <option value="">Select location...</option>
+                                <option value="entrance">Main Entrance</option>
+                                <option value="parking">Parking Lot</option>
+                                <option value="warehouse">Warehouse</option>
+                                <option value="office">Office Area</option>
+                                <option value="production">Production Floor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cctv_ip" class="form-label">IP Address <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="cctv_ip" name="ip_address" required placeholder="192.168.1.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cctv_install_date" class="form-label">Installation Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="cctv_install_date" name="installation_date" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="cctv_description" class="form-label">Description</label>
+                            <textarea class="form-control" id="cctv_description" name="description" rows="2"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="cctv_active" name="is_active" checked>
+                                <label class="form-check-label" for="cctv_active">Camera is active</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-save me-1"></i> Save Camera
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-img-top {
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .card-img-top i {
+        opacity: 0.3;
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+    
+    .dropdown-toggle::after {
+        display: none;
+    }
+</style>
+
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %}

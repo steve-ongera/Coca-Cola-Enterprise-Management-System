@@ -705,3 +705,22 @@ class IncidentCategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'severity_level', 'requires_followup')
     list_filter = ('severity_level', 'requires_followup')
     search_fields = ('name', 'description')
+
+
+
+from django.contrib import admin
+from .models import CCTV, CCTVRecording
+
+@admin.register(CCTV)
+class CCTVAdmin(admin.ModelAdmin):
+    list_display = ('name', 'location', 'ip_address', 'is_active', 'installation_date', 'last_maintenance')
+    list_filter = ('location', 'is_active', 'installation_date')
+    search_fields = ('name', 'ip_address', 'description')
+    ordering = ('-installation_date',)
+
+@admin.register(CCTVRecording)
+class CCTVRecordingAdmin(admin.ModelAdmin):
+    list_display = ('cctv', 'start_time', 'end_time', 'duration', 'incident_reported')
+    list_filter = ('cctv__location', 'incident_reported', 'start_time')
+    search_fields = ('cctv__name', 'notes', 'file_path')
+    date_hierarchy = 'start_time'

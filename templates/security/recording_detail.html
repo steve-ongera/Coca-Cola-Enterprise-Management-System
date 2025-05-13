@@ -1,0 +1,23 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<h1>Recording Details</h1>
+<p><strong>CCTV:</strong> {{ recording.cctv.name }}</p>
+<p><strong>Location:</strong> {{ recording.cctv.get_location_display }}</p>
+<p><strong>Start Time:</strong> {{ recording.start_time }}</p>
+<p><strong>End Time:</strong> {{ recording.end_time }}</p>
+<p><strong>Duration:</strong> {{ recording.duration }}</p>
+<p><strong>Incident Reported:</strong> {% if recording.incident_reported %}Yes{% else %}No{% endif %}</p>
+
+<h2>Notes</h2>
+<p>{{ recording.notes|linebreaks }}</p>
+
+<!-- Here you would integrate your actual CCTV stream or recording playback -->
+<div class="video-container">
+    <h3>Video Playback</h3>
+    <p>Video would be streamed here from: {{ recording.file_path }}</p>
+    <!-- In a real implementation, you would use a video player component -->
+</div>
+
+<a href="{% url 'cctv_detail' recording.cctv.id %}" class="btn btn-secondary">Back to CCTV</a>
+{% endblock %}

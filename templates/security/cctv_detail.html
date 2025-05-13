@@ -1,0 +1,30 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<h1>{{ cctv.name }} Recordings</h1>
+<p><strong>Location:</strong> {{ cctv.get_location_display }}</p>
+<p><strong>IP Address:</strong> {{ cctv.ip_address }}</p>
+<p><strong>Description:</strong> {{ cctv.description }}</p>
+
+<h2>Recent Recordings</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Date/Time</th>
+            <th>Duration</th>
+            <th>Incident Reported</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for recording in recordings %}
+        <tr>
+            <td>{{ recording.start_time }}</td>
+            <td>{{ recording.duration }}</td>
+            <td>{% if recording.incident_reported %}Yes{% else %}No{% endif %}</td>
+            <td><a href="{% url 'recording_detail' recording.id %}" class="btn btn-sm btn-info">View Details</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
