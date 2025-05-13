@@ -57,39 +57,53 @@
                             <tbody>
                                 {% for visitor in visitors %}
                                 <tr>
-                                    <td>{{ visitor.first_name }} {{ visitor.last_name }}</td>
-                                    <td>{{ visitor.company }}</td>
                                     <td>
-                                        <span class="badge bg-{% if visitor.visitor_type == 'official' %}danger{% elif visitor.visitor_type == 'contractor' %}warning{% elif visitor.visitor_type == 'vendor' %}info{% else %}secondary{% endif %}">
+                                        <!-- Professional profile icon with status circle -->
+                                        <div class="position-relative d-inline-block">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                                style="width: 36px; height: 36px; background-color: #f8f9fa; border: 2px solid {% if visitor.is_checked_in %}#28a745{% else %}#ffc107{% endif %};">
+                                                <i class="bi bi-person-fill text-secondary" style="font-size: 1.1rem;"></i>
+                                            </div>
+                                            <span class="position-absolute bottom-0 end-0 translate-middle p-1 border border-light rounded-circle 
+                                                {% if visitor.is_checked_in %}bg-success{% else %}bg-warning{% endif %}">
+                                                <span class="visually-hidden">Status</span>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">{{ visitor.first_name }} {{ visitor.last_name }}</td>
+                                    <td class="align-middle">{{ visitor.company }}</td>
+                                    <td class="align-middle">
+                                        <span class="badge bg-{% if visitor.visitor_type == 'official' %}danger{% elif visitor.visitor_type == 'contractor' %}warning text-dark{% elif visitor.visitor_type == 'vendor' %}info{% else %}secondary{% endif %} rounded-pill">
                                             {{ visitor.get_visitor_type_display }}
                                         </span>
                                     </td>
-                                    <td>
-                                        {% if visitor.phone %}<i class="fas fa-phone me-1"></i> {{ visitor.phone }}<br>{% endif %}
-                                        {% if visitor.email %}<i class="fas fa-envelope me-1"></i> {{ visitor.email }}{% endif %}
+                                    <td class="align-middle">
+                                        {% if visitor.phone %}<i class="fas fa-phone me-1 text-muted"></i> {{ visitor.phone }}<br>{% endif %}
+                                        {% if visitor.email %}<i class="fas fa-envelope me-1 text-muted"></i> {{ visitor.email }}{% endif %}
                                     </td>
-                                    <td>
+                                    <td class="align-middle">
                                         {% if visitor.id_number %}
                                         {{ visitor.id_type|default:"ID" }}: {{ visitor.id_number }}
                                         {% else %}
                                         <span class="text-muted">Not provided</span>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td class="align-middle">
                                         <button class="btn btn-sm btn-outline-primary view-visitor" data-visitor-id="{{ visitor.id }}" data-bs-toggle="modal" data-bs-target="#visitorModal">
                                             <i class="fas fa-eye"></i> View
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger delete-visitor" data-visitor-id="{{ visitor.id }}">
-                                            <i class="fas fa-trash"></i> Delete
+                                        <button class="btn btn-sm btn-outline-danger delete-visitor ms-1" data-visitor-id="{{ visitor.id }}">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">No visitors found</td>
+                                    <td colspan="7" class="text-center text-muted py-3">No visitors found</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
+
                         </table>
                     </div>
                     
