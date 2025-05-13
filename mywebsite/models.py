@@ -2039,3 +2039,36 @@ class AccessLog(models.Model):
     def __str__(self):
         status = "Granted" if self.access_granted else "Denied"
         return f"{self.user.username} - {self.door.name} - {status} at {self.access_time}"
+    
+
+
+
+
+class PASystem(models.Model):
+    name = models.CharField(max_length=100)
+    location = models.CharField(max_length=200)
+    is_active = models.BooleanField(default=True)
+    last_maintenance = models.DateField()
+    
+    def __str__(self):
+        return f"{self.name} ({self.location})"
+
+class PAAnnouncement(models.Model):
+    PRIORITY_CHOICES = [
+        ('LOW', 'Low Priority'),
+        ('MEDIUM', 'Medium Priority'),
+        ('HIGH', 'High Priority'),
+        ('EMERGENCY', 'Emergency'),
+    ]
+    
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    system = models.ForeignKey(PASystem, on_delete=models.CASCADE)
+    message_line1 = models.CharField(max_length=100)
+    message_line2 = models.CharField(max_length=100, blank=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    broadcast_at = models.DateTimeField(null=True, blank=True)
+    is_broadcast = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"Announcement at {self.created_at} ({self.get_priority_display()})"
