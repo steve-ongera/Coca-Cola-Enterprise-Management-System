@@ -4772,3 +4772,100 @@ def pa_dashboard(request):
         'form': form,
     }
     return render(request, 'pa_system/dashboard.html', context)
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.contrib import messages
+from .models import Item, ItemLog
+from .forms import ItemCheckInForm, ItemCheckOutForm
+
+@login_required
+def check_in_items(request, visitor_id=None, employee_id=None):
+    visitor = get_object_or_404(Visitor, pk=visitor_id) if visitor_id else None
+    employee = get_object_or_404(Employee, pk=employee_id) if employee_id else None
+    
+    if request.method == 'POST':
+        form = ItemCheckInForm(request.POST)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.visitor = visitor
+            item.employee = employee
+            item.security_guard = request.user.securityguard
+            item.save()
+            
+            # Create log entry
+            ItemLog.objects.create(
+                item=item,
+                action='check_in',
+                security_guard=request.user.securityguard,
+                notes=f"Checked in with {visitor or employee}"
+            )
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'item_code': item.item_code,
+                    'description': item.description
+                })
+            
+            messages.success(request, f"Item {item.item_code} checked in successfully")
+            return redirect('visitor_detail', pk=visitor_id) if visitor else redirect('employee_detail', pk=employee_id)
+    else:
+        form = ItemCheckInForm()
+    
+    context = {
+        'form': form,
+        'visitor': visitor,
+        'employee': employee
+    }
+    return render(request, 'security/item_checkin.html', context)
+
+@login_required
+def check_out_items(request):
+    if request.method == 'POST':
+        form = ItemCheckOutForm(request.POST)
+        if form.is_valid():
+            item_code = form.cleaned_data['item_code']
+            try:
+                item = Item.objects.get(item_code=item_code, status='checked_in')
+                item.status = 'checked_out'
+                item.check_out_time = timezone.now()
+                item.security_guard = request.user.securityguard
+                item.save()
+                
+                # Create log entry
+                ItemLog.objects.create(
+                    item=item,
+                    action='check_out',
+                    security_guard=request.user.securityguard,
+                    notes=form.cleaned_data['notes']
+                )
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'item': {
+                            'code': item.item_code,
+                            'type': item.item_type.name,
+                            'owner': str(item.visitor or item.employee)
+                        }
+                    })
+                
+                messages.success(request, f"Item {item.item_code} checked out successfully")
+                return redirect('security_dashboard')
+            
+            except Item.DoesNotExist:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Item not found or already checked out'
+                    }, status=404)
+                
+                form.add_error('item_code', 'Item not found or already checked out')
+    
+    else:
+        form = ItemCheckOutForm()
+    
+    return render(request, 'security/item_checkout.html', {'form': form})
