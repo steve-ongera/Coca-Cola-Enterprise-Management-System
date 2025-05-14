@@ -3778,10 +3778,12 @@ def visitor_check_in(request):
 def visitor_check_out(request):
     if request.method == 'POST':
         form = VisitorCheckOutForm(request.POST)
+        
         if form.is_valid():
             id_number = form.cleaned_data['id_number']
             
             try:
+                # Try to find visitor by ID number
                 visitor = Visitor.objects.get(id_number=id_number)
                 visit = VisitLog.objects.filter(
                     visitor=visitor, 
@@ -3800,16 +3802,47 @@ def visitor_check_out(request):
                         'check_out_time': visit.check_out_time.strftime('%Y-%m-%d %H:%M:%S')
                     })
                 return redirect('visitor_check_out_success')
-            except (Visitor.DoesNotExist, VisitLog.DoesNotExist):
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'No active visit found with this ID number'
-                    })
-                form.add_error('id_number', 'No active visit found with this ID number')
-    else:
-        form = VisitorCheckOutForm()
+                
+            except Visitor.DoesNotExist:
+                # If visitor not found by ID number, try using the value as primary key
+                try:
+                    visitor = Visitor.objects.get(pk=id_number)
+                    visit = VisitLog.objects.filter(
+                        visitor=visitor, 
+                        check_out_time__isnull=True
+                    ).latest('check_in_time')
+                    
+                    visit.check_out_time = timezone.now()
+                    visit.is_inside = False
+                    visit.save()
+                    
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': True,
+                            'visitor_name': f"{visitor.first_name} {visitor.last_name}",
+                            'check_in_time': visit.check_in_time.strftime('%Y-%m-%d %H:%M:%S'),
+                            'check_out_time': visit.check_out_time.strftime('%Y-%m-%d %H:%M:%S')
+                        })
+                    return redirect('visitor_check_out_success')
+                    
+                except (Visitor.DoesNotExist, VisitLog.DoesNotExist):
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': False,
+                            'error': 'No active visit found with this ID'
+                        }, status=404)
+                    form.add_error('id_number', 'No active visit found with this ID number')
+        
+        # Handle form errors for AJAX requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid form data',
+                'errors': dict(form.errors.items())
+            }, status=400)
     
+    # For GET requests or regular form submissions
+    form = VisitorCheckOutForm()
     return render(request, 'visitors/check_out.html', {'form': form})
 
 def find_visitor(request):

@@ -1062,3 +1062,23 @@ class AnnouncementForm(forms.ModelForm):
             'system': forms.Select(attrs={'class': 'form-select'}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
         }
+
+
+class VisitorCheckOutForm(forms.Form):
+    id_number = forms.CharField(
+        label='Visitor ID Number',
+        max_length=50,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter visitor ID number',
+            'autofocus': 'autofocus'
+        })
+    )
+    notes = forms.CharField(
+        label='Notes',
+        required=False,
+        widget=forms.Textarea(attrs={
+            'rows': 3,
+            'placeholder': 'Optional notes about the visit'
+        })
+    )
