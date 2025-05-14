@@ -1829,6 +1829,11 @@ class ItemLog(models.Model):
         return f"{self.item.item_code} - {self.action} at {self.timestamp}"
 
 
+import string
+import random
+from django.core.mail import send_mail
+from django.conf import settings
+from django.db import models
 
 class VisitLog(models.Model):
     visitor = models.ForeignKey(Visitor, on_delete=models.CASCADE)
@@ -1842,15 +1847,26 @@ class VisitLog(models.Model):
     is_inside = models.BooleanField(default=True)
     items = models.ManyToManyField(Item, blank=True, related_name='visits')
     
+    # ✅ Add the batch number field
+    batch_number = models.CharField(max_length=10, unique=True, blank=True, null=True)
+
     def __str__(self):
         return f"{self.visitor} - {self.department} ({'Inside' if self.is_inside else 'Checked Out'})"
-    
+
     def save(self, *args, **kwargs):
-        # Send notification when visit is created
-        if not self.pk:  # Only on creation
+        # Generate batch number only on creation
+        if not self.pk:
+            self.batch_number = self.generate_unique_batch_number()
             self.send_notification()
         super().save(*args, **kwargs)
-    
+
+    def generate_unique_batch_number(self, length=7):
+        characters = string.ascii_uppercase + string.digits
+        while True:
+            batch = ''.join(random.choices(characters, k=length))
+            if not VisitLog.objects.filter(batch_number=batch).exists():
+                return batch
+
     def send_notification(self):
         subject = f"Visitor Notification: {self.visitor.first_name} {self.visitor.last_name}"
         message = f"""
@@ -1859,7 +1875,7 @@ class VisitLog(models.Model):
         Company: {self.visitor.company}
         Purpose: {self.purpose}
         Check-in Time: {self.check_in_time}
-        
+
         Please be prepared to receive this visitor.
         """
         recipient_email = self.department.contact_email
@@ -1870,7 +1886,6 @@ class VisitLog(models.Model):
             [recipient_email],
             fail_silently=False,
         )
-
 
 
 class Vehicle(models.Model):
