@@ -1082,3 +1082,40 @@ class VisitorCheckOutForm(forms.Form):
             'placeholder': 'Optional notes about the visit'
         })
     )
+
+
+
+from django import forms
+from .models import Item, ItemType, Visitor, Employee
+
+class ItemCheckInForm(forms.ModelForm):
+    item_type = forms.ModelChoiceField(
+        queryset=ItemType.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    class Meta:
+        model = Item
+        fields = ['item_type', 'serial_number', 'description']
+        widgets = {
+            'serial_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+class ItemCheckOutForm(forms.Form):
+    item_code = forms.CharField(
+        label='Item Code',
+        max_length=20,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Scan or enter item code'
+        })
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 2,
+            'placeholder': 'Optional notes'
+        })
+    )
