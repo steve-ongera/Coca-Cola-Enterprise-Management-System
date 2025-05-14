@@ -446,9 +446,15 @@
     }
 </style>
 
-{% block extra_js %}
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Debug helper - log URLs to console
+    console.log("App URLs:", {
+        findVisitor: "/find-visitor/",
+        visitorCheckOut: "/visitor/check-out/"
+    });
+    
     // View visitor details
     document.querySelectorAll('.view-visitor').forEach(button => {
         button.addEventListener('click', function() {
@@ -505,7 +511,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 body: formData,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 }
             })
             .then(response => response.json())
@@ -540,37 +546,77 @@ document.addEventListener("DOMContentLoaded", function() {
     });
     
     // Check in/out form submission
-    const checkinoutForm = document.getElementById('checkinoutForm');
-    if (checkinoutForm) {
-        checkinoutForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const visitorId = formData.get('visitor_id');
-            const action = formData.get('action');
-            
-            fetch(`/visitors/${visitorId}/check${action}/`, {
+    // Check in/out form submission
+
+    // Check in/out form submission
+const checkinoutForm = document.getElementById('checkinoutForm');
+if (checkinoutForm) {
+    checkinoutForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const visitorId = formData.get('visitor_id');
+        const action = formData.get('action');
+        
+        if (action === 'in') {
+            // Check-in process
+            fetch(`/check-in/`, {
                 method: 'POST',
                 body: formData,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast(`Visitor checked ${action} successfully`, 'success');
+                    showToast('Visitor checked in successfully', 'success');
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    showToast('Error: ' + data.message, 'danger');
+                    let errorMsg = data.error || data.message || 'An error occurred';
+                    showToast('Error: ' + errorMsg, 'danger');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showToast('An error occurred during check in/out', 'danger');
+                showToast('An error occurred during check in', 'danger');
             });
-        });
-    }
+        } else {
+            // Check-out process - we'll use the visitor ID directly
+            fetch(`/check-out/`, {
+                method: 'POST',
+                body: new URLSearchParams({
+                    'id_number': visitorId,  // Using the visitor ID as the ID number
+                    'notes': formData.get('notes') || '',
+                    'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showToast('Visitor checked out successfully', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Error: ' + (data.error || 'Failed to check out visitor'), 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred during check out process', 'danger');
+            });
+        }
+    });
+}
+
     
     // Delete visitor confirmation
     document.querySelectorAll('.delete-visitor').forEach(button => {
@@ -591,7 +637,7 @@ document.addEventListener("DOMContentLoaded", function() {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': '{{ csrf_token }}'
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             }
         })
         .then(response => response.json())
@@ -611,6 +657,7 @@ document.addEventListener("DOMContentLoaded", function() {
     
     // Helper function to show toast notifications
     function showToast(message, type) {
+        console.log(`Toast: ${type} - ${message}`); // Debug logging
         const toastContainer = document.createElement('div');
         toastContainer.innerHTML = `
             <div class="toast align-items-center text-white bg-${type} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
@@ -634,5 +681,5 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
-{% endblock %}
+
 {% endblock %}
