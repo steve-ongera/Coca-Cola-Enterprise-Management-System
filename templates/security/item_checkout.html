@@ -1,0 +1,76 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Check Out Items</h2>
+    
+    <form method="post" id="checkoutForm">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.item_code.label_tag }}
+            {{ form.item_code }}
+            <div class="invalid-feedback" id="itemError"></div>
+        </div>
+        <div class="mb-3">
+            {{ form.notes.label_tag }}
+            {{ form.notes }}
+        </div>
+        <button type="submit" class="btn btn-primary">Check Out Item</button>
+    </form>
+    
+    <div id="itemDetails" class="mt-4 d-none">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title" id="itemTitle"></h5>
+                <p class="card-text" id="itemDescription"></p>
+                <p class="card-text"><small class="text-muted" id="itemOwner"></small></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch('{% url "check_out_items" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success and reset form
+            alert(`Item ${data.item.code} checked out successfully`);
+            this.reset();
+            document.getElementById('itemDetails').classList.add('d-none');
+        } else {
+            // Show error
+            document.getElementById('itemError').textContent = data.error;
+            document.getElementById('id_item_code').classList.add('is-invalid');
+        }
+    });
+});
+
+// Optional: Live lookup when typing item code
+document.getElementById('id_item_code').addEventListener('input', function(e) {
+    if (this.value.length >= 8) {  // Minimum item code length
+        fetch(`/api/items/${this.value}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                document.getElementById('itemTitle').textContent = `${data.type} (${data.code})`;
+                document.getElementById('itemDescription').textContent = data.description;
+                document.getElementById('itemOwner').textContent = `Owner: ${data.owner}`;
+                document.getElementById('itemDetails').classList.remove('d-none');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -754,3 +754,31 @@ class AccessLogAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'door__name')
     ordering = ('-access_time',)
 
+
+
+from django.contrib import admin
+from .models import ItemType, Item, ItemLog
+
+@admin.register(ItemType)
+class ItemTypeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'requires_approval')
+    search_fields = ('name',)
+
+@admin.register(Item)
+class ItemAdmin(admin.ModelAdmin):
+    list_display = ('item_code', 'item_type', 'get_owner', 'status', 'check_in_time')
+    list_filter = ('status', 'item_type')
+    search_fields = ('item_code', 'serial_number', 'visitor__first_name', 'visitor__last_name', 'employee__first_name', 'employee__last_name')
+    readonly_fields = ('item_code', 'check_in_time', 'check_out_time')
+    
+    def get_owner(self, obj):
+        return obj.visitor or obj.employee
+    get_owner.short_description = 'Owner'
+
+@admin.register(ItemLog)
+class ItemLogAdmin(admin.ModelAdmin):
+    list_display = ('item', 'action', 'timestamp', 'security_guard')
+    list_filter = ('action',)
+    search_fields = ('item__item_code', 'security_guard__user__username')
+    readonly_fields = ('timestamp',)
+
