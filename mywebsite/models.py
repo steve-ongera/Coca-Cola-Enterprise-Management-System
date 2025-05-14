@@ -1701,6 +1701,7 @@ class IncidentReport(models.Model):
 
 #security guard models 
 
+
 class SecurityGuard(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     badge_number = models.CharField(max_length=20, unique=True)
@@ -1742,6 +1743,93 @@ class Visitor(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.company})"
 
+
+
+
+class ItemType(models.Model):
+    """Categories for items being brought in (electronics, tools, etc.)"""
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    requires_approval = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.name
+
+class Item(models.Model):
+    """Individual items being brought in by visitors/employees"""
+    ITEM_STATUS = (
+        ('checked_in', 'Checked In'),
+        ('checked_out', 'Checked Out'),
+        ('in_custody', 'In Security Custody'),
+    )
+    
+    # Identification
+    item_code = models.CharField(max_length=20, unique=True, blank=True)
+    item_type = models.ForeignKey(ItemType, on_delete=models.PROTECT)
+    serial_number = models.CharField(max_length=100, blank=True)
+    description = models.TextField()
+    
+    # Ownership
+    visitor = models.ForeignKey(
+        Visitor, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        related_name='items'
+    )
+    employee = models.ForeignKey(
+        Employee, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        related_name='items'
+    )
+    
+    # Tracking
+    status = models.CharField(max_length=20, choices=ITEM_STATUS, default='checked_in')
+    check_in_time = models.DateTimeField(auto_now_add=True)
+    check_out_time = models.DateTimeField(null=True, blank=True)
+    security_guard = models.ForeignKey(
+        SecurityGuard, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-check_in_time']
+    
+    def __str__(self):
+        owner = self.visitor if self.visitor else self.employee
+        return f"{self.item_type.name} ({self.item_code}) - {owner}"
+    
+    def save(self, *args, **kwargs):
+        if not self.item_code:
+            # Generate unique item code: IT-YYYYMMDD-XXXX
+            date_part = timezone.now().strftime('%Y%m%d')
+            last_item = Item.objects.filter(item_code__startswith=f"IT-{date_part}").order_by('item_code').last()
+            if last_item:
+                last_num = int(last_item.item_code.split('-')[-1])
+                new_num = last_num + 1
+            else:
+                new_num = 1
+            self.item_code = f"IT-{date_part}-{new_num:04d}"
+        super().save(*args, **kwargs)
+
+class ItemLog(models.Model):
+    """Detailed history of item movements"""
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='logs')
+    action = models.CharField(max_length=50)  # 'check_in', 'check_out', 'custody', 'returned'
+    timestamp = models.DateTimeField(auto_now_add=True)
+    security_guard = models.ForeignKey(SecurityGuard, on_delete=models.SET_NULL, null=True)
+    notes = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.item.item_code} - {self.action} at {self.timestamp}"
+
+
+
 class VisitLog(models.Model):
     visitor = models.ForeignKey(Visitor, on_delete=models.CASCADE)
     purpose = models.TextField()
@@ -1752,6 +1840,7 @@ class VisitLog(models.Model):
     badge_issued = models.BooleanField(default=False)
     badge_number = models.CharField(max_length=20, blank=True, null=True)
     is_inside = models.BooleanField(default=True)
+    items = models.ManyToManyField(Item, blank=True, related_name='visits')
     
     def __str__(self):
         return f"{self.visitor} - {self.department} ({'Inside' if self.is_inside else 'Checked Out'})"
@@ -2072,3 +2161,4 @@ class PAAnnouncement(models.Model):
     
     def __str__(self):
         return f"Announcement at {self.created_at} ({self.get_priority_display()})"
+    
