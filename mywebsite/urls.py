@@ -218,5 +218,10 @@ urlpatterns = [
     path('user/<int:user_id>/', views.user_detail, name='user_detail'),
 
     path('pa_dashboard' , views.pa_dashboard , name="pa_dashboard"),
+
+    path('items/check-in/', views.check_in_items, name='check_in_items'),
+    path('items/check-in/visitor/<int:visitor_id>/', views.check_in_items, name='check_in_visitor_items'),
+    path('items/check-in/employee/<int:employee_id>/', views.check_in_items, name='check_in_employee_items'),
+    path('items/check-out/', views.check_out_items, name='check_out_items'),
   
 ]
