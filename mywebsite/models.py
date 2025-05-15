@@ -1828,7 +1828,6 @@ class ItemLog(models.Model):
     def __str__(self):
         return f"{self.item.item_code} - {self.action} at {self.timestamp}"
 
-
 import string
 import random
 from django.core.mail import send_mail
@@ -1836,26 +1835,26 @@ from django.conf import settings
 from django.db import models
 
 class VisitLog(models.Model):
-    visitor = models.ForeignKey(Visitor, on_delete=models.CASCADE)
+    visitor = models.ForeignKey('Visitor', on_delete=models.CASCADE)
     purpose = models.TextField()
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)
-    security_guard = models.ForeignKey(SecurityGuard, on_delete=models.SET_NULL, null=True)
+    department = models.ForeignKey('Department', on_delete=models.CASCADE)
+    security_guard = models.ForeignKey('SecurityGuard', on_delete=models.SET_NULL, null=True)
     check_in_time = models.DateTimeField(auto_now_add=True)
     check_out_time = models.DateTimeField(null=True, blank=True)
     badge_issued = models.BooleanField(default=False)
     badge_number = models.CharField(max_length=20, blank=True, null=True)
     is_inside = models.BooleanField(default=True)
-    items = models.ManyToManyField(Item, blank=True, related_name='visits')
-    
-    # ✅ Add the batch number field
+    items = models.ManyToManyField('Item', blank=True, related_name='visits')
+
+    # Batch number field
     batch_number = models.CharField(max_length=10, unique=True, blank=True, null=True)
 
     def __str__(self):
         return f"{self.visitor} - {self.department} ({'Inside' if self.is_inside else 'Checked Out'})"
 
     def save(self, *args, **kwargs):
-        # Generate batch number only on creation
-        if not self.pk:
+        # Generate batch number only if it hasn't been set
+        if not self.batch_number:
             self.batch_number = self.generate_unique_batch_number()
             self.send_notification()
         super().save(*args, **kwargs)
@@ -1870,14 +1869,14 @@ class VisitLog(models.Model):
     def send_notification(self):
         subject = f"Visitor Notification: {self.visitor.first_name} {self.visitor.last_name}"
         message = f"""
-        Visitor Details:
-        Name: {self.visitor.first_name} {self.visitor.last_name}
-        Company: {self.visitor.company}
-        Purpose: {self.purpose}
-        Check-in Time: {self.check_in_time}
+Visitor Details:
+Name: {self.visitor.first_name} {self.visitor.last_name}
+Company: {self.visitor.company}
+Purpose: {self.purpose}
+Check-in Time: {self.check_in_time.strftime('%Y-%m-%d %H:%M:%S')}
 
-        Please be prepared to receive this visitor.
-        """
+Please be prepared to receive this visitor.
+"""
         recipient_email = self.department.contact_email
         send_mail(
             subject,
@@ -1886,6 +1885,7 @@ class VisitLog(models.Model):
             [recipient_email],
             fail_silently=False,
         )
+
 
 
 class Vehicle(models.Model):

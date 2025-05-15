@@ -4946,7 +4946,7 @@ def visitor_export_page(request):
     Renders the visitor export interface page with optional preview data
     """
     # Get most recent visits for preview (limit to 5)
-    recent_logs = VisitLog.objects.all().order_by('-check_in_time')[:5]
+    recent_logs = VisitLog.objects.all().order_by('-check_in_time')[:6]
     
     context = {
         'recent_logs': recent_logs,
