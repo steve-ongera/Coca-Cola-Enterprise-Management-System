@@ -4175,6 +4175,8 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 from .models import Employee  # Adjust import as needed
 
+
+# Enhanced employee search view with additional details
 @login_required
 @require_http_methods(['GET'])
 def search_employees(request):
@@ -4183,30 +4185,40 @@ def search_employees(request):
     if not search_term:
         return JsonResponse({'results': []})
     
+    # Search by working_id, first name, or last name
     employees = Employee.objects.filter(
         Q(working_id__icontains=search_term) | 
         Q(first_name__icontains=search_term) |
         Q(last_name__icontains=search_term)
-    ).select_related('user')[:10]
+    ).select_related('user', 'department')[:10]
 
     results = []
     for employee in employees:
+        # Get full name from user if available, otherwise use employee fields
         user = getattr(employee, 'user', None)
         if user:
             full_name = user.get_full_name() or f"{employee.first_name} {employee.last_name}"
         else:
             full_name = f"{employee.first_name} {employee.last_name}"
 
+        # Get department name if available
+        department_name = employee.department.name if employee.department else 'N/A'
+        
+        # Get role display name if available
+        role_display = dict(Employee.ROLE_CHOICES).get(employee.role, 'N/A') if employee.role else 'N/A'
+        
+        # Build result with additional details
         results.append({
             'id': employee.id,
             'name': full_name,
-            #'department': employee.department or 'N/A'
-            
-
+            'department': department_name,
+            'phone_number': employee.phone_number or 'N/A',
+            'email': employee.email or 'N/A',
+            'role': role_display,
+            'working_id': employee.working_id or 'N/A'
         })
     
     return JsonResponse({'results': results})
-
 
 
 
