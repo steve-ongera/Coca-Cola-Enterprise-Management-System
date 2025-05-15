@@ -4161,6 +4161,41 @@ def employee_attendance(request):
     }
     return render(request, 'security/employee_attendance.html', context)
 
+
+"""
+This implementation includes:
+1. A new Django view function to handle AJAX employee search
+2. HTML changes to replace dropdown with search input
+3. JavaScript to implement the search functionality
+"""
+
+@login_required
+@require_http_methods(['GET'])
+def search_employees(request):
+    """Search employees by name or department"""
+    search_term = request.GET.get('term', '').strip()
+    
+    if not search_term:
+        return JsonResponse({'results': []})
+    
+    # Search for employees whose name or department contains the search term
+    employees = Employee.objects.filter(
+        Q(user__first_name__icontains=search_term) | 
+        Q(user__last_name__icontains=search_term) |
+        Q(department__icontains=search_term)
+    ).select_related('user')[:10]  # Limit to 10 results
+    
+    results = []
+    for employee in employees:
+        results.append({
+            'id': employee.id,
+            'name': employee.user.get_full_name(),
+            'department': employee.department
+        })
+    
+    return JsonResponse({'results': results})
+
+
 def handle_employee_checkin(request, security_guard):
     employee_id = request.POST.get('employee')
     status = request.POST.get('status', 'present')
