@@ -57,6 +57,7 @@
                             <form id="employeeCheckInForm" method="post" novalidate>
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="check_in">
+                                <input type="hidden" id="employee_id" name="employee" value="">
                                 
                                 <div class="mb-4">
                                     <h6 class="mb-3" style="color: #F40009;">
@@ -64,13 +65,40 @@
                                     </h6>
                                     <div class="row g-3">
                                         <div class="col-md-8">
-                                            <label for="employee" class="form-label">Employee</label>
-                                            <select class="form-select" id="employee" name="employee" required>
-                                                <option value="">Select employee...</option>
-                                                {% for employee in active_employees %}
-                                                <option value="{{ employee.id }}">{{ employee.user.get_full_name }} ({{ employee.department }})</option>
-                                                {% endfor %}
-                                            </select>
+                                            <label for="employee_search" class="form-label">Search Employee</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="employee_search" 
+                                                       placeholder="Type name or department..." autocomplete="off" required>
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                            </div>
+                                            <div class="position-relative">
+                                                <div id="employee_search_results" class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm d-none" 
+                                                     style="max-height: 200px; overflow-y: auto; z-index: 1000;">
+                                                </div>
+                                            </div>
+                                            <div class="mt-2 d-none" id="selected_employee_info">
+                                                <div class="bg-light p-2 rounded">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="flex-shrink-0">
+                                                            <div class="bg-danger rounded-circle text-white d-flex align-items-center justify-content-center" 
+                                                                 style="width: 40px; height: 40px;">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex-grow-1 ms-3">
+                                                            <h6 class="mb-0" id="selected_employee_name">-</h6>
+                                                            <small class="text-muted" id="selected_employee_department">-</small>
+                                                        </div>
+                                                        <div>
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clear_employee_selection">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="col-md-4">
                                             <label for="status" class="form-label">Status</label>
@@ -83,7 +111,7 @@
                                 </div>
                                 
                                 <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-danger btn-lg">
+                                    <button type="submit" class="btn btn-danger btn-lg" id="checkin_submit_btn" disabled>
                                         <i class="fas fa-sign-in-alt me-2"></i> Record Check-In
                                     </button>
                                 </div>
@@ -95,6 +123,7 @@
                             <form id="employeeCheckOutForm" method="post" novalidate>
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="check_out">
+                                <input type="hidden" id="checkout_employee_id" name="employee" value="">
                                 
                                 <div class="mb-4">
                                     <h6 class="mb-3" style="color: #F40009;">
@@ -102,13 +131,40 @@
                                     </h6>
                                     <div class="row g-3">
                                         <div class="col-md-8">
-                                            <label for="checkout_employee" class="form-label">Employee</label>
-                                            <select class="form-select" id="checkout_employee" name="employee" required>
-                                                <option value="">Select employee...</option>
-                                                {% for employee in active_employees %}
-                                                <option value="{{ employee.id }}">{{ employee.user.get_full_name }} ({{ employee.department }})</option>
-                                                {% endfor %}
-                                            </select>
+                                            <label for="checkout_employee_search" class="form-label">Search Employee</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="checkout_employee_search" 
+                                                       placeholder="Type name or department..." autocomplete="off" required>
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                            </div>
+                                            <div class="position-relative">
+                                                <div id="checkout_employee_search_results" class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm d-none" 
+                                                     style="max-height: 200px; overflow-y: auto; z-index: 1000;">
+                                                </div>
+                                            </div>
+                                            <div class="mt-2 d-none" id="checkout_selected_employee_info">
+                                                <div class="bg-light p-2 rounded">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="flex-shrink-0">
+                                                            <div class="bg-danger rounded-circle text-white d-flex align-items-center justify-content-center" 
+                                                                 style="width: 40px; height: 40px;">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex-grow-1 ms-3">
+                                                            <h6 class="mb-0" id="checkout_selected_employee_name">-</h6>
+                                                            <small class="text-muted" id="checkout_selected_employee_department">-</small>
+                                                        </div>
+                                                        <div>
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="checkout_clear_employee_selection">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="col-md-4 d-flex align-items-end">
                                             <button type="button" class="btn btn-outline-secondary w-100" id="searchEmployeeBtn">
@@ -264,9 +320,171 @@
     </div>
 </div>
 
-
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Employee search functionality for check-in
+    setupEmployeeSearch(
+        'employee_search', 
+        'employee_search_results', 
+        'employee_id', 
+        'selected_employee_info',
+        'selected_employee_name',
+        'selected_employee_department',
+        'clear_employee_selection',
+        'checkin_submit_btn'
+    );
+    
+    // Employee search functionality for check-out
+    setupEmployeeSearch(
+        'checkout_employee_search', 
+        'checkout_employee_search_results', 
+        'checkout_employee_id', 
+        'checkout_selected_employee_info',
+        'checkout_selected_employee_name',
+        'checkout_selected_employee_department',
+        'checkout_clear_employee_selection'
+    );
+    
+    function setupEmployeeSearch(searchInputId, resultsContainerId, hiddenInputId, 
+                                 selectedInfoContainerId, selectedNameId, 
+                                 selectedDepartmentId, clearButtonId, submitButtonId = null) {
+        
+        const searchInput = document.getElementById(searchInputId);
+        const resultsContainer = document.getElementById(resultsContainerId);
+        const hiddenInput = document.getElementById(hiddenInputId);
+        const selectedInfoContainer = document.getElementById(selectedInfoContainerId);
+        const selectedName = document.getElementById(selectedNameId);
+        const selectedDepartment = document.getElementById(selectedDepartmentId);
+        const clearButton = document.getElementById(clearButtonId);
+        const submitButton = submitButtonId ? document.getElementById(submitButtonId) : null;
+        
+        let searchTimeout = null;
+        
+        // Search as user types
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim();
+            
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            // If search term is empty, hide results
+            if (searchTerm.length < 2) {
+                resultsContainer.classList.add('d-none');
+                return;
+            }
+            
+            // Set new timeout for search (debounce)
+            searchTimeout = setTimeout(function() {
+                fetchEmployeeResults(searchTerm);
+            }, 300);
+        });
+        
+        // Hide results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                resultsContainer.classList.add('d-none');
+            }
+        });
+        
+        // Focus on search input shows results again if there are any
+        searchInput.addEventListener('focus', function() {
+            if (resultsContainer.children.length > 0 && this.value.trim().length >= 2) {
+                resultsContainer.classList.remove('d-none');
+            }
+        });
+        
+        // Clear selection
+        if (clearButton) {
+            clearButton.addEventListener('click', function() {
+                searchInput.value = '';
+                hiddenInput.value = '';
+                selectedInfoContainer.classList.add('d-none');
+                searchInput.disabled = false;
+                
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
+            });
+        }
+        
+        // Fetch employee results via AJAX
+        function fetchEmployeeResults(searchTerm) {
+            fetch(`/search-employees/?term=${encodeURIComponent(searchTerm)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP ${response.status}: ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Clear previous results
+                resultsContainer.innerHTML = '';
+                
+                if (data.results.length === 0) {
+                    resultsContainer.innerHTML = '<div class="p-2 text-muted">No employees found</div>';
+                } else {
+                    // Create result items
+                    data.results.forEach(employee => {
+                        const item = document.createElement('div');
+                        item.className = 'p-2 border-bottom employee-result';
+                        item.dataset.id = employee.id;
+                        item.dataset.name = employee.name;
+                        item.dataset.department = employee.department;
+                        item.innerHTML = `
+                            <div>
+                                <strong>${employee.name}</strong>
+                                <div class="small text-muted">${employee.department}</div>
+                            </div>
+                        `;
+                        
+                        // Add click event to select employee
+                        item.addEventListener('click', function() {
+                            selectEmployee(this.dataset.id, this.dataset.name, this.dataset.department);
+                        });
+                        
+                        resultsContainer.appendChild(item);
+                    });
+                }
+                
+                // Show results
+                resultsContainer.classList.remove('d-none');
+            })
+            .catch(error => {
+                console.error('Error fetching employees:', error);
+                resultsContainer.innerHTML = '<div class="p-2 text-danger">Error fetching employees</div>';
+                resultsContainer.classList.remove('d-none');
+            });
+        }
+        
+        // Select employee from results
+        function selectEmployee(id, name, department) {
+            hiddenInput.value = id;
+            selectedName.textContent = name;
+            selectedDepartment.textContent = department;
+            selectedInfoContainer.classList.remove('d-none');
+            searchInput.value = '';
+            searchInput.disabled = true;
+            resultsContainer.classList.add('d-none');
+            
+            if (submitButton) {
+                submitButton.disabled = false;
+            }
+            
+            // If this is checkout, trigger search for employee attendance
+            if (searchInputId === 'checkout_employee_search') {
+                document.getElementById('searchEmployeeBtn').click();
+            }
+        }
+    }
+    
     // Employee check-in form submission
     const checkInForm = document.getElementById('employeeCheckInForm');
     if (checkInForm) {
@@ -299,7 +517,15 @@ document.addEventListener("DOMContentLoaded", function() {
                     
                     // Reset form
                     checkInForm.reset();
-                    location.reload(); // Refresh to update the lists
+                    document.getElementById('employee_id').value = '';
+                    document.getElementById('selected_employee_info').classList.add('d-none');
+                    document.getElementById('employee_search').disabled = false;
+                    document.getElementById('checkin_submit_btn').disabled = true;
+                    
+                    // Refresh to update the lists
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
                 } else {
                     alert('Error: ' + data.error);
                 }
@@ -315,9 +541,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const searchEmployeeBtn = document.getElementById('searchEmployeeBtn');
     if (searchEmployeeBtn) {
         searchEmployeeBtn.addEventListener('click', function() {
-            const employeeId = document.getElementById('checkout_employee').value;
+            const employeeId = document.getElementById('checkout_employee_id').value;
             if (!employeeId) {
-                alert('Please select an employee');
+                alert('Please select an employee first');
                 return;
             }
             
@@ -387,9 +613,16 @@ document.addEventListener("DOMContentLoaded", function() {
                     
                     // Reset form
                     checkOutForm.reset();
+                    document.getElementById('checkout_employee_id').value = '';
+                    document.getElementById('checkout_selected_employee_info').classList.add('d-none');
+                    document.getElementById('checkout_employee_search').disabled = false;
                     document.getElementById('employeeDetailsCard').classList.add('d-none');
                     document.getElementById('checkOutBtn').classList.add('d-none');
-                    location.reload(); // Refresh to update the lists
+                    
+                    // Refresh to update the lists
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
                 } else {
                     alert('Error: ' + data.error);
                 }

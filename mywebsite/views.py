@@ -4169,31 +4169,45 @@ This implementation includes:
 3. JavaScript to implement the search functionality
 """
 
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+from django.db.models import Q
+from .models import Employee  # Adjust import as needed
+
 @login_required
 @require_http_methods(['GET'])
 def search_employees(request):
-    """Search employees by name or department"""
     search_term = request.GET.get('term', '').strip()
     
     if not search_term:
         return JsonResponse({'results': []})
     
-    # Search for employees whose name or department contains the search term
     employees = Employee.objects.filter(
-        Q(user__first_name__icontains=search_term) | 
-        Q(user__last_name__icontains=search_term) |
-        Q(department__icontains=search_term)
-    ).select_related('user')[:10]  # Limit to 10 results
-    
+        Q(working_id__icontains=search_term) | 
+        Q(first_name__icontains=search_term) |
+        Q(last_name__icontains=search_term)
+    ).select_related('user')[:10]
+
     results = []
     for employee in employees:
+        user = getattr(employee, 'user', None)
+        if user:
+            full_name = user.get_full_name() or f"{employee.first_name} {employee.last_name}"
+        else:
+            full_name = f"{employee.first_name} {employee.last_name}"
+
         results.append({
             'id': employee.id,
-            'name': employee.user.get_full_name(),
-            'department': employee.department
+            'name': full_name,
+            #'department': employee.department or 'N/A'
+            
+
         })
     
     return JsonResponse({'results': results})
+
+
 
 
 def handle_employee_checkin(request, security_guard):

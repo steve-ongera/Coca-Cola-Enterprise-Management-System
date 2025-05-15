@@ -195,6 +195,8 @@ urlpatterns = [
 
     path('employee-attendance/', views.employee_attendance, name='employee_attendance'),
     path('attendance/get-details/', views.get_employee_attendance, name='get_employee_attendance'),
+    path('search-employees/', views.search_employees, name='search_employees'),
+
 
 
     path('visitors/', views.visitor_management, name='visitor_management'),
