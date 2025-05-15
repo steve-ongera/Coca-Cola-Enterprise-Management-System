@@ -4930,3 +4930,123 @@ def check_out_items(request):
         form = ItemCheckOutForm()
     
     return render(request, 'security/item_checkout.html', {'form': form})
+
+
+from django.http import HttpResponse
+from django.shortcuts import render
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment
+from django.utils.timezone import localtime
+from .models import VisitLog, Visitor
+import datetime
+
+
+def visitor_export_page(request):
+    """
+    Renders the visitor export interface page with optional preview data
+    """
+    # Get most recent visits for preview (limit to 5)
+    recent_logs = VisitLog.objects.all().order_by('-check_in_time')[:5]
+    
+    context = {
+        'recent_logs': recent_logs,
+    }
+    
+    return render(request, 'visitors/export_page.html', context)
+
+
+def export_visitors_excel(request):
+    """
+    Exports visitor log data to Excel based on date range parameters
+    """
+    start_date_str = request.GET.get('start')
+    end_date_str = request.GET.get('end')
+    
+    # Parse dates
+    try:
+        if start_date_str and end_date_str:
+            start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d') + datetime.timedelta(days=1)
+            logs = VisitLog.objects.filter(check_in_time__range=(start_date, end_date))
+        else:
+            today = datetime.date.today()
+            tomorrow = today + datetime.timedelta(days=1)
+            logs = VisitLog.objects.filter(check_in_time__range=(today, tomorrow))
+    except Exception as e:
+        return HttpResponse(f"Error parsing date range: {e}")
+    
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Visitor Records"
+    
+    # Header
+    headers = [
+        "Batch Number", "First Name", "Last Name", "Company", "Visitor Type", "ID Number",
+        "Check-in Time", "Check-out Time", "Department", "Purpose", "Security Guard", "Badge Issued"
+    ]
+    ws.append(headers)
+    
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal='center')
+    
+    # Data rows
+    for log in logs:
+        visitor = log.visitor
+        ws.append([
+            log.batch_number,
+            visitor.first_name,
+            visitor.last_name,
+            visitor.company,
+            visitor.visitor_type,
+            visitor.id_number or "",
+            localtime(log.check_in_time).strftime('%Y-%m-%d %H:%M:%S'),
+            localtime(log.check_out_time).strftime('%Y-%m-%d %H:%M:%S') if log.check_out_time else "",
+            str(log.department),
+            log.purpose,
+            str(log.security_guard) if log.security_guard else "",
+            "Yes" if log.badge_issued else "No",
+        ])
+    
+    # Response
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    filename = f"visitor_log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    wb.save(response)
+    return response
+
+
+def preview_data(request):
+    """
+    Returns preview data for the selected date range via AJAX
+    """
+    start_date_str = request.GET.get('start')
+    end_date_str = request.GET.get('end')
+    
+    try:
+        if start_date_str and end_date_str:
+            start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d') + datetime.timedelta(days=1)
+            logs = VisitLog.objects.filter(check_in_time__range=(start_date, end_date))[:10]  # Limit to 10 records
+        else:
+            today = datetime.date.today()
+            tomorrow = today + datetime.timedelta(days=1)
+            logs = VisitLog.objects.filter(check_in_time__range=(today, tomorrow))[:10]
+            
+        preview_data = []
+        for log in logs:
+            visitor = log.visitor
+            preview_data.append({
+                'batch_number': log.batch_number,
+                'name': f"{visitor.first_name} {visitor.last_name}",
+                'company': visitor.company,
+                'check_in': localtime(log.check_in_time).strftime('%Y-%m-%d %H:%M'),
+                'department': str(log.department),
+                'purpose': log.purpose
+            })
+            
+        return render(request, 'visitors/preview_data.html', {'logs': preview_data})
+    
+    except Exception as e:
+        return HttpResponse(f"Error retrieving preview data: {e}")

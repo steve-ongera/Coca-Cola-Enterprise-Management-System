@@ -1,0 +1,18 @@
+{% extends 'base/base.html'%}
+
+{% block content %}
+<!-- templates/export.html -->
+
+<form method="get" action="{% url 'export_visitors_excel' %}">
+    <label>Start Date:</label>
+    <input type="date" name="start" required>
+
+    <label>End Date:</label>
+    <input type="date" name="end" required>
+
+    <button type="submit">Export to Excel</button>
+</form>
+
+<!-- Or add a button for today's logs -->
+<a href="{% url 'export_visitors_excel' %}">Export Today's Visitors</a>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% for log in logs %}
+<tr>
+    <td>{{ log.batch_number }}</td>
+    <td>{{ log.name }}</td>
+    <td>{{ log.company }}</td>
+    <td>{{ log.check_in }}</td>
+    <td>{{ log.department }}</td>
+    <td>{{ log.purpose }}</td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="6" class="text-center">No records found for selected date range</td>
+</tr>
+{% endfor %}

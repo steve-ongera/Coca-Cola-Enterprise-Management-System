@@ -1,0 +1,130 @@
+{% extends "base/base.html" %}
+{% block title %}Visitor Log Export{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>Visitor Log Export</h1>
+    </div>
+    <div class="content">
+        <form id="exportForm" method="GET" action="{% url 'export_visitors_excel' %}">
+            <div class="form-group">
+                <label for="start">Start Date:</label>
+                <input type="date" id="start" name="start" required>
+            </div>
+            <div class="form-group">
+                <label for="end">End Date:</label>
+                <input type="date" id="end" name="end" required>
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn">Export Selected Date Range</button>
+                <button type="button" class="btn btn-today" id="exportToday">Export Today's Records</button>
+            </div>
+        </form>
+
+        <div class="info-box">
+            <h3>Export Information</h3>
+            <p>This tool allows you to export visitor log records to Excel format. You can either:</p>
+            <ul>
+                <li>Select a specific date range and click "Export Selected Date Range", or</li>
+                <li>Click "Export Today's Records" to export only today's visitor logs</li>
+            </ul>
+            <p>The exported Excel file will contain the following information:</p>
+            <ul>
+                <li>Batch Number</li>
+                <li>Visitor's First and Last Name</li>
+                <li>Company</li>
+                <li>Visitor Type</li>
+                <li>ID Number</li>
+                <li>Check-in and Check-out Times</li>
+                <li>Department Visited</li>
+                <li>Visit Purpose</li>
+                <li>Security Guard</li>
+                <li>Badge Status</li>
+            </ul>
+        </div>
+
+        <div class="preview-section">
+            <h2>Recent Visitor Records Preview</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Batch #</th>
+                        <th>Name</th>
+                        <th>Company</th>
+                        <th>Check-in Time</th>
+                        <th>Department</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody id="previewRecords">
+                    {% if recent_logs %}
+                        {% for log in recent_logs %}
+                        <tr>
+                            <td>{{ log.batch_number }}</td>
+                            <td>{{ log.visitor.first_name }} {{ log.visitor.last_name }}</td>
+                            <td>{{ log.visitor.company }}</td>
+                            <td>{{ log.check_in_time|date:"Y-m-d H:i" }}</td>
+                            <td>{{ log.department }}</td>
+                            <td>{{ log.purpose }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No recent records found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default dates
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        
+        document.getElementById('start').value = formattedDate;
+        document.getElementById('end').value = formattedDate;
+        
+        // Handle "Export Today" button
+        document.getElementById('exportToday').addEventListener('click', function() {
+            window.location.href = "{% url 'export_visitors_excel' %}";
+        });
+        
+        // Validate end date is not before start date
+        document.getElementById('end').addEventListener('change', function() {
+            const startDate = document.getElementById('start').value;
+            const endDate = this.value;
+            
+            if (endDate < startDate) {
+                alert('End date cannot be before start date');
+                this.value = startDate;
+            }
+        });
+        
+        // Optional: Add AJAX preview functionality
+        const startDate = document.getElementById('start');
+        const endDate = document.getElementById('end');
+        
+        function updatePreview() {
+            if(startDate.value && endDate.value) {
+                fetch(`{% url 'preview_data' %}?start=${startDate.value}&end=${endDate.value}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('previewRecords').innerHTML = html;
+                })
+                .catch(error => console.error('Error loading preview:', error));
+            }
+        }
+        
+        // Uncomment to enable live preview updates when dates change
+        // startDate.addEventListener('change', updatePreview);
+        // endDate.addEventListener('change', updatePreview);
+    });
+</script>
+{% endblock %}

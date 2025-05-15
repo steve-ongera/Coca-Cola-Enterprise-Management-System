@@ -225,5 +225,9 @@ urlpatterns = [
     path('items/check-in/visitor/<int:visitor_id>/', views.check_in_items, name='check_in_visitor_items'),
     path('items/check-in/employee/<int:employee_id>/', views.check_in_items, name='check_in_employee_items'),
     path('items/check-out/', views.check_out_items, name='check_out_items'),
+    
+    path('export-page/', views.visitor_export_page, name='visitor_export_page'),
+    path('export-visitors-excel/', views.export_visitors_excel, name='export_visitors_excel'),
+    path('preview-data/', views.preview_data, name='preview_data'),
   
 ]
