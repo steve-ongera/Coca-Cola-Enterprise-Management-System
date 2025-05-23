@@ -3744,35 +3744,69 @@ from django.utils import timezone
 from .forms import VisitorCheckInForm, VisitorCheckOutForm
 from .models import Visitor, VisitLog, SecurityGuard
 
+from django.utils import timezone  # Make sure this import is present at the top
+
 @login_required
 def visitor_check_in(request):
     if request.method == 'POST':
         form = VisitorCheckInForm(request.POST)
         if form.is_valid():
-            visitor = form.save()
-            
-            # Create visit log
-            visit = VisitLog.objects.create(
-                visitor=visitor,
-                purpose=form.cleaned_data['purpose'],
-                department=form.cleaned_data['department'],
-                security_guard=request.user.securityguard,
-                badge_issued=True,
-                badge_number=f"CC-{timezone.now().strftime('%Y%m%d')}-{visitor.id}"
-            )
-            
+            try:
+                visitor = form.save()
+                
+                # Get current time (safely)
+                current_time = timezone.now()
+                if current_time is None:  # Fallback if timezone.now() fails
+                    from datetime import datetime
+                    current_time = datetime.now()
+                
+                # Create visit log with safe time handling
+                visit = VisitLog.objects.create(
+                    visitor=visitor,
+                    purpose=form.cleaned_data['purpose'],
+                    department=form.cleaned_data['department'],
+                    security_guard=request.user.securityguard,
+                    badge_issued=True,
+                    badge_number=f"CC-{current_time.strftime('%Y%m%d')}-{visitor.id}"
+                )
+                
+                # Format check_in_time safely
+                check_in_time_str = ''
+                if visit.check_in_time:
+                    try:
+                        check_in_time_str = visit.check_in_time.strftime('%Y-%m-%d %H:%M:%S')
+                    except AttributeError:
+                        check_in_time_str = str(visit.check_in_time)
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'badge_number': visit.badge_number,
+                        'visitor_name': f"{visitor.first_name} {visitor.last_name}",
+                        'check_in_time': check_in_time_str
+                    })
+                return redirect('visitor_check_in_success')
+            except Exception as e:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'error': str(e)
+                    }, status=400)
+                # Re-raise for non-AJAX requests
+                raise
+        else:
+            # Form is invalid
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                errors = {field: str(errors[0]) for field, errors in form.errors.items()}
                 return JsonResponse({
-                    'success': True,
-                    'badge_number': visit.badge_number,
-                    'visitor_name': f"{visitor.first_name} {visitor.last_name}",
-                    'check_in_time': visit.check_in_time.strftime('%Y-%m-%d %H:%M:%S')
-                })
-            return redirect('visitor_check_in_success')
+                    'success': False,
+                    'errors': errors
+                }, status=400)
     else:
         form = VisitorCheckInForm()
     
     return render(request, 'visitors/check_in.html', {'form': form})
+
 
 @login_required
 def visitor_check_out(request):

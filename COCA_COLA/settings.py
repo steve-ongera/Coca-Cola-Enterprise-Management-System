@@ -31,6 +31,10 @@ INSTALLED_APPS = [
     'mywebsite',
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://4b90-2c0f-fe38-2256-f0f6-4dc3-6d3e-959c-cccb.ngrok-free.app"
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

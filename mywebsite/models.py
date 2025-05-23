@@ -1830,9 +1830,13 @@ class ItemLog(models.Model):
 
 import string
 import random
+import logging
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 class VisitLog(models.Model):
     visitor = models.ForeignKey('Visitor', on_delete=models.CASCADE)
@@ -1853,11 +1857,18 @@ class VisitLog(models.Model):
         return f"{self.visitor} - {self.department} ({'Inside' if self.is_inside else 'Checked Out'})"
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None  # Check if this is a new object
+        
         # Generate batch number only if it hasn't been set
         if not self.batch_number:
             self.batch_number = self.generate_unique_batch_number()
-            self.send_notification()
+        
+        # First save the object so auto_now_add can populate check_in_time
         super().save(*args, **kwargs)
+        
+        # Then send notification only for new records after check_in_time is available
+        if is_new:
+            self.send_notification()
 
     def generate_unique_batch_number(self, length=7):
         characters = string.ascii_uppercase + string.digits
@@ -1867,24 +1878,36 @@ class VisitLog(models.Model):
                 return batch
 
     def send_notification(self):
-        subject = f"Visitor Notification: {self.visitor.first_name} {self.visitor.last_name}"
-        message = f"""
+        try:
+            # Format check_in_time safely
+            check_in_time_str = "Not available"
+            if self.check_in_time:
+                try:
+                    check_in_time_str = self.check_in_time.strftime('%Y-%m-%d %H:%M:%S')
+                except AttributeError:
+                    check_in_time_str = str(self.check_in_time)
+            
+            subject = f"Visitor Notification: {self.visitor.first_name} {self.visitor.last_name}"
+            message = f"""
 Visitor Details:
 Name: {self.visitor.first_name} {self.visitor.last_name}
 Company: {self.visitor.company}
 Purpose: {self.purpose}
-Check-in Time: {self.check_in_time.strftime('%Y-%m-%d %H:%M:%S')}
+Check-in Time: {check_in_time_str}
 
 Please be prepared to receive this visitor.
 """
-        recipient_email = self.department.contact_email
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [recipient_email],
-            fail_silently=False,
-        )
+            recipient_email = self.department.contact_email
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [recipient_email],
+                fail_silently=True,  # Use True to prevent exceptions
+            )
+        except Exception as e:
+            # Log the error but don't stop the process
+            logger.error(f"Failed to send notification for visitor {self.visitor_id}: {str(e)}")
 
 
 

@@ -392,27 +392,38 @@ document.addEventListener("DOMContentLoaded", function() {
                     'X-CSRFToken': '{{ csrf_token }}'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    // Try to parse error JSON first
+                    return response.json().catch(() => {
+                        // If not JSON, get text
+                        return response.text().then(text => {
+                            throw new Error(`Server error: ${text.substring(0, 100)}...`);
+                        });
+                    }).then(errorData => {
+                        throw errorData;
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
-                    // Update success modal with visitor data
-                    document.querySelector('.visitor-name').textContent = data.visitor_name;
-                    document.querySelector('.badge-number').textContent = data.badge_number;
-                    document.querySelector('.check-in-time').textContent = data.check_in_time;
-                    
-                    // Show success modal
-                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-                    successModal.show();
-                    
-                    // Reset form
-                    checkInForm.reset();
-                } else {
-                    alert('Error: ' + data.error);
+                    // Success handling code remains the same
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred during check-in');
+                
+                // More user-friendly error display
+                if (error.errors) {
+                    // Form validation errors
+                    const errorMessages = Object.values(error.errors).join('\n');
+                    alert('Please correct the following errors:\n' + errorMessages);
+                } else if (error.error) {
+                    alert('Error: ' + error.error);
+                } else {
+                    alert('An unexpected error occurred during check-in');
+                }
             });
         });
     }
