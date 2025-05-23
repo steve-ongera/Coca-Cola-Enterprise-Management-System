@@ -1070,6 +1070,7 @@ class VisitorCheckOutForm(forms.Form):
         max_length=50,
         required=True,
         widget=forms.TextInput(attrs={
+            'class': 'form-control',
             'placeholder': 'Enter visitor ID number',
             'autofocus': 'autofocus'
         })
