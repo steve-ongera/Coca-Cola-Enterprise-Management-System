@@ -4113,6 +4113,7 @@ def handle_vehicle_checkout(request, security_guard):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+
 @login_required
 @require_http_methods(['GET'])
 def get_vehicle_details(request):
@@ -4553,7 +4554,7 @@ def vehicle_record_management(request):
     return render(request, 'security/vehicle_record_management.html', context)
 
 @login_required
-def get_vehicle_details(request, vehicle_id):
+def get_car_details(request, vehicle_id):
     vehicle = get_object_or_404(Vehicle, id=vehicle_id)
     data = {
         'id': vehicle.id,
