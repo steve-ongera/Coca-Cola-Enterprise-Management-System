@@ -558,7 +558,7 @@ def employee_create(request):
 from django.shortcuts import render, get_object_or_404
 from datetime import date
 from .models import Employee, PositionHistory, Attendance, Leave, Payroll, PerformanceReview
-
+import datetime
 
 def is_admin(user):
     return user.is_authenticated and user.is_staff  # or use user.is_superuser
@@ -569,7 +569,7 @@ def employee_detail(request, pk):
 
     #stats
     # Calculate date range for past 6 months
-    six_months_ago = datetime.now() - timedelta(days=180)
+    six_months_ago = datetime.datetime.now() - datetime.timedelta(days=180)
     
     # Get attendance data for past 6 months
     attendance_records = Attendance.objects.filter(
